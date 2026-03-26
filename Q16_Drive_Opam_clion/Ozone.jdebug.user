@@ -1,0 +1,36 @@
+
+
+GraphedExpression="(g_svpwm).ta", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#e56a6f
+GraphedExpression="(g_svpwm).tb", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#35792b, Show=0
+GraphedExpression="(g_svpwm).tc", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#769dda, Show=0
+GraphedExpression="va_norm", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#b14f0d
+GraphedExpression="vc_norm", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#b3c38e
+GraphedExpression="vb_norm", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#ab7b05
+GraphedExpression="dealta_us", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#7fd3b7, Show=0
+OpenDocument="app.c", FilePath="C:/Users/fubingyan/Desktop/wheel_legged_robot/Q16_Drive_Opam_clion/applications/app.c", Line=184
+OpenDocument="startup_stm32g431xx.s", FilePath="C:/Users/fubingyan/Desktop/wheel_legged_robot/Q16_Drive_Opam_clion/startup_stm32g431xx.s", Line=54
+OpenDocument="main.c", FilePath="C:/Users/fubingyan/Desktop/wheel_legged_robot/Q16_Drive_Opam_clion/Core/Src/main.c", Line=73
+OpenDocument="foc_svpwm_q16.c", FilePath="C:/Users/fubingyan/Desktop/wheel_legged_robot/Q16_Drive_Opam_clion/Q16_FOC/foc_svpwm_q16.c", Line=170
+OpenDocument="q16_16_math.c", FilePath="C:/Users/fubingyan/Desktop/wheel_legged_robot/Q16_Drive_Opam_clion/Q16_FOC/q16_16_math.c", Line=158
+OpenDocument="foc_ctrl_q16.c", FilePath="C:/Users/fubingyan/Desktop/wheel_legged_robot/Q16_Drive_Opam_clion/Q16_FOC/foc_ctrl_q16.c", Line=300
+OpenDocument="foc_ctrl_q16.h", FilePath="C:/Users/fubingyan/Desktop/wheel_legged_robot/Q16_Drive_Opam_clion/Q16_FOC/foc_ctrl_q16.h", Line=21
+OpenToolbar="Debug", Floating=0, x=0, y=0
+OpenWindow="Source Files", DockArea=LEFT, x=0, y=0, w=485, h=160, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Memory 1", DockArea=BOTTOM, x=1, y=0, w=1064, h=201, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x8A0
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=2, w=485, h=399, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Code Profile", DockArea=LEFT, x=0, y=1, w=485, h=134, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, GroupByFiles=0, SortRespectsFilters=0, ParentRelativeLoad=0
+OpenWindow="Data Sampling", DockArea=RIGHT, x=0, y=0, w=675, h=252, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
+OpenWindow="Timeline", DockArea=RIGHT, x=0, y=1, w=675, h=442, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=0, CodePaneShown=0, PinCursor="Cursor Movable", TimePerDiv="5 s / Div", TimeStampFormat="Time", DataGraphDrawAsPoints=0, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="350;0", DataGraphShowNamesAtCursor=0, PowerGraphDrawAsPoints=0, PowerGraphLegendShown=0, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="395;-105", CodeGraphLegendShown=0, CodeGraphLegendPosition="436;0"
+OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=855, h=201, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
+TableHeader="Source Files", SortCol="File", SortOrder="DESCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[205;100;100;100;1562]
+TableHeader="Code Profile", SortCol="File / Function", SortOrder="ASCENDING", VisibleCols=["File / Function";"Source Coverage";"Inst. Coverage";"Run Count";"Fetch Count";"Load"], ColWidths=[1132;135;142;100;107;114]
+TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" (g_svpwm).ta";" (g_svpwm).tb";" (g_svpwm).tc";" va_norm";" vc_norm";" vb_norm";" dealta_us"], ColWidths=[100;100;100;100;100;100;100;100;100]
+TableHeader="Data Sampling Setup", SortCol="# Changes", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[190;170;100;100;100;134;130;170;154]
+TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[175;100;136;100]
+TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;886]
+WatchedExpression="g_svpwm", RefreshRate=1, Window=Watched Data 1
+WatchedExpression="ratio", RefreshRate=1, Window=Watched Data 1
+WatchedExpression="foc_ctrl", RefreshRate=1, Window=Watched Data 1

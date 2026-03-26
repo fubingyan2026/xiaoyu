@@ -1,0 +1,94 @@
+      Code (inc. data)   RO Data    RW Data    ZI Data      Debug   Object Name
+      1054          0          9          0        300          0   app.o
+        88          0        191          0       8064          0   app_freertos.o
+       556          0          0          0          0          0   b_protocol_core.o
+        60          0          0          0          8          0   bsp_delay.o
+      1604          0          8          0        184          0   can_comm.o
+       252          0          0          0        144          0   can_comm_port.o
+       340          0          0          0        268          0   can_nm.o
+       632          0        176          0         49          0   can_server.o
+      2324          0       1871          0        462          0   cm_backtrace.o
+        12          0          0          0          0          0   cmb_fault.o
+       282          0          0          0       1724          0   cmsis_os2.o
+        32          0        256          0          0          0   crc.o
+       630          0          0          0         20          0   daemon.o
+       188          0          0          1        257          0   debug.o
+       120          0          0          0          0          0   dma.o
+       140          0         80          0          1          0   easyflash.o
+      5524          0        468          0        254          0   ef_env.o
+       740          0         61          0        280          0   ef_port.o
+        48          0       1024          0          0          0   ef_utils.o
+       240          0          0          0        100          0   fdcan.o
+       570          0          0          8          8          0   gimbal_pid.o
+       496          0        148          0        256          0   gimbal_task.o
+       252          0          0          0          0          0   gpio.o
+        76          0          0          0          8          0   hal_fdcan.o
+        96          0          0          0          8          0   hal_gpio.o
+        36          0          0          0          8          0   hal_tim_pwm.o
+       108          0          0          0          8          0   hal_uart.o
+       524          0          0          0       3101          0   heap_4.o
+       220          0          0          0         84          0   i2c.o
+      2982          0         20        106        132          0   ins_task.o
+       880          0          0          0         12          0   key_base.o
+      1108          0        211         52         16          0   key_function.o
+       568          0          0          0          0          0   kfifo.o
+       594          0          7         80          4          0   led.o
+       148          0          0          0          0          0   list.o
+       748          0          0          0         40          0   lwmem.o
+       696          0          0          0        268          0   lwshell.o
+       192          0          0          0          0          0   main.o
+       388          0          0          0          0          0   maths.o
+       968          0          0         16       6145          0   memory_pool.o
+       552          0          0          0          8          0   message_center.o
+       312          0          4         24         32          0   perf_counter.o
+       358          0          0          0          0          0   pid.o
+       784          0          0          4          8          0   port.o
+      1604          0          0          0         64          0   queue.o
+       332          0          0          0        200          0   spi.o
+        36          0        472          0       2048          0   startup_stm32g431xx.o
+       980          0         60          0          0          0   stm32_hal_fdcan.o
+       272          0         44          0          0          0   stm32_hal_gpio.o
+      1510          0        128          0        160          0   stm32_hal_uart.o
+       152          0          0         12          0          0   stm32g4xx_hal.o
+       224          0          0          0          0          0   stm32g4xx_hal_cortex.o
+      1048          0          0          0          0          0   stm32g4xx_hal_dma.o
+      1860          0         16          0          0          0   stm32g4xx_hal_fdcan.o
+       396          0          0         32          0          0   stm32g4xx_hal_flash.o
+       372          0          0          0          0          0   stm32g4xx_hal_flash_ex.o
+       674          0          0          0          0          0   stm32g4xx_hal_gpio.o
+       168          0          0          0          0          0   stm32g4xx_hal_i2c.o
+       146          0          0          0          0          0   stm32g4xx_hal_i2c_ex.o
+        64          0          0          0          0          0   stm32g4xx_hal_msp.o
+       192          0          0          0          0          0   stm32g4xx_hal_pwr_ex.o
+      1820          0          0          0          0          0   stm32g4xx_hal_rcc.o
+       568          0          0          0          0          0   stm32g4xx_hal_rcc_ex.o
+      1306          0          0          0          0          0   stm32g4xx_hal_spi.o
+      2318          0          0          0          0          0   stm32g4xx_hal_tim.o
+       342          0          0          0          0          0   stm32g4xx_hal_tim_ex.o
+      6066          0         24          0          0          0   stm32g4xx_hal_uart.o
+       296          0         16          0          0          0   stm32g4xx_hal_uart_ex.o
+       130          0          0          0          0          0   stm32g4xx_it.o
+        16          0         24          4          0          0   system_stm32g4xx.o
+      2272          0          0          0       1280          0   tasks.o
+       708          0          0          0        324          0   tim.o
+       964          0          0          0        300          0   timers.o
+       104          0          0          0          0          0   tk_event.o
+       568          0        100          0          8          0   tk_timer.o
+       428          0          0          0        340          0   usart.o
+       454          0        126         92        264          0   usart_receive.o
+        44          0          0          0          0          0   user_lib.o
+       176          0          0          0         12          0   warning_task.o
+        20          0          0          0          0          0   ws2812_tim.o
+Object Totals
+
+Memory Map of the image
+
+	Load Region LR_IROM1 
+
+		Execution Region ER_IROM1 (Exec base: 0x08000000, Size: 0x0001052C, Max: 0x00020000, END)
+
+		Execution Region RW_IRAM1 (Exec base: 0x20000000, Size: 0x00000004, Max: 0x00000010, END)
+
+		Execution Region RW_IRAM2 (Exec base: 0x20000010, Size: 0x00006CF8, Max: 0x00007FF0, END)
+
+Image component sizes

@@ -1,0 +1,334 @@
+
+=================================================== keil-build-viewer v1.5b ==================================================
+ 
+[Search keil project] 1 item(s)
+	C:\Users\fubingyan\Desktop\wheel_legged_robot\IMU_CTRL\MDK-ARM\imu_ctrl.uvprojx
+
+[User input] 
+[Current folder] C:\Users\fubingyan\Desktop\wheel_legged_robot\IMU_CTRL\MDK-ARM
+[Encoding] 936
+[Keil project path] C:\Users\fubingyan\Desktop\wheel_legged_robot\IMU_CTRL\MDK-ARM\imu_ctrl.uvprojx
+[Keil project name] imu_ctrl.uvprojx
+[Is keil v4] 0
+[target name] imu_ctrl
+[final target name] imu_ctrl
+
+[Device] STM32G431CBTx
+[Target name] 
+[Output name] imu_ctrl
+[Output path] .\imu_ctrl\
+[Listing path] .\imu_ctrl\
+[Is has pack] 1
+[Is enbale LTO] 0
+[Is has user library] 0
+[Is custom scatter file] 0
+
+[imu_ctrl.uvprojx]  [imu_ctrl]  [STM32G431CBTx]
+ 
+[memory info]
+[name] IRAM [base addr] 0x20000000 [size] 0x00008000 [type] 1 [off-chip] 0 [is pack] 1 [ID] 2 
+[name] IROM [base addr] 0x08000000 [size] 0x00020000 [type] 2 [off-chip] 0 [is pack] 1 [ID] 3 
+
+
+[map file path] C:\Users\fubingyan\Desktop\wheel_legged_robot\IMU_CTRL\MDK-ARM\imu_ctrl\imu_ctrl.map
+
+[region info]
+[load region] LR_IROM1
+	[execution region] ER_IROM1, 0x08000000, 0x00020000, 0x0001052C [memory type] 2 [memory ID] 3
+
+	[execution region] RW_IRAM1, 0x20000000, 0x00000010, 0x00000004 [memory type] 1 [memory ID] 2
+		[ZI block] addr: 0x20000000, size: 0x00000004 (4)
+
+	[execution region] RW_IRAM2, 0x20000010, 0x00007FF0, 0x00006CF8 [memory type] 1 [memory ID] 2
+		[ZI block] addr: 0x200001F0, size: 0x00006B18 (27416)
+
+
+[object name max length] 29
+[object path max length] 68
+
+[object in map file]
+[object name] app.o                          [path] ..\applications\app.c
+[object name] app_freertos.o                 [path] ../Core/Src/app_freertos.c
+[object name] b_protocol_core.o              [path] ..\modules\protocol\b_protocol_core.c
+[object name] bsp_delay.o                    [path] ..\applications\bsp_delay.c
+[object name] can_comm.o                     [path] ..\modules\can_comm\can_comm.c
+[object name] can_comm_port.o                [path] ..\modules\can_comm\can_comm_port.c
+[object name] can_nm.o                       [path] ..\modules\can_comm\can_nm.c
+[object name] can_server.o                   [path] ..\applications\CAN_Server.c
+[object name] cm_backtrace.o                 [path] ..\modules\CmBacktrace\cm_backtrace\cm_backtrace.c
+[object name] cmb_fault.o                    [path] ..\modules\CmBacktrace\cm_backtrace\fault_handler\keil\cmb_fault.S
+[object name] cmsis_os2.o                    [path] ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c
+[object name] crc.o                          [path] ..\modules\crc\crc.c
+[object name] daemon.o                       [path] ..\modules\daemon\daemon.c
+[object name] debug.o                        [path] ..\modules\debug\debug.c
+[object name] dma.o                          [path] ../Core/Src/dma.c
+[object name] easyflash.o                    [path] ..\modules\easyflash\src\easyflash.c
+[object name] ef_env.o                       [path] ..\modules\easyflash\src\ef_env.c
+[object name] ef_port.o                      [path] ..\modules\easyflash\port\ef_port.c
+[object name] ef_utils.o                     [path] ..\modules\easyflash\src\ef_utils.c
+[object name] fdcan.o                        [path] ../Core/Src/fdcan.c
+[object name] gimbal_pid.o                   [path] ..\modules\controller\gimbal_pid.c
+[object name] gimbal_task.o                  [path] ..\applications\gimbal_task.c
+[object name] gpio.o                         [path] ../Core/Src/gpio.c
+[object name] hal_fdcan.o                    [path] ..\hal_drivers\hal_fdcan.c
+[object name] hal_gpio.o                     [path] ..\hal_drivers\hal_gpio.c
+[object name] hal_tim_pwm.o                  [path] ..\hal_drivers\hal_tim_pwm.c
+[object name] hal_uart.o                     [path] ..\hal_drivers\hal_uart.c
+[object name] heap_4.o                       [path] ../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c
+[object name] i2c.o                          [path] ../Core/Src/i2c.c
+[object name] ins_task.o                     [path] ..\applications\ins_task.c
+[object name] key_base.o                     [path] ..\modules\keybase\key_base.c
+[object name] key_function.o                 [path] ..\applications\key_function.c
+[object name] kfifo.o                        [path] ..\modules\kfifo\kfifo.c
+[object name] led.o                          [path] ..\modules\ledshow\led.c
+[object name] list.o                         [path] ../Middlewares/Third_Party/FreeRTOS/Source/list.c
+[object name] lwmem.o                        [path] ..\modules\lwmem\src\lwmem\lwmem.c
+[object name] lwshell.o                      [path] ..\modules\lwshell\src\lwshell.c
+[object name] main.o                         [path] ../Core/Src/main.c
+[object name] maths.o                        [path] ..\modules\algorithm\maths.c
+[object name] memory_pool.o                  [path] ..\modules\memory_pool\memory_pool.c
+[object name] message_center.o               [path] ..\modules\message_center\message_center.c
+[object name] perf_counter.o                 [path] ..\applications\perf_counter.c
+[object name] pid.o                          [path] ..\modules\controller\pid.c
+[object name] port.o                         [path] ..\portable\GCC\ARM_CM4F\port.c
+[object name] queue.o                        [path] ../Middlewares/Third_Party/FreeRTOS/Source/queue.c
+[object name] spi.o                          [path] ../Core/Src/spi.c
+[object name] startup_stm32g431xx.o          [path] startup_stm32g431xx.s
+[object name] stm32_hal_fdcan.o              [path] ..\hal_drivers\stm32_hal_fdcan.c
+[object name] stm32_hal_gpio.o               [path] ..\hal_drivers\stm32_hal_gpio.c
+[object name] stm32_hal_uart.o               [path] ..\hal_drivers\stm32_hal_uart.c
+[object name] stm32g4xx_hal.o                [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal.c
+[object name] stm32g4xx_hal_cortex.o         [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_cortex.c
+[object name] stm32g4xx_hal_dma.o            [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma.c
+[object name] stm32g4xx_hal_fdcan.o          [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_fdcan.c
+[object name] stm32g4xx_hal_flash.o          [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c
+[object name] stm32g4xx_hal_flash_ex.o       [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash_ex.c
+[object name] stm32g4xx_hal_gpio.o           [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_gpio.c
+[object name] stm32g4xx_hal_i2c.o            [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_i2c.c
+[object name] stm32g4xx_hal_i2c_ex.o         [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_i2c_ex.c
+[object name] stm32g4xx_hal_msp.o            [path] ../Core/Src/stm32g4xx_hal_msp.c
+[object name] stm32g4xx_hal_pwr_ex.o         [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pwr_ex.c
+[object name] stm32g4xx_hal_rcc.o            [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc.c
+[object name] stm32g4xx_hal_rcc_ex.o         [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc_ex.c
+[object name] stm32g4xx_hal_spi.o            [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_spi.c
+[object name] stm32g4xx_hal_tim.o            [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim.c
+[object name] stm32g4xx_hal_tim_ex.o         [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim_ex.c
+[object name] stm32g4xx_hal_uart.o           [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart.c
+[object name] stm32g4xx_hal_uart_ex.o        [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart_ex.c
+[object name] stm32g4xx_it.o                 [path] ../Core/Src/stm32g4xx_it.c
+[object name] system_stm32g4xx.o             [path] ../Core/Src/system_stm32g4xx.c
+[object name] tasks.o                        [path] ../Middlewares/Third_Party/FreeRTOS/Source/tasks.c
+[object name] tim.o                          [path] ../Core/Src/tim.c
+[object name] timers.o                       [path] ../Middlewares/Third_Party/FreeRTOS/Source/timers.c
+[object name] tk_event.o                     [path] ..\modules\toolkit\tk_event.c
+[object name] tk_timer.o                     [path] ..\modules\toolkit\tk_timer.c
+[object name] usart.o                        [path] ../Core/Src/usart.c
+[object name] usart_receive.o                [path] ..\applications\usart_receive.c
+[object name] user_lib.o                     [path] ..\modules\algorithm\user_lib.c
+[object name] warning_task.o                 [path] ..\applications\warning_task.c
+[object name] ws2812_tim.o                   [path] ..\applications\ws2812_tim.c
+
+[file path in keil project]
+[old name] startup_stm32g431xx.s          [type] 1   [path] startup_stm32g431xx.s
+[old name] main.c                         [type] 1   [path] ../Core/Src/main.c
+[old name] gpio.c                         [type] 1   [path] ../Core/Src/gpio.c
+[old name] app_freertos.c                 [type] 1   [path] ../Core/Src/app_freertos.c
+[old name] dma.c                          [type] 1   [path] ../Core/Src/dma.c
+[old name] fdcan.c                        [type] 1   [path] ../Core/Src/fdcan.c
+[old name] i2c.c                          [type] 1   [path] ../Core/Src/i2c.c
+[old name] spi.c                          [type] 1   [path] ../Core/Src/spi.c
+[old name] tim.c                          [type] 1   [path] ../Core/Src/tim.c
+[old name] usart.c                        [type] 1   [path] ../Core/Src/usart.c
+[old name] stm32g4xx_it.c                 [type] 1   [path] ../Core/Src/stm32g4xx_it.c
+[old name] stm32g4xx_hal_msp.c            [type] 1   [path] ../Core/Src/stm32g4xx_hal_msp.c
+[old name] stm32g4xx_hal_fdcan.c          [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_fdcan.c
+[old name] stm32g4xx_hal.c                [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal.c
+[old name] stm32g4xx_hal_rcc.c            [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc.c
+[old name] stm32g4xx_hal_rcc_ex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc_ex.c
+[old name] stm32g4xx_hal_flash.c          [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c
+[old name] stm32g4xx_hal_flash_ex.c       [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash_ex.c
+[old name] stm32g4xx_hal_flash_ramfunc.c  [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash_ramfunc.c
+[old name] stm32g4xx_hal_gpio.c           [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_gpio.c
+[old name] stm32g4xx_hal_exti.c           [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_exti.c
+[old name] stm32g4xx_hal_dma.c            [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma.c
+[old name] stm32g4xx_hal_dma_ex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma_ex.c
+[old name] stm32g4xx_hal_pwr.c            [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pwr.c
+[old name] stm32g4xx_hal_pwr_ex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pwr_ex.c
+[old name] stm32g4xx_hal_cortex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_cortex.c
+[old name] stm32g4xx_hal_i2c.c            [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_i2c.c
+[old name] stm32g4xx_hal_i2c_ex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_i2c_ex.c
+[old name] stm32g4xx_hal_spi.c            [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_spi.c
+[old name] stm32g4xx_hal_spi_ex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_spi_ex.c
+[old name] stm32g4xx_hal_tim.c            [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim.c
+[old name] stm32g4xx_hal_tim_ex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim_ex.c
+[old name] stm32g4xx_hal_uart.c           [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart.c
+[old name] stm32g4xx_hal_uart_ex.c        [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart_ex.c
+[old name] system_stm32g4xx.c             [type] 1   [path] ../Core/Src/system_stm32g4xx.c
+[old name] hal_fdcan.c                    [type] 1   [path] ..\hal_drivers\hal_fdcan.c
+[old name] hal_gpio.c                     [type] 1   [path] ..\hal_drivers\hal_gpio.c
+[old name] hal_tim_pwm.c                  [type] 1   [path] ..\hal_drivers\hal_tim_pwm.c
+[old name] hal_uart.c                     [type] 1   [path] ..\hal_drivers\hal_uart.c
+[old name] stm32_hal_fdcan.c              [type] 1   [path] ..\hal_drivers\stm32_hal_fdcan.c
+[old name] stm32_hal_gpio.c               [type] 1   [path] ..\hal_drivers\stm32_hal_gpio.c
+[old name] stm32_hal_tim_pwm.c            [type] 1   [path] ..\hal_drivers\stm32_hal_tim_pwm.c
+[old name] stm32_hal_uart.c               [type] 1   [path] ..\hal_drivers\stm32_hal_uart.c
+[old name] app.c                          [type] 1   [path] ..\applications\app.c
+[old name] bsp_delay.c                    [type] 1   [path] ..\applications\bsp_delay.c
+[old name] CAN_Server.c                   [type] 1   [path] ..\applications\CAN_Server.c
+[old name] ins_task.c                     [type] 1   [path] ..\applications\ins_task.c
+[old name] key_function.c                 [type] 1   [path] ..\applications\key_function.c
+[old name] perf_counter.c                 [type] 1   [path] ..\applications\perf_counter.c
+[old name] PS4_Controller.c               [type] 1   [path] ..\applications\PS4_Controller.c
+[old name] usart_receive.c                [type] 1   [path] ..\applications\usart_receive.c
+[old name] warning_task.c                 [type] 1   [path] ..\applications\warning_task.c
+[old name] ws2812_tim.c                   [type] 1   [path] ..\applications\ws2812_tim.c
+[old name] gimbal_task.c                  [type] 1   [path] ..\applications\gimbal_task.c
+[old name] filter.c                       [type] 1   [path] ..\modules\algorithm\filter.c
+[old name] maths.c                        [type] 1   [path] ..\modules\algorithm\maths.c
+[old name] user_lib.c                     [type] 1   [path] ..\modules\algorithm\user_lib.c
+[old name] utils_math.c                   [type] 1   [path] ..\modules\algorithm\utils_math.c
+[old name] can_comm.c                     [type] 1   [path] ..\modules\can_comm\can_comm.c
+[old name] gimbal_pid.c                   [type] 1   [path] ..\modules\controller\gimbal_pid.c
+[old name] pid.c                          [type] 1   [path] ..\modules\controller\pid.c
+[old name] crc.c                          [type] 1   [path] ..\modules\crc\crc.c
+[old name] daemon.c                       [type] 1   [path] ..\modules\daemon\daemon.c
+[old name] debug.c                        [type] 1   [path] ..\modules\debug\debug.c
+[old name] key_base.c                     [type] 1   [path] ..\modules\keybase\key_base.c
+[old name] kfifo.c                        [type] 1   [path] ..\modules\kfifo\kfifo.c
+[old name] led.c                          [type] 1   [path] ..\modules\ledshow\led.c
+[old name] lwmem.c                        [type] 1   [path] ..\modules\lwmem\src\lwmem\lwmem.c
+[old name] lwshell.c                      [type] 1   [path] ..\modules\lwshell\src\lwshell.c
+[old name] memory_pool.c                  [type] 1   [path] ..\modules\memory_pool\memory_pool.c
+[old name] message_center.c               [type] 1   [path] ..\modules\message_center\message_center.c
+[old name] b_protocol_core.c              [type] 1   [path] ..\modules\protocol\b_protocol_core.c
+[old name] tk_event.c                     [type] 1   [path] ..\modules\toolkit\tk_event.c
+[old name] tk_queue.c                     [type] 1   [path] ..\modules\toolkit\tk_queue.c
+[old name] tk_timer.c                     [type] 1   [path] ..\modules\toolkit\tk_timer.c
+[old name] printf.c                       [type] 1   [path] ..\modules\utils\printf.c
+[old name] can_comm_port.c                [type] 1   [path] ..\modules\can_comm\can_comm_port.c
+[old name] can_nm.c                       [type] 1   [path] ..\modules\can_comm\can_nm.c
+[old name] cm_backtrace.c                 [type] 1   [path] ..\modules\CmBacktrace\cm_backtrace\cm_backtrace.c
+[old name] cmb_fault.S                    [type] 1   [path] ..\modules\CmBacktrace\cm_backtrace\fault_handler\keil\cmb_fault.S
+[old name] SEGGER_RTT.c                   [type] 1   [path] ..\modules\SEGGER_RTT\RTT\SEGGER_RTT.c
+[old name] SEGGER_RTT_printf.c            [type] 1   [path] ..\modules\SEGGER_RTT\RTT\SEGGER_RTT_printf.c
+[old name] easyflash.c                    [type] 1   [path] ..\modules\easyflash\src\easyflash.c
+[old name] ef_env.c                       [type] 1   [path] ..\modules\easyflash\src\ef_env.c
+[old name] ef_utils.c                     [type] 1   [path] ..\modules\easyflash\src\ef_utils.c
+[old name] ef_port.c                      [type] 1   [path] ..\modules\easyflash\port\ef_port.c
+[old name] croutine.c                     [type] 1   [path] ../Middlewares/Third_Party/FreeRTOS/Source/croutine.c
+[old name] event_groups.c                 [type] 1   [path] ../Middlewares/Third_Party/FreeRTOS/Source/event_groups.c
+[old name] list.c                         [type] 1   [path] ../Middlewares/Third_Party/FreeRTOS/Source/list.c
+[old name] queue.c                        [type] 1   [path] ../Middlewares/Third_Party/FreeRTOS/Source/queue.c
+[old name] stream_buffer.c                [type] 1   [path] ../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c
+[old name] tasks.c                        [type] 1   [path] ../Middlewares/Third_Party/FreeRTOS/Source/tasks.c
+[old name] timers.c                       [type] 1   [path] ../Middlewares/Third_Party/FreeRTOS/Source/timers.c
+[old name] cmsis_os2.c                    [type] 1   [path] ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c
+[old name] heap_4.c                       [type] 1   [path] ../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c
+[old name] port.c                         [type] 1   [path] ..\portable\GCC\ARM_CM4F\port.c
+
+[record region info]
+[load region] LR_IROM1
+	[execution region] ER_IROM1, 0x08000000, 0x00020000, 0x00010524 [type] 2 [ID] 3
+	[execution region] RW_IRAM1, 0x20000000, 0x00000010, 0x00000004 [type] 1 [ID] 2
+	[execution region] RW_IRAM2, 0x20000010, 0x00007FF0, 0x00006CF8 [type] 1 [ID] 2
+--------------------------------------------------------------------------------------------------------------------------------
+                                 FILE(s)                                 |         RAM (byte)       |       FLASH (byte)       |
+--------------------------------------------------------------------------------------------------------------------------------
+..\applications\app.c():                                                 |         300              |        1063              |
+../Core/Src/app_freertos.c():                                            |        8064              |         279              |
+..\modules\protocol\b_protocol_core.c():                                 |           0              |         556              |
+..\applications\bsp_delay.c():                                           |           8              |          60              |
+..\modules\can_comm\can_comm.c():                                        |         184              |        1612  [+4]        |
+..\modules\can_comm\can_comm_port.c():                                   |         144              |         252              |
+..\modules\can_comm\can_nm.c():                                          |         268              |         340              |
+..\applications\CAN_Server.c():                                          |          49              |         808              |
+..\modules\CmBacktrace\cm_backtrace\cm_backtrace.c():                    |         462              |        4195              |
+..\modules\CmBacktrace\cm_backtrace\fault_handler\keil\cmb_fault.S():    |           0              |          12              |
+../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.c():  |        1724              |         282              |
+..\modules\crc\crc.c():                                                  |           0              |         288              |
+..\modules\daemon\daemon.c():                                            |          20              |         630              |
+..\modules\debug\debug.c():                                              |         258              |         189              |
+../Core/Src/dma.c():                                                     |           0              |         120              |
+..\modules\easyflash\src\easyflash.c():                                  |           1              |         220              |
+..\modules\easyflash\src\ef_env.c():                                     |         254              |        5992              |
+..\modules\easyflash\port\ef_port.c():                                   |         280              |         801              |
+..\modules\easyflash\src\ef_utils.c():                                   |           0              |        1072              |
+../Core/Src/fdcan.c():                                                   |         100              |         240              |
+..\modules\controller\gimbal_pid.c():                                    |          16              |         578              |
+..\applications\gimbal_task.c():                                         |         256              |         644              |
+../Core/Src/gpio.c():                                                    |           0              |         252              |
+..\hal_drivers\hal_fdcan.c():                                            |           8              |          76              |
+..\hal_drivers\hal_gpio.c():                                             |           8              |          96              |
+..\hal_drivers\hal_tim_pwm.c():                                          |           8              |          36              |
+..\hal_drivers\hal_uart.c():                                             |           8              |         108              |
+../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c():  |        3101              |         524              |
+../Core/Src/i2c.c():                                                     |          84              |         220              |
+..\applications\ins_task.c():                                            |         238              |        3108              |
+..\modules\keybase\key_base.c():                                         |          12              |         880              |
+..\applications\key_function.c():                                        |          68              |        1371              |
+..\modules\kfifo\kfifo.c():                                              |           0              |         568              |
+..\modules\ledshow\led.c():                                              |          84              |         681              |
+../Middlewares/Third_Party/FreeRTOS/Source/list.c():                     |           0              |         148              |
+..\modules\lwmem\src\lwmem\lwmem.c():                                    |          40              |         748              |
+..\modules\lwshell\src\lwshell.c():                                      |         268              |         696              |
+../Core/Src/main.c():                                                    |           0              |         192              |
+..\modules\algorithm\maths.c():                                          |           0              |         388              |
+..\modules\memory_pool\memory_pool.c():                                  |        6161              |         984              |
+..\modules\message_center\message_center.c():                            |           8              |         552              |
+..\applications\perf_counter.c():                                        |          56              |         340              |
+..\modules\controller\pid.c():                                           |           0              |         358              |
+..\portable\GCC\ARM_CM4F\port.c():                                       |          12              |         788              |
+../Middlewares/Third_Party/FreeRTOS/Source/queue.c():                    |          64              |        1604              |
+../Core/Src/spi.c():                                                     |         200              |         332              |
+startup_stm32g431xx.s():                                                 |        2048              |         508              |
+..\hal_drivers\stm32_hal_fdcan.c():                                      |           0              |        1040              |
+..\hal_drivers\stm32_hal_gpio.c():                                       |           0              |         316              |
+..\hal_drivers\stm32_hal_uart.c():                                       |         160              |        1638              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal.c():                   |          12              |         164              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_cortex.c():            |           0              |         224              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma.c():               |           0              |        1048              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_fdcan.c():             |           0              |        1876              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c():             |          32              |         428              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash_ex.c():          |           0              |         372              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_gpio.c():              |           0              |         674              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_i2c.c():               |           0              |         168              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_i2c_ex.c():            |           0              |         146              |
+../Core/Src/stm32g4xx_hal_msp.c():                                       |           0              |          64              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pwr_ex.c():            |           0              |         192              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc.c():               |           0              |        1820              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc_ex.c():            |           0              |         568              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_spi.c():               |           0              |        1306              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim.c():               |           0              |        2318              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim_ex.c():            |           0              |         342              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart.c():              |           0              |        6090              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart_ex.c():           |           0              |         312              |
+../Core/Src/stm32g4xx_it.c():                                            |           0              |         130              |
+../Core/Src/system_stm32g4xx.c():                                        |           4              |          44              |
+../Middlewares/Third_Party/FreeRTOS/Source/tasks.c():                    |        1280              |        2272              |
+../Core/Src/tim.c():                                                     |         324              |         708              |
+../Middlewares/Third_Party/FreeRTOS/Source/timers.c():                   |         300              |         964              |
+..\modules\toolkit\tk_event.c():                                         |           0              |         104              |
+..\modules\toolkit\tk_timer.c():                                         |           8              |         668              |
+../Core/Src/usart.c():                                                   |         340              |         428              |
+..\applications\usart_receive.c():                                       |         356              |         672              |
+..\modules\algorithm\user_lib.c():                                       |           0              |          44              |
+..\applications\warning_task.c():                                        |          12              |         176              |
+..\applications\ws2812_tim.c():                                          |           0              |          20              |
+--------------------------------------------------------------------------------------------------------------------------------
+[memory print mode]: 0
+LR_IROM1
+        RAM 1             [0x20000000 | 0x00008000 (32768)]
+                [zi start] 0   [zi end] 12
+                RW_IRAM1  [0x20000000]|¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ______________________________________| (        4 /       16 )  25.0%  
+                [zi start] 1   [zi end] 42
+                RW_IRAM2  [0x20000010]|¡ö¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ________| (  27.2 KB /  31.9 KB )  85.2%  
+ 
+        FLASH 1           [0x08000000 | 0x00020000 (131072)]
+                ER_IROM1  [0x08000000]|¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö_________________________| (  65.2 KB / 128.0 KB )  51.0%  [+8]
+ 
+[htm file path] C:\Users\fubingyan\Desktop\wheel_legged_robot\IMU_CTRL\MDK-ARM\imu_ctrl\imu_ctrl.htm
+Maximum Stack Usage =       1024 bytes + Unknown(Cycles, Untraceable Function Pointers)
+ 
+=============================================================================================================================
+
+run time: 0.377 s

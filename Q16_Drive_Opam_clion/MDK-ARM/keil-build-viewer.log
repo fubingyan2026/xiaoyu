@@ -1,0 +1,346 @@
+
+=================================================== keil-build-viewer v1.5b ==================================================
+ 
+[Search keil project] 1 item(s)
+	C:\Users\fubingyan\Desktop\wheel_legged_robot\Q16_Drive_Opam_clion\MDK-ARM\odrive-G431.uvprojx
+
+[User input] 
+[Current folder] C:\Users\fubingyan\Desktop\wheel_legged_robot\Q16_Drive_Opam_clion\MDK-ARM
+[Encoding] 936
+[Keil project path] C:\Users\fubingyan\Desktop\wheel_legged_robot\Q16_Drive_Opam_clion\MDK-ARM\odrive-G431.uvprojx
+[Keil project name] odrive-G431.uvprojx
+[Is keil v4] 0
+[target name] odrive-G431
+[final target name] odrive-G431
+
+[Device] STM32G431CBTx
+[Target name] 
+[Output name] odrive-foc
+[Output path] .\Objects\
+[Listing path] .\Objects\
+[Is has pack] 1
+[Is enbale LTO] 0
+[Is has user library] 0
+[Is custom scatter file] 0
+
+[odrive-G431.uvprojx]  [odrive-G431]  [STM32G431CBTx]
+ 
+[memory info]
+[name] IRAM [base addr] 0x20000000 [size] 0x00008000 [type] 1 [off-chip] 0 [is pack] 1 [ID] 2 
+[name] IROM [base addr] 0x08000000 [size] 0x00020000 [type] 2 [off-chip] 0 [is pack] 1 [ID] 3 
+
+
+[map file path] C:\Users\fubingyan\Desktop\wheel_legged_robot\Q16_Drive_Opam_clion\MDK-ARM\Objects\odrive-foc.map
+
+[region info]
+[load region] LR_IROM1
+	[execution region] ER_IROM1, 0x08000000, 0x0001E000, 0x000137C4 [memory type] 2 [memory ID] 3
+
+	[execution region] RW_IRAM2, 0x20000000, 0x00000020, 0x00000004 [memory type] 1 [memory ID] 2
+		[ZI block] addr: 0x20000000, size: 0x00000004 (4)
+
+	[execution region] RW_IRAM1, 0x20000020, 0x00007FE0, 0x00004148 [memory type] 1 [memory ID] 2
+		[ZI block] addr: 0x200003E0, size: 0x00003D88 (15752)
+
+
+[object name max length] 29
+[object path max length] 66
+
+[object in map file]
+[object name] adc.o                          [path] ../Core/Src/adc.c
+[object name] app.o                          [path] ..\applications\app.c
+[object name] b_protocol_core.o              [path] ..\modules\protocol\b_protocol_core.c
+[object name] bsp_delay.o                    [path] ..\applications\bsp_delay.c
+[object name] can_comm.o                     [path] ..\modules\can_comm\can_comm.c
+[object name] can_comm_port.o                [path] ..\modules\can_comm\can_comm_port.c
+[object name] can_nm.o                       [path] ..\modules\can_comm\can_nm.c
+[object name] can_server.o                   [path] ..\applications\CAN_Server.c
+[object name] cm_backtrace.o                 [path] ..\modules\CmBacktrace\cm_backtrace\cm_backtrace.c
+[object name] cmb_fault.o                    [path] ..\modules\CmBacktrace\cm_backtrace\fault_handler\keil\cmb_fault.S
+[object name] crc.o                          [path] ..\modules\crc\crc.c
+[object name] daemon.o                       [path] ..\modules\daemon\daemon.c
+[object name] debug.o                        [path] ..\modules\debug\debug.c
+[object name] dma.o                          [path] ../Core/Src/dma.c
+[object name] easyflash.o                    [path] ..\modules\easyflash\src\easyflash.c
+[object name] ef_env.o                       [path] ..\modules\easyflash\src\ef_env.c
+[object name] ef_port.o                      [path] ..\modules\easyflash\port\ef_port.c
+[object name] ef_utils.o                     [path] ..\modules\easyflash\src\ef_utils.c
+[object name] encoder_alignment.o            [path] ..\applications\encoder_alignment.c
+[object name] fdcan.o                        [path] ../Core/Src/fdcan.c
+[object name] filter.o                       [path] ..\modules\algorithm\filter.c
+[object name] flash_task.o                   [path] ..\applications\flash_task.c
+[object name] foc_ctrl_q16.o                 [path] ..\Q16_FOC\foc_ctrl_q16.c
+[object name] foc_port.o                     [path] ..\Q16_FOC\foc_port.c
+[object name] foc_sm.o                       [path] ..\Q16_FOC\foc_sm.c
+[object name] foc_svpwm_q16.o                [path] ..\Q16_FOC\foc_svpwm_q16.c
+[object name] fsm.o                          [path] ..\modules\fsm\fsm.c
+[object name] gimbal_pid.o                   [path] ..\modules\controller\gimbal_pid.c
+[object name] gpio.o                         [path] ../Core/Src/gpio.c
+[object name] hal_fdcan.o                    [path] ..\hal_drivers\hal_fdcan.c
+[object name] hal_gpio.o                     [path] ..\hal_drivers\hal_gpio.c
+[object name] hal_tim_pwm.o                  [path] ..\hal_drivers\hal_tim_pwm.c
+[object name] hal_uart.o                     [path] ..\hal_drivers\hal_uart.c
+[object name] hall_adjustment.o              [path] ..\applications\hall_adjustment.c
+[object name] key_base.o                     [path] ..\modules\keybase\key_base.c
+[object name] key_function.o                 [path] ..\applications\key_function.c
+[object name] kfifo.o                        [path] ..\modules\kfifo\kfifo.c
+[object name] kqueue.o                       [path] ..\modules\kfifo\kqueue.c
+[object name] led.o                          [path] ..\modules\ledshow\led.c
+[object name] line_hall_pll.o                [path] ..\modules\encoder\line_hall_pll.c
+[object name] lwmem.o                        [path] ..\modules\lwmem\src\lwmem\lwmem.c
+[object name] lwshell.o                      [path] ..\modules\lwshell\src\lwshell.c
+[object name] main.o                         [path] ../Core/Src/main.c
+[object name] maths.o                        [path] ..\modules\algorithm\maths.c
+[object name] memory_pool.o                  [path] ..\modules\memory_pool\memory_pool.c
+[object name] message_center.o               [path] ..\modules\message_center\message_center.c
+[object name] mt6816.o                       [path] ..\modules\encoder\MT6816.c
+[object name] opamp.o                        [path] ../Core/Src/opamp.c
+[object name] perf_counter.o                 [path] ..\applications\perf_counter.c
+[object name] pid.o                          [path] ..\modules\controller\pid.c
+[object name] q16_16_math.o                  [path] ..\Q16_FOC\q16_16_math.c
+[object name] spi.o                          [path] ../Core/Src/spi.c
+[object name] startup_stm32g431xx.o          [path] startup_stm32g431xx.s
+[object name] stm32_hal_fdcan.o              [path] ..\hal_drivers\stm32_hal_fdcan.c
+[object name] stm32_hal_gpio.o               [path] ..\hal_drivers\stm32_hal_gpio.c
+[object name] stm32_hal_tim_pwm.o            [path] ..\hal_drivers\stm32_hal_tim_pwm.c
+[object name] stm32_hal_uart.o               [path] ..\hal_drivers\stm32_hal_uart.c
+[object name] stm32g4xx_hal.o                [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal.c
+[object name] stm32g4xx_hal_adc.o            [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_adc.c
+[object name] stm32g4xx_hal_adc_ex.o         [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_adc_ex.c
+[object name] stm32g4xx_hal_cortex.o         [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_cortex.c
+[object name] stm32g4xx_hal_dma.o            [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma.c
+[object name] stm32g4xx_hal_fdcan.o          [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_fdcan.c
+[object name] stm32g4xx_hal_flash.o          [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c
+[object name] stm32g4xx_hal_flash_ex.o       [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash_ex.c
+[object name] stm32g4xx_hal_gpio.o           [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_gpio.c
+[object name] stm32g4xx_hal_msp.o            [path] ../Core/Src/stm32g4xx_hal_msp.c
+[object name] stm32g4xx_hal_opamp.o          [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_opamp.c
+[object name] stm32g4xx_hal_pwr_ex.o         [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pwr_ex.c
+[object name] stm32g4xx_hal_rcc.o            [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc.c
+[object name] stm32g4xx_hal_rcc_ex.o         [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc_ex.c
+[object name] stm32g4xx_hal_spi.o            [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_spi.c
+[object name] stm32g4xx_hal_tim.o            [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim.c
+[object name] stm32g4xx_hal_tim_ex.o         [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim_ex.c
+[object name] stm32g4xx_hal_uart.o           [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart.c
+[object name] stm32g4xx_hal_uart_ex.o        [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart_ex.c
+[object name] stm32g4xx_it.o                 [path] ../Core/Src/stm32g4xx_it.c
+[object name] system_stm32g4xx.o             [path] ../Core/Src/system_stm32g4xx.c
+[object name] tim.o                          [path] ../Core/Src/tim.c
+[object name] tk_event.o                     [path] ..\modules\toolkit\tk_event.c
+[object name] tk_timer.o                     [path] ..\modules\toolkit\tk_timer.c
+[object name] usart.o                        [path] ../Core/Src/usart.c
+[object name] usart_receive.o                [path] ..\applications\usart_receive.c
+[object name] warning_task.o                 [path] ..\applications\warning_task.c
+[object name] ws2812_spi.o                   [path] ..\applications\WS2812_SPI.c
+
+[file path in keil project]
+[old name] startup_stm32g431xx.s          [type] 1   [path] startup_stm32g431xx.s
+[old name] main.c                         [type] 1   [path] ../Core/Src/main.c
+[old name] gpio.c                         [type] 1   [path] ../Core/Src/gpio.c
+[old name] adc.c                          [type] 1   [path] ../Core/Src/adc.c
+[old name] dma.c                          [type] 1   [path] ../Core/Src/dma.c
+[old name] fdcan.c                        [type] 1   [path] ../Core/Src/fdcan.c
+[old name] opamp.c                        [type] 1   [path] ../Core/Src/opamp.c
+[old name] spi.c                          [type] 1   [path] ../Core/Src/spi.c
+[old name] tim.c                          [type] 1   [path] ../Core/Src/tim.c
+[old name] usart.c                        [type] 1   [path] ../Core/Src/usart.c
+[old name] stm32g4xx_it.c                 [type] 1   [path] ../Core/Src/stm32g4xx_it.c
+[old name] stm32g4xx_hal_msp.c            [type] 1   [path] ../Core/Src/stm32g4xx_hal_msp.c
+[old name] stm32g4xx_hal_adc.c            [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_adc.c
+[old name] stm32g4xx_hal_adc_ex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_adc_ex.c
+[old name] stm32g4xx_ll_adc.c             [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_ll_adc.c
+[old name] stm32g4xx_hal.c                [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal.c
+[old name] stm32g4xx_hal_rcc.c            [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc.c
+[old name] stm32g4xx_hal_rcc_ex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc_ex.c
+[old name] stm32g4xx_hal_flash.c          [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c
+[old name] stm32g4xx_hal_flash_ex.c       [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash_ex.c
+[old name] stm32g4xx_hal_flash_ramfunc.c  [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash_ramfunc.c
+[old name] stm32g4xx_hal_gpio.c           [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_gpio.c
+[old name] stm32g4xx_hal_exti.c           [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_exti.c
+[old name] stm32g4xx_hal_dma.c            [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma.c
+[old name] stm32g4xx_hal_dma_ex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma_ex.c
+[old name] stm32g4xx_hal_pwr.c            [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pwr.c
+[old name] stm32g4xx_hal_pwr_ex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pwr_ex.c
+[old name] stm32g4xx_hal_cortex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_cortex.c
+[old name] stm32g4xx_hal_fdcan.c          [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_fdcan.c
+[old name] stm32g4xx_hal_opamp.c          [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_opamp.c
+[old name] stm32g4xx_hal_opamp_ex.c       [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_opamp_ex.c
+[old name] stm32g4xx_hal_spi.c            [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_spi.c
+[old name] stm32g4xx_hal_spi_ex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_spi_ex.c
+[old name] stm32g4xx_hal_tim.c            [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim.c
+[old name] stm32g4xx_hal_tim_ex.c         [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim_ex.c
+[old name] stm32g4xx_hal_uart.c           [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart.c
+[old name] stm32g4xx_hal_uart_ex.c        [type] 1   [path] ../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart_ex.c
+[old name] system_stm32g4xx.c             [type] 1   [path] ../Core/Src/system_stm32g4xx.c
+[old name] hal_gpio.c                     [type] 1   [path] ..\hal_drivers\hal_gpio.c
+[old name] hal_tim_pwm.c                  [type] 1   [path] ..\hal_drivers\hal_tim_pwm.c
+[old name] hal_fdcan.c                    [type] 1   [path] ..\hal_drivers\hal_fdcan.c
+[old name] hal_uart.c                     [type] 1   [path] ..\hal_drivers\hal_uart.c
+[old name] stm32_hal_gpio.c               [type] 1   [path] ..\hal_drivers\stm32_hal_gpio.c
+[old name] stm32_hal_tim_pwm.c            [type] 1   [path] ..\hal_drivers\stm32_hal_tim_pwm.c
+[old name] stm32_hal_fdcan.c              [type] 1   [path] ..\hal_drivers\stm32_hal_fdcan.c
+[old name] stm32_hal_uart.c               [type] 1   [path] ..\hal_drivers\stm32_hal_uart.c
+[old name] app.c                          [type] 1   [path] ..\applications\app.c
+[old name] bsp_delay.c                    [type] 1   [path] ..\applications\bsp_delay.c
+[old name] CAN_Server.c                   [type] 1   [path] ..\applications\CAN_Server.c
+[old name] hall_adjustment.c              [type] 1   [path] ..\applications\hall_adjustment.c
+[old name] key_function.c                 [type] 1   [path] ..\applications\key_function.c
+[old name] perf_counter.c                 [type] 1   [path] ..\applications\perf_counter.c
+[old name] usart_receive.c                [type] 1   [path] ..\applications\usart_receive.c
+[old name] warning_task.c                 [type] 1   [path] ..\applications\warning_task.c
+[old name] WS2812_SPI.c                   [type] 1   [path] ..\applications\WS2812_SPI.c
+[old name] encoder_alignment.c            [type] 1   [path] ..\applications\encoder_alignment.c
+[old name] flash_task.c                   [type] 1   [path] ..\applications\flash_task.c
+[old name] utils_math.c                   [type] 1   [path] ..\modules\algorithm\utils_math.c
+[old name] user_lib.c                     [type] 1   [path] ..\modules\algorithm\user_lib.c
+[old name] maths.c                        [type] 1   [path] ..\modules\algorithm\maths.c
+[old name] joint_pos.c                    [type] 1   [path] ..\modules\algorithm\joint_pos.c
+[old name] filter.c                       [type] 1   [path] ..\modules\algorithm\filter.c
+[old name] pid.c                          [type] 1   [path] ..\modules\controller\pid.c
+[old name] crc.c                          [type] 1   [path] ..\modules\crc\crc.c
+[old name] daemon.c                       [type] 1   [path] ..\modules\daemon\daemon.c
+[old name] key_base.c                     [type] 1   [path] ..\modules\keybase\key_base.c
+[old name] led.c                          [type] 1   [path] ..\modules\ledshow\led.c
+[old name] memory_pool.c                  [type] 1   [path] ..\modules\memory_pool\memory_pool.c
+[old name] message_center.c               [type] 1   [path] ..\modules\message_center\message_center.c
+[old name] debug.c                        [type] 1   [path] ..\modules\debug\debug.c
+[old name] kfifo.c                        [type] 1   [path] ..\modules\kfifo\kfifo.c
+[old name] b_protocol_core.c              [type] 1   [path] ..\modules\protocol\b_protocol_core.c
+[old name] tk_event.c                     [type] 1   [path] ..\modules\toolkit\tk_event.c
+[old name] tk_queue.c                     [type] 1   [path] ..\modules\toolkit\tk_queue.c
+[old name] tk_timer.c                     [type] 1   [path] ..\modules\toolkit\tk_timer.c
+[old name] line_hall_pll.c                [type] 1   [path] ..\modules\encoder\line_hall_pll.c
+[old name] MT6816.c                       [type] 1   [path] ..\modules\encoder\MT6816.c
+[old name] lwmem.c                        [type] 1   [path] ..\modules\lwmem\src\lwmem\lwmem.c
+[old name] lwshell.c                      [type] 1   [path] ..\modules\lwshell\src\lwshell.c
+[old name] gimbal_pid.c                   [type] 1   [path] ..\modules\controller\gimbal_pid.c
+[old name] kqueue.c                       [type] 1   [path] ..\modules\kfifo\kqueue.c
+[old name] fsm.c                          [type] 1   [path] ..\modules\fsm\fsm.c
+[old name] easyflash.c                    [type] 1   [path] ..\modules\easyflash\src\easyflash.c
+[old name] ef_env.c                       [type] 1   [path] ..\modules\easyflash\src\ef_env.c
+[old name] ef_utils.c                     [type] 1   [path] ..\modules\easyflash\src\ef_utils.c
+[old name] ef_port.c                      [type] 1   [path] ..\modules\easyflash\port\ef_port.c
+[old name] cm_backtrace.c                 [type] 1   [path] ..\modules\CmBacktrace\cm_backtrace\cm_backtrace.c
+[old name] cmb_fault.S                    [type] 1   [path] ..\modules\CmBacktrace\cm_backtrace\fault_handler\keil\cmb_fault.S
+[old name] SEGGER_RTT.c                   [type] 1   [path] ..\modules\SEGGER_RTT\RTT\SEGGER_RTT.c
+[old name] SEGGER_RTT_printf.c            [type] 1   [path] ..\modules\SEGGER_RTT\RTT\SEGGER_RTT_printf.c
+[old name] can_nm.c                       [type] 1   [path] ..\modules\can_comm\can_nm.c
+[old name] can_comm.c                     [type] 1   [path] ..\modules\can_comm\can_comm.c
+[old name] can_comm_port.c                [type] 1   [path] ..\modules\can_comm\can_comm_port.c
+[old name] foc_ctrl_q16.c                 [type] 1   [path] ..\Q16_FOC\foc_ctrl_q16.c
+[old name] foc_sm.c                       [type] 1   [path] ..\Q16_FOC\foc_sm.c
+[old name] foc_svpwm_q16.c                [type] 1   [path] ..\Q16_FOC\foc_svpwm_q16.c
+[old name] q16_16_math.c                  [type] 1   [path] ..\Q16_FOC\q16_16_math.c
+[old name] foc_port.c                     [type] 1   [path] ..\Q16_FOC\foc_port.c
+
+[record region info]
+[load region] LR_IROM1
+	[execution region] ER_IROM1, 0x08000000, 0x0001E000, 0x000137C4 [type] 2 [ID] 3
+	[execution region] RW_IRAM2, 0x20000000, 0x00000020, 0x00000004 [type] 1 [ID] 2
+	[execution region] RW_IRAM1, 0x20000020, 0x00007FE0, 0x00004148 [type] 1 [ID] 2
+------------------------------------------------------------------------------------------------------------------------------
+                                FILE(s)                                |         RAM (byte)       |       FLASH (byte)       |
+------------------------------------------------------------------------------------------------------------------------------
+../Core/Src/adc.c():                                                   |         412              |         780              |
+..\applications\app.c():                                               |        1156              |         980              |
+..\modules\protocol\b_protocol_core.c():                               |           0              |         582              |
+..\applications\bsp_delay.c():                                         |          56              |         160              |
+..\modules\can_comm\can_comm.c():                                      |         116              |        1014              |
+..\modules\can_comm\can_comm_port.c():                                 |         148              |         826              |
+..\modules\can_comm\can_nm.c():                                        |         268              |         348              |
+..\applications\CAN_Server.c():                                        |          16              |         611              |
+..\modules\CmBacktrace\cm_backtrace\cm_backtrace.c():                  |         590              |        4183              |
+..\modules\CmBacktrace\cm_backtrace\fault_handler\keil\cmb_fault.S():  |           0              |          12              |
+..\modules\crc\crc.c():                                                |           0              |         288              |
+..\modules\daemon\daemon.c():                                          |          20              |         634              |
+..\modules\debug\debug.c():                                            |         258              |         189              |
+../Core/Src/dma.c():                                                   |           0              |         144              |
+..\modules\easyflash\src\easyflash.c():                                |           1              |         220              |
+..\modules\easyflash\src\ef_env.c():                                   |         254              |        6308              |
+..\modules\easyflash\port\ef_port.c():                                 |         265              |         915              |
+..\modules\easyflash\src\ef_utils.c():                                 |           0              |        1072              |
+..\applications\encoder_alignment.c():                                 |         196              |         652              |
+../Core/Src/fdcan.c():                                                 |         100              |         240              |
+..\modules\algorithm\filter.c():                                       |           0              |          76              |
+..\applications\flash_task.c():                                        |           9              |        1266              |
+..\Q16_FOC\foc_ctrl_q16.c():                                           |         292              |        1562              |
+..\Q16_FOC\foc_port.c():                                               |           0              |         362              |
+..\Q16_FOC\foc_sm.c():                                                 |         370              |        2137              |
+..\Q16_FOC\foc_svpwm_q16.c():                                          |          28              |         664              |
+..\modules\fsm\fsm.c():                                                |           0              |         354              |
+..\modules\controller\gimbal_pid.c():                                  |          16              |         448              |
+../Core/Src/gpio.c():                                                  |           0              |         232              |
+..\hal_drivers\hal_fdcan.c():                                          |           8              |          76              |
+..\hal_drivers\hal_gpio.c():                                           |           8              |          96              |
+..\hal_drivers\hal_tim_pwm.c():                                        |           8              |         100              |
+..\hal_drivers\hal_uart.c():                                           |           8              |         108              |
+..\applications\hall_adjustment.c():                                   |         196              |        1084              |
+..\modules\keybase\key_base.c():                                       |          12              |         880              |
+..\applications\key_function.c():                                      |          68              |        1271              |
+..\modules\kfifo\kfifo.c():                                            |           0              |         522              |
+..\modules\kfifo\kqueue.c():                                           |           0              |         326              |
+..\modules\ledshow\led.c():                                            |          84              |         881              |
+..\modules\encoder\line_hall_pll.c():                                  |           0              |         412              |
+..\modules\lwmem\src\lwmem\lwmem.c():                                  |          40              |         748              |
+..\modules\lwshell\src\lwshell.c():                                    |         268              |         696              |
+../Core/Src/main.c():                                                  |           0              |         224              |
+..\modules\algorithm\maths.c():                                        |           0              |         416              |
+..\modules\memory_pool\memory_pool.c():                                |        6161              |         984              |
+..\modules\message_center\message_center.c():                          |           8              |         552              |
+..\modules\encoder\MT6816.c():                                         |          20              |         372              |
+../Core/Src/opamp.c():                                                 |         120              |         232              |
+..\applications\perf_counter.c():                                      |          56              |         344              |
+..\modules\controller\pid.c():                                         |           0              |          46              |
+..\Q16_FOC\q16_16_math.c():                                            |           0              |        2828              |
+../Core/Src/spi.c():                                                   |         296              |         424              |
+startup_stm32g431xx.s():                                               |        3072              |         536              |
+..\hal_drivers\stm32_hal_fdcan.c():                                    |           0              |        1040              |
+..\hal_drivers\stm32_hal_gpio.c():                                     |           0              |         316              |
+..\hal_drivers\stm32_hal_tim_pwm.c():                                  |           0              |        1344              |
+..\hal_drivers\stm32_hal_uart.c():                                     |         160              |        1638              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal.c():                 |          12              |         128              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_adc.c():             |           0              |        1894              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_adc_ex.c():          |           0              |         392              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_cortex.c():          |           0              |         224              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma.c():             |           0              |        1048              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_fdcan.c():           |           0              |        1876              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c():           |          32              |         428              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash_ex.c():        |           0              |         372              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_gpio.c():            |           0              |         670              |
+../Core/Src/stm32g4xx_hal_msp.c():                                     |           0              |          52              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_opamp.c():           |           0              |         262              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_pwr_ex.c():          |           0              |         192              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc.c():             |           0              |        1820              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_rcc_ex.c():          |           0              |         568              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_spi.c():             |           0              |        2006              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim.c():             |           0              |        3394              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_tim_ex.c():          |           0              |         644              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart.c():            |           0              |        6090              |
+../Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart_ex.c():         |           0              |         312              |
+../Core/Src/stm32g4xx_it.c():                                          |           0              |         206              |
+../Core/Src/system_stm32g4xx.c():                                      |           4              |          56              |
+../Core/Src/tim.c():                                                   |         228              |         948              |
+..\modules\toolkit\tk_event.c():                                       |           0              |         104              |
+..\modules\toolkit\tk_timer.c():                                       |           8              |         668              |
+../Core/Src/usart.c():                                                 |         340              |         432              |
+..\applications\usart_receive.c():                                     |         352              |         657              |
+..\applications\warning_task.c():                                      |          12              |         152              |
+..\applications\WS2812_SPI.c():                                        |         273              |         971              |
+------------------------------------------------------------------------------------------------------------------------------
+[memory print mode]: 0
+LR_IROM1
+        RAM 1             [0x20000000 | 0x00008000 (32768)]
+                [zi start] 0   [zi end] 6
+                RW_IRAM2  [0x20000000]|¡õ¡õ¡õ¡õ¡õ¡õ____________________________________________| (        4 /       32 )  12.5%  
+                [zi start] 1   [zi end] 25
+                RW_IRAM1  [0x20000020]|¡ö¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ¡õ_________________________| (  16.3 KB /  31.9 KB )  51.1%  
+ 
+        FLASH 1           [0x08000000 | 0x00020000 (131072)]
+                ER_IROM1  [0x08000000]|¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö¡ö__________________| (  77.9 KB / 120.0 KB )  65.0%  
+ 
+[htm file path] C:\Users\fubingyan\Desktop\wheel_legged_robot\Q16_Drive_Opam_clion\MDK-ARM\Objects\odrive-foc.htm
+Maximum Stack Usage =       1048 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)
+ 
+=============================================================================================================================
+
+run time: 0.474 s

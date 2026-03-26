@@ -1,0 +1,99 @@
+      Code (inc. data)   RO Data    RW Data    ZI Data      Debug   Object Name
+       780          0          0          0        412          0   adc.o
+       954          0         26          0       1156          0   app.o
+       582          0          0          0          0          0   b_protocol_core.o
+       160          0          0          0         56          0   bsp_delay.o
+      1006          0          8          0        116          0   can_comm.o
+       606          0        220          0        148          0   can_comm_port.o
+       348          0          0          0        268          0   can_nm.o
+       524          0         87          0         16          0   can_server.o
+      2312          0       1871          0        590          0   cm_backtrace.o
+        12          0          0          0          0          0   cmb_fault.o
+        32          0        256          0          0          0   crc.o
+       634          0          0          0         20          0   daemon.o
+       188          0          0          1        257          0   debug.o
+       144          0          0          0          0          0   dma.o
+       140          0         80          0          1          0   easyflash.o
+      5840          0        468          0        254          0   ef_env.o
+       724          0        191          0        265          0   ef_port.o
+        48          0       1024          0          0          0   ef_utils.o
+       548          0          0        104         92          0   encoder_alignment.o
+       240          0          0          0        100          0   fdcan.o
+        76          0          0          0          0          0   filter.o
+      1064          0        202          0          9          0   flash_task.o
+      1298          0         36        228         64          0   foc_ctrl_q16.o
+       362          0          0          0          0          0   foc_port.o
+      1998          0        111         28        342          0   foc_sm.o
+       664          0          0          0         28          0   foc_svpwm_q16.o
+       354          0          0          0          0          0   fsm.o
+       440          0          0          8          8          0   gimbal_pid.o
+       232          0          0          0          0          0   gpio.o
+        76          0          0          0          8          0   hal_fdcan.o
+        96          0          0          0          8          0   hal_gpio.o
+       100          0          0          0          8          0   hal_tim_pwm.o
+       108          0          0          0          8          0   hal_uart.o
+       972          0          0        112         84          0   hall_adjustment.o
+       880          0          0          0         12          0   key_base.o
+       972          0        247         52         16          0   key_function.o
+       522          0          0          0          0          0   kfifo.o
+       326          0          0          0          0          0   kqueue.o
+       794          0          7         80          4          0   led.o
+       412          0          0          0          0          0   line_hall_pll.o
+       748          0          0          0         40          0   lwmem.o
+       696          0          0          0        268          0   lwshell.o
+       224          0          0          0          0          0   main.o
+       416          0          0          0          0          0   maths.o
+       968          0          0         16       6145          0   memory_pool.o
+       552          0          0          0          8          0   message_center.o
+       344          0         28          0         20          0   mt6816.o
+       232          0          0          0        120          0   opamp.o
+       316          0          4         24         32          0   perf_counter.o
+        46          0          0          0          0          0   pid.o
+       780          0       2048          0          0          0   q16_16_math.o
+       424          0          0          0        296          0   spi.o
+        64          0        472          0       3072          0   startup_stm32g431xx.o
+       980          0         60          0          0          0   stm32_hal_fdcan.o
+       272          0         44          0          0          0   stm32_hal_gpio.o
+      1124          0        220          0          0          0   stm32_hal_tim_pwm.o
+      1510          0        128          0        160          0   stm32_hal_uart.o
+       116          0          0         12          0          0   stm32g4xx_hal.o
+      1894          0          0          0          0          0   stm32g4xx_hal_adc.o
+       392          0          0          0          0          0   stm32g4xx_hal_adc_ex.o
+       224          0          0          0          0          0   stm32g4xx_hal_cortex.o
+      1048          0          0          0          0          0   stm32g4xx_hal_dma.o
+      1860          0         16          0          0          0   stm32g4xx_hal_fdcan.o
+       396          0          0         32          0          0   stm32g4xx_hal_flash.o
+       372          0          0          0          0          0   stm32g4xx_hal_flash_ex.o
+       670          0          0          0          0          0   stm32g4xx_hal_gpio.o
+        52          0          0          0          0          0   stm32g4xx_hal_msp.o
+       262          0          0          0          0          0   stm32g4xx_hal_opamp.o
+       192          0          0          0          0          0   stm32g4xx_hal_pwr_ex.o
+      1820          0          0          0          0          0   stm32g4xx_hal_rcc.o
+       568          0          0          0          0          0   stm32g4xx_hal_rcc_ex.o
+      2006          0          0          0          0          0   stm32g4xx_hal_spi.o
+      3362          0         32          0          0          0   stm32g4xx_hal_tim.o
+       644          0          0          0          0          0   stm32g4xx_hal_tim_ex.o
+      6066          0         24          0          0          0   stm32g4xx_hal_uart.o
+       296          0         16          0          0          0   stm32g4xx_hal_uart_ex.o
+       206          0          0          0          0          0   stm32g4xx_it.o
+        28          0         24          4          0          0   system_stm32g4xx.o
+       948          0          0          0        228          0   tim.o
+       104          0          0          0          0          0   tk_event.o
+       568          0        100          0          8          0   tk_timer.o
+       432          0          0          0        340          0   usart.o
+       450          0        119         88        264          0   usart_receive.o
+       152          0          0          0         12          0   warning_task.o
+       808          0         51        112        161          0   ws2812_spi.o
+Object Totals
+
+Memory Map of the image
+
+	Load Region LR_IROM1 
+
+		Execution Region ER_IROM1 (Exec base: 0x08000000, Size: 0x000137C4, Max: 0x0001E000, END)
+
+		Execution Region RW_IRAM2 (Exec base: 0x20000000, Size: 0x00000004, Max: 0x00000020, END)
+
+		Execution Region RW_IRAM1 (Exec base: 0x20000020, Size: 0x00004148, Max: 0x00007FE0, END)
+
+Image component sizes
