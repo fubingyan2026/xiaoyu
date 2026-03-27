@@ -11,7 +11,7 @@
 
 #include "warning_task.h"
 #include "daemon/daemon.h"
-#include "key_function.h"
+#include "key_menu.h"
 #include "ledshow/led.h"
 #include "WS2812_SPI.h"
 
@@ -76,11 +76,11 @@ void warning_task(void)
         err_bits++;
     }
 
-    static key_func_state_e last_state = FUNC_NONE;
+    static key_fsm_state_e last_state = KEY_FSM_STATE_NONE;
     if (last_state != key_func_get_state())
     {
         last_state = key_func_get_state();
-        if (last_state == FUNC_NONE)
+        if (last_state == KEY_FSM_STATE_NONE)
         {
             goto reset_code;
         }

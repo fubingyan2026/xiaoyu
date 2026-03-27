@@ -1,14 +1,14 @@
 /**
  * @file    flash_task.h
- * @brief   Flash延迟任务队列 - 基于kqueue通用队列
+ * @brief   Flash延迟任务队列 - 基于message_center
  * @author  FOC Development Team
- * @date    2026-02-04
+ * @date    2026-03-27
  */
 
 #ifndef FLASH_TASK_H
 #define FLASH_TASK_H
 
-#include "kfifo/kqueue.h"
+#include "message_center/message_center.h"
 #include <stddef.h>
 #include <stdint.h>
 #include "flash_config.h"
@@ -40,21 +40,22 @@ typedef struct __attribute__((packed))
 } flash_task_request_t;
 
 /**
- * @brief Flash任务队列管理器（基于kqueue）
+ * @brief Flash任务管理器（基于message_center）
  */
 typedef struct __attribute__((packed))
 {
-    kqueue_t *queue;        ///< kqueue队列句柄
-    uint32_t pending_count; ///< 等待执行的任务数
-    uint8_t idle_threshold; ///< CPU空闲阈值(%)
-} flash_task_queue_t;
+    Publisher_t *publisher;     ///< 消息发布者
+    Subscriber_t *subscriber;   ///< 消息订阅者
+    uint32_t pending_count;     ///< 等待执行的任务数
+    uint8_t idle_threshold;     ///< CPU空闲阈值(%)
+} flash_task_mgr_t;
 
 /*============================================================================
  * 公共API声明
  *============================================================================*/
 
 /**
- * @brief 初始化Flash任务队列
+ * @brief 初始化Flash任务管理器
  * @return 成功返回0，失败返回-1
  */
 int flash_task_init(void);
@@ -78,16 +79,16 @@ void flash_task_process(void);
  * @brief 获取等待执行的任务数
  * @return 等待执行的任务数量
  */
-uint32_t flash_task_pending_count(void);
+uint32_t flash_task_get_pending_count(void);
 
 /**
- * @brief 获取任务队列实例
- * @return 任务队列指针
+ * @brief 获取任务管理器实例
+ * @return 任务管理器指针
  */
-flash_task_queue_t *flash_task_get_instance(void);
+flash_task_mgr_t *flash_task_get_instance(void);
 
 /**
- * @brief 销毁Flash任务队列（释放资源）
+ * @brief 销毁Flash任务管理器（释放资源）
  */
 void flash_task_destroy(void);
 

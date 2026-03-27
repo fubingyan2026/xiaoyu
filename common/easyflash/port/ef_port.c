@@ -16,7 +16,6 @@
 #include "encoder_alignment.h"
 #include "flash_config.h"
 #include "hall_adjustment.h"
-#include "key_function.h"
 #include "memory_pool/memory_pool.h"
 #include "stm32g4xx_hal.h"
 

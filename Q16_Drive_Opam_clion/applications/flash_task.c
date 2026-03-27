@@ -1,8 +1,8 @@
 /**
  * @file    flash_task.c
- * @brief   Flash延迟任务队列实现 - 基于kqueue通用队列
+ * @brief   Flash延迟任务队列实现 - 基于message_center
  * @author  FOC Development Team
- * @date    2026-02-04
+ * @date    2026-03-27
  */
 
 #include "flash_task.h"
@@ -11,10 +11,10 @@
 #include "flash_config.h"
 #include <string.h>
 
-#define FLASH_TASK_QUEUE_SIZE 16     ///< 最大任务数
-#define FLASH_TASK_IDLE_THRESHOLD 50 ///< CPU空闲率阈值(50%)
+#define FLASH_TASK_TOPIC_NAME "FlashTask" ///< 任务话题名称
+#define FLASH_TASK_IDLE_THRESHOLD 50      ///< CPU空闲率阈值(50%)
 
-static flash_task_queue_t g_flash_task_queue = {0};
+static flash_task_mgr_t g_flash_task_mgr = {0};
 
 /**
  * @brief   默认环境变量表
@@ -78,34 +78,40 @@ static void (*task_handler[])(void *, size_t) = {
 };
 
 /**
- * @brief 初始化Flash任务队列
+ * @brief 初始化Flash任务管理器
  */
 int flash_task_init(void)
 {
-    /* 使用kqueue注册队列，item_size为请求结构大小，max_items为最大任务数 */
-    g_flash_task_queue.queue = kqueue_register("FlashTask", sizeof(flash_task_request_t), FLASH_TASK_QUEUE_SIZE,
-                                               0 // timeout为0，不使用看门狗功能
-    );
-
-    if (g_flash_task_queue.queue == NULL)
+    /* 注册发布者 */
+    g_flash_task_mgr.publisher = PubRegister(FLASH_TASK_TOPIC_NAME, sizeof(flash_task_request_t));
+    if (g_flash_task_mgr.publisher == NULL)
     {
-        DEBUG_ERROR("[FlashTask] kqueue 注册失败");
+        DEBUG_ERROR("[FlashTask] 发布者注册失败");
         return -1;
     }
 
-    g_flash_task_queue.idle_threshold = FLASH_TASK_IDLE_THRESHOLD;
-    g_flash_task_queue.pending_count = 0;
+    /* 注册订阅者 */
+    g_flash_task_mgr.subscriber = SubRegister(FLASH_TASK_TOPIC_NAME, sizeof(flash_task_request_t));
+    if (g_flash_task_mgr.subscriber == NULL)
+    {
+        DEBUG_ERROR("[FlashTask] 订阅者注册失败");
+        MessageCenterUnregister(FLASH_TASK_TOPIC_NAME);
+        return -1;
+    }
 
-    DEBUG_INFO("[FlashTask] 初始化成功, 最大任务数: %d", FLASH_TASK_QUEUE_SIZE);
+    g_flash_task_mgr.idle_threshold = FLASH_TASK_IDLE_THRESHOLD;
+    g_flash_task_mgr.pending_count = 0;
+
+    DEBUG_INFO("[FlashTask] 初始化成功");
     return 0;
 }
 
 /**
- * @brief 获取任务队列实例
+ * @brief 获取任务管理器实例
  */
-flash_task_queue_t *flash_task_get_instance(void)
+flash_task_mgr_t *flash_task_get_instance(void)
 {
-    return &g_flash_task_queue;
+    return &g_flash_task_mgr;
 }
 
 /**
@@ -118,31 +124,18 @@ void flash_task_request(flash_task_type_t type, void *data, size_t size)
     req.data = data;
     req.size = size;
 
-    /* 使用kqueue_push将请求放入队列 */
-    int ret = kqueue_push(g_flash_task_queue.queue, &req);
-
-    if (ret != KQUEUE_OK)
+    /* 发布消息 */
+    uint8_t subs_count = PubPushMessage(g_flash_task_mgr.publisher, &req);
+    
+    if (subs_count == 0)
     {
-        /* 队列满时丢弃最旧的任务并重试 */
-        if (ret == KQUEUE_ERR_FULL)
-        {
-            flash_task_request_t oldest;
-            if (kqueue_pop(g_flash_task_queue.queue, &oldest) == KQUEUE_OK)
-            {
-                /* 移除最旧任务后重试 */
-                DEBUG_WARN("[FlashTask] 队列已满, 跳过最旧任务");
-                ret = kqueue_push(g_flash_task_queue.queue, &req);
-            }
-        }
-
-        if (ret != KQUEUE_OK)
-        {
-            DEBUG_WARN("[FlashTask] 推送任务失败, 类型: %d", type);
-            return;
-        }
+        DEBUG_WARN("[FlashTask] 发布消息失败, 类型: %d", type);
+        return;
     }
 
-    g_flash_task_queue.pending_count = kqueue_count(g_flash_task_queue.queue);
+    g_flash_task_mgr.pending_count = flash_task_get_pending_count();
+    DEBUG_DEBUG("[FlashTask] 任务已加入队列, 类型: %d, 待处理: %lu", 
+               type, g_flash_task_mgr.pending_count);
 }
 
 /**
@@ -152,8 +145,8 @@ void flash_task_process(void)
 {
     flash_task_request_t req;
 
-    /* 使用kqueue_is_empty检查队列是否为空 */
-    if (kqueue_is_empty(g_flash_task_queue.queue))
+    /* 检查是否有新消息 */
+    if (!SubGetMessage(g_flash_task_mgr.subscriber, &req))
     {
         return;
     }
@@ -163,55 +156,65 @@ void flash_task_process(void)
      * 实际使用时可以根据 perf_counter 或其他机制获取CPU空闲率
      */
     // uint8_t cpu_idle = get_cpu_idle_percent();
-    // if (cpu_idle < g_flash_task_queue.idle_threshold) {
+    // if (cpu_idle < g_flash_task_mgr.idle_threshold) {
     //     return;  // CPU繁忙，延迟处理
     // }
 
-    /* 使用kqueue_pop取出任务 */
-    if (kqueue_pop(g_flash_task_queue.queue, &req) == KQUEUE_OK)
+    if (req.type < FLASH_TASK_COUNT && task_handler[req.type] != NULL)
     {
-        if (req.type < FLASH_TASK_COUNT && task_handler[req.type] != NULL)
-        {
-            DEBUG_DEBUG("[FlashTask] 执行任务类型: %d", req.type);
+        DEBUG_DEBUG("[FlashTask] 执行任务类型: %d", req.type);
 
-            /* 关中断执行Flash写入 */
-            __disable_irq();
-            task_handler[req.type](req.data, req.size);
-            __enable_irq();
+        /* 关中断执行Flash写入 */
+        __disable_irq();
+        task_handler[req.type](req.data, req.size);
+        __enable_irq();
 
-            DEBUG_DEBUG("[FlashTask] 任务 %d 完成", req.type);
-        }
-        else
-        {
-            DEBUG_WARN("[FlashTask] 未知任务类型: %d", req.type);
-        }
+        DEBUG_DEBUG("[FlashTask] 任务 %d 完成", req.type);
+    }
+    else
+    {
+        DEBUG_WARN("[FlashTask] 未知任务类型: %d", req.type);
     }
 
-    g_flash_task_queue.pending_count = kqueue_count(g_flash_task_queue.queue);
+    g_flash_task_mgr.pending_count = flash_task_get_pending_count();
 }
 
 /**
  * @brief 获取等待执行的任务数
  */
-uint32_t flash_task_pending_count(void)
+uint32_t flash_task_get_pending_count(void)
 {
-    /* 直接使用kqueue_count获取队列中的元素个数 */
-    if (g_flash_task_queue.queue == NULL)
+    if (g_flash_task_mgr.publisher == NULL || g_flash_task_mgr.subscriber == NULL)
     {
         return 0;
     }
-    return kqueue_count(g_flash_task_queue.queue);
+    
+    /* 计算待处理的消息数 */
+    uint32_t write_count = g_flash_task_mgr.publisher->write_count;
+    uint32_t read_count = g_flash_task_mgr.subscriber->read_count;
+    
+    /* 处理溢出情况 */
+    if (write_count >= read_count)
+    {
+        return write_count - read_count;
+    }
+    else
+    {
+        /* 32位溢出，计算实际差值 */
+        return (UINT32_MAX - read_count) + write_count + 1;
+    }
 }
 
 /**
- * @brief 销毁Flash任务队列（释放资源）
+ * @brief 销毁Flash任务管理器（释放资源）
  */
 void flash_task_destroy(void)
 {
-    if (g_flash_task_queue.queue != NULL)
+    if (g_flash_task_mgr.publisher != NULL || g_flash_task_mgr.subscriber != NULL)
     {
-        kqueue_destroy(g_flash_task_queue.queue);
-        g_flash_task_queue.queue = NULL;
+        MessageCenterUnregister(FLASH_TASK_TOPIC_NAME);
+        g_flash_task_mgr.publisher = NULL;
+        g_flash_task_mgr.subscriber = NULL;
     }
     DEBUG_INFO("[FlashTask] 已销毁");
 }

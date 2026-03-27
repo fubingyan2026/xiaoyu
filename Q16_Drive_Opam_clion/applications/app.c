@@ -22,7 +22,7 @@
 #include "flash_task.h"
 #include "foc_ctrl_q16.h"
 #include "hal_uart.h"
-#include "key_function.h"
+#include "key_menu.h"
 #include "lwmem/lwmem.h"
 #include "lwshell/lwshell.h"
 #include "opamp.h"
