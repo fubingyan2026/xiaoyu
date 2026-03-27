@@ -8,7 +8,6 @@
 #include "flash_task.h"
 #include "debug/debug.h"
 #include "easyflash.h"
-#include "flash_config.h"
 #include <string.h>
 
 #define FLASH_TASK_TOPIC_NAME "FlashTask" ///< 任务话题名称
@@ -20,10 +19,10 @@ static flash_task_mgr_t g_flash_task_mgr = {0};
  * @brief   默认环境变量表
  * @note    这些变量会从Flash加载到RAM中
  */
-const ef_env default_env_set[FLASH_ENV_SET_SIZE] = {
-    {FLASH_ENCODER_MAGIC, &g_motor_flash_cfg, sizeof(g_motor_flash_cfg)}, ///< 电机校准数据
-    {FLASH_LINE_HALL_MAGIC, &hall_save_param, sizeof(hall_save_param)},   ///< 霍尔传感器参数
-    {FLASH_CAN_ID_MAGIC, &can_save_id, sizeof(can_save_id)},              ///< CAN通信ID配置
+const ef_env default_env_set[] = {
+    {FLASH_MAGIC_ENCODER, &g_motor_flash_cfg, sizeof(g_motor_flash_cfg)}, ///< 电机校准数据
+    {FLASH_MAGIC_HALL, &hall_save_param, sizeof(hall_save_param)},        ///< 霍尔传感器参数
+    {FLASH_MAGIC_CAN, &can_save_id, sizeof(can_save_id)},                 ///< CAN通信ID配置
 };
 
 /**
@@ -31,7 +30,7 @@ const ef_env default_env_set[FLASH_ENV_SET_SIZE] = {
  */
 static void task_write_cali(void *data, size_t size)
 {
-    ef_set_env_blob(FLASH_ENCODER_MAGIC, data, size);
+    ef_set_env_blob(FLASH_MAGIC_ENCODER, data, size);
     DEBUG_INFO("[FlashTask] 编码器校准写入");
 }
 
@@ -41,7 +40,7 @@ static void task_write_cali(void *data, size_t size)
 static void task_write_hall(void *data, size_t size)
 {
     /* TODO: 实现霍尔参数写入 */
-    ef_set_env_blob(FLASH_LINE_HALL_MAGIC, data, size);
+    ef_set_env_blob(FLASH_MAGIC_HALL, data, size);
 
     DEBUG_INFO("[FlashTask] 霍尔参数写入");
 }
@@ -51,7 +50,7 @@ static void task_write_hall(void *data, size_t size)
  */
 static void task_write_can(void *data, size_t size)
 {
-    ef_set_env_blob(FLASH_CAN_ID_MAGIC, data, size);
+    ef_set_env_blob(FLASH_MAGIC_CAN, data, size);
     DEBUG_INFO("[FlashTask] CAN ID 写入为: %d", *(int *)data);
 }
 
@@ -71,7 +70,7 @@ static void task_erase_all(void *data, size_t size)
 
 /* 任务处理函数表 */
 static void (*task_handler[])(void *, size_t) = {
-    [FLASH_TASK_WRITE_CALI] = task_write_cali,
+    [FLASH_TASK_WRITE_ENCODER] = task_write_cali,
     [FLASH_TASK_WRITE_HALL] = task_write_hall,
     [FLASH_TASK_WRITE_CAN] = task_write_can,
     [FLASH_TASK_ERASE_ALL] = task_erase_all,
@@ -126,7 +125,7 @@ void flash_task_request(flash_task_type_t type, void *data, size_t size)
 
     /* 发布消息 */
     uint8_t subs_count = PubPushMessage(g_flash_task_mgr.publisher, &req);
-    
+
     if (subs_count == 0)
     {
         DEBUG_WARN("[FlashTask] 发布消息失败, 类型: %d", type);
@@ -134,8 +133,8 @@ void flash_task_request(flash_task_type_t type, void *data, size_t size)
     }
 
     g_flash_task_mgr.pending_count = flash_task_get_pending_count();
-    DEBUG_DEBUG("[FlashTask] 任务已加入队列, 类型: %d, 待处理: %lu", 
-               type, g_flash_task_mgr.pending_count);
+    DEBUG_DEBUG("[FlashTask] 任务已加入队列, 类型: %d, 待处理: %lu",
+                type, g_flash_task_mgr.pending_count);
 }
 
 /**
@@ -188,11 +187,11 @@ uint32_t flash_task_get_pending_count(void)
     {
         return 0;
     }
-    
+
     /* 计算待处理的消息数 */
     uint32_t write_count = g_flash_task_mgr.publisher->write_count;
     uint32_t read_count = g_flash_task_mgr.subscriber->read_count;
-    
+
     /* 处理溢出情况 */
     if (write_count >= read_count)
     {

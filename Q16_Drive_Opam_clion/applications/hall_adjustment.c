@@ -172,7 +172,7 @@ static void HALL_Adjust_Init(void)
         hall_filter_init(&hall_filter[i], hall_filter_fcut_Adjust, 0.001f);
     }
 
-    ef_get_env_blob(FLASH_LINE_HALL_MAGIC, &hall_save_param, sizeof(hall_save_param), NULL);
+    ef_get_env_blob(FLASH_MAGIC_HALL, &hall_save_param, sizeof(hall_save_param), NULL);
 
     hall_pll_init(&hall_pll);
     daemon_get_encoder = DaemonGetInstance("encoder");

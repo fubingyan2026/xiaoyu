@@ -16,9 +16,9 @@
  */
 
 #include "encoder_alignment.h"
-#include "flash_config.h"
 #include <math.h>
 #include <string.h>
+#include "flash_task.h"
 
 /*==============================================================================
  * 私有宏定义
@@ -154,7 +154,7 @@ bool encoder_alignment_init(void)
 {
     // 从Flash加载校准数据
     const size_t bytes_read =
-        ef_get_env_blob(FLASH_ENCODER_MAGIC, &g_motor_flash_cfg, sizeof(motor_flash_config_t), NULL);
+        ef_get_env_blob(FLASH_MAGIC_ENCODER, &g_motor_flash_cfg, sizeof(motor_flash_config_t), NULL);
 
     if (bytes_read != sizeof(motor_flash_config_t))
     {

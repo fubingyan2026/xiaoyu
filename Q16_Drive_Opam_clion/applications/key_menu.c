@@ -17,7 +17,6 @@
 #include "bsp_delay.h"
 #include "debug/debug.h"
 #include "easyflash.h"
-#include "flash_config.h"
 #include "flash_task.h"
 #include "foc_ctrl_q16.h"
 #include "foc_sm.h"
@@ -560,7 +559,7 @@ void key_func_init(void)
 #endif
 
     /* 从 Flash 读取 CAN ID */
-    ef_get_env_blob(FLASH_CAN_ID_MAGIC, &can_save_id, sizeof(can_save_id), NULL);
+    ef_get_env_blob(FLASH_MAGIC_CAN, &can_save_id, sizeof(can_save_id), NULL);
     KEY_FUNC_PRINTF("CAN-ID is:%d\r\n", can_save_id);
 }
 

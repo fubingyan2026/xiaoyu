@@ -313,7 +313,7 @@ static fsm_state_t handler_alignment(fsm_context_t *ctx)
             encoder_detect_direction(flash_data->angle_map, &g_encoder_calib); // 检查电机方向
             g_encoder_calib.direction = flash_data->direction;                 // 设置电机方向
             /* 延迟写入Flash */
-            flash_task_request(FLASH_TASK_WRITE_CALI, flash_data, sizeof(g_motor_flash_cfg));
+            flash_task_request(FLASH_TASK_WRITE_ENCODER, flash_data, sizeof(g_motor_flash_cfg));
         }
 
         ctrl->target_id_q = 0;

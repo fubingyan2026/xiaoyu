@@ -11,7 +11,26 @@
 #include "message_center/message_center.h"
 #include <stddef.h>
 #include <stdint.h>
-#include "flash_config.h"
+#include "easyflash.h"
+#include "encoder_alignment.h"
+#include "hall_adjustment.h"
+
+/*============================================================================
+ * 宏定义
+ *============================================================================*/
+
+/**
+ * @brief Flash存储的Magic名称定义
+ * @note 使用宏定义代替数组，避免运行时开销和类型转换问题
+ */
+#define FLASH_MAGIC_ENCODER     "FlashEncoder"
+#define FLASH_MAGIC_HALL        "FlashLineHall"
+#define FLASH_MAGIC_CAN         "FlashCanid"
+
+/**
+ * @brief 默认环境变量表大小
+ */
+#define FLASH_ENV_SET_SIZE      3
 
 /*============================================================================
  * 类型定义
@@ -22,12 +41,22 @@
  */
 typedef enum __attribute__((packed))
 {
-    FLASH_TASK_WRITE_CALI = 0, ///< 写入校准数据
-    FLASH_TASK_WRITE_HALL,     ///< 写入霍尔参数
-    FLASH_TASK_WRITE_CAN,      ///< 写入CAN-ID
-    FLASH_TASK_ERASE_ALL,      ///< 擦除所有
+    FLASH_TASK_WRITE_ENCODER = 0, ///< 写入校准数据
+    FLASH_TASK_WRITE_HALL,        ///< 写入霍尔参数
+    FLASH_TASK_WRITE_CAN,         ///< 写入CAN-ID
+    FLASH_TASK_ERASE_ALL,         ///< 擦除所有
     FLASH_TASK_COUNT
 } flash_task_type_t;
+
+extern motor_flash_config_t g_motor_flash_cfg;
+extern hall_save_param_t hall_save_param;
+extern uint32_t can_save_id;
+
+/**
+ * @brief   默认环境变量表
+ * @note    这些变量会从Flash加载到RAM中
+ */
+extern const ef_env default_env_set[FLASH_ENV_SET_SIZE];
 
 /**
  * @brief Flash任务请求结构
@@ -44,10 +73,10 @@ typedef struct __attribute__((packed))
  */
 typedef struct __attribute__((packed))
 {
-    Publisher_t *publisher;     ///< 消息发布者
-    Subscriber_t *subscriber;   ///< 消息订阅者
-    uint32_t pending_count;     ///< 等待执行的任务数
-    uint8_t idle_threshold;     ///< CPU空闲阈值(%)
+    Publisher_t *publisher;   ///< 消息发布者
+    Subscriber_t *subscriber; ///< 消息订阅者
+    uint32_t pending_count;   ///< 等待执行的任务数
+    uint8_t idle_threshold;   ///< CPU空闲阈值(%)
 } flash_task_mgr_t;
 
 /*============================================================================
@@ -91,5 +120,12 @@ flash_task_mgr_t *flash_task_get_instance(void);
  * @brief 销毁Flash任务管理器（释放资源）
  */
 void flash_task_destroy(void);
+
+/**
+ * @brief 获取默认环境变量表大小
+ * @return 默认环境变量表大小
+ * @note 供ef_port.c使用
+ */
+size_t flash_task_get_env_set_size(void);
 
 #endif /* FLASH_TASK_H */

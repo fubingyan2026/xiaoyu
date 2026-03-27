@@ -14,11 +14,10 @@
 
 #include "debug/debug.h"
 #include "encoder_alignment.h"
-#include "flash_config.h"
 #include "hall_adjustment.h"
 #include "memory_pool/memory_pool.h"
 #include "stm32g4xx_hal.h"
-
+#include "flash_task.h"
 /**
  * @brief   Flash编程粒度（STM32G4支持64位双字编程）
  */
@@ -44,6 +43,8 @@ static uint64_t read_data;
  * @note    用于支持嵌套锁调用
  */
 static uint8_t env_lock_depth = 0;
+
+extern const ef_env default_env_set[];
 
 /**
  * @brief   Flash端口层初始化
