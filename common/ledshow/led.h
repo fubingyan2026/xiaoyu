@@ -47,7 +47,8 @@ extern "C"
         LED_STATE_OFF,        /**< 关闭 */
         LED_STATE_ON,         /**< 开启 */
         LED_STATE_BLINK_CODE, /**< 编码闪烁 (异步更新) */
-        LED_STATE_BREATHING   /**< 呼吸灯 (PWM更新) */
+        LED_STATE_BREATHING,  /**< 呼吸灯 (PWM更新) */
+        LED_STATE_MAX,        /**< 最大状态 */
     } led_state_t;
 
     /** @brief 编码闪烁阶段枚举 */
@@ -90,7 +91,14 @@ extern "C"
         uint16_t breath_max;         /**< 最大亮度 (PWM占空比) */
         uint16_t breath_min;         /**< 最小亮度 (PWM占空比) */
 
-        led_pwm_config_t pwm; /**< PWM配置 (仅呼吸灯模式需要) */
+        hal_tim_pwm_config_t pwm_cfg; /**< PWM配置 (仅呼吸灯模式需要) */
+                
+        /**
+         * @brief GPIO 初始化回调
+         * @details 用于在LED初始化时调用，配置GPIO引脚为输出模式
+         */
+        void (*gpio_init_cb)(void);       /**< GPIO 初始化回调 (led_gpio_init_callback_t) */
+        void (*gpio_pwm_init_cb)(void);   /**< PWM 初始化回调 (led_gpio_pwm_init_callback_t) */
     } led_config_t;
 
     /** @brief LED 异步命令结构体 */
@@ -120,7 +128,8 @@ extern "C"
         uint8_t is_static : 1;             /**< 是否为静态分配 */
         uint8_t initialized : 1;           /**< 是否已初始化 */
         uint8_t pending_blink_update : 1;  /**< 是否有待处理的闪烁参数更新（等待 LED 熄灭） */
-
+        uint8_t pwm_init_flag : 1;         /**< PWM 初始化标志位 */
+        
         kfifo_t *cmd_fifo;       /**< 异步命令队列句柄 (kfifo_t*) */
         struct led_handle *next; /**< 链表指针 */
 

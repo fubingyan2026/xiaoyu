@@ -17,7 +17,7 @@
 
 /* ==================== 私有宏与常量 ==================== */
 #define LED_PRINTF(...) DEBUG_INFO(__VA_ARGS__)
-#define LED_CMD_FIFO_SIZE 4 /* 异步命令队列深度，必须为2的幂 */
+#define LED_CMD_FIFO_SIZE 8 /* 异步命令队列深度，必须为2的幂 */
 
 /* ==================== 静态变量 = :=================== */
 static led_handle_t *led_master = NULL;
@@ -163,7 +163,11 @@ static fsm_state_t led_fsm_breathing_handler(fsm_context_t *ctx)
                 handle->breath_value -= handle->config.breath_step;
             }
         }
-        hal_tim_pwm_set_duty_cycle(handle->config.pwm.timer_instance, handle->config.pwm.channel, handle->breath_value);
+
+        if (handle->pwm_init_flag)
+        {
+            hal_tim_pwm_set_duty_cycle(handle->config.pwm_cfg.timer_instance, handle->config.pwm_cfg.channel, handle->breath_value);
+        }
     }
     return LED_STATE_BREATHING;
 }
@@ -178,7 +182,7 @@ static void led_fsm_on_entry(fsm_context_t *ctx, fsm_state_t state)
     {
         ((led_state_change_callback_t)handle->state_change_cb)(handle, state, handle->callback_user_data);
     }
-    
+
     switch (state)
     {
     case LED_STATE_ON:
@@ -200,13 +204,47 @@ static void led_fsm_on_entry(fsm_context_t *ctx, fsm_state_t state)
         handle->breath_value = handle->config.breath_min;
         handle->last_breath_time = now;
 
-        /* 触发状态变化回调 */
-        if (handle->state_change_cb)
+        if (handle->config.gpio_pwm_init_cb)
         {
-            ((led_state_change_callback_t)handle->state_change_cb)(handle, state, handle->callback_user_data);
+            handle->config.gpio_pwm_init_cb();
+        }
+        else
+        {
+            if (handle->pwm_init_flag == 0)
+            {
+                handle->pwm_init_flag = 1;
+                /* 如果没有配置 PWM 初始化回调，默认配置为输出模式 */
+                hal_tim_pwm_init(&handle->config.pwm_cfg);
+                hal_tim_pwm_start(handle->config.pwm_cfg.timer_instance, handle->config.pwm_cfg.channel);
+            }
+            hal_tim_pwm_gpio_alternate(&handle->config.pwm_cfg.gpio); // 配置GPIO复用功能
         }
         break;
     default:
+        break;
+    }
+}
+
+static void led_fsm_on_exit(fsm_context_t *ctx, fsm_state_t state)
+{
+    led_handle_t *handle = (led_handle_t *)ctx->user_data;
+    switch (state)
+    {
+    case LED_STATE_BREATHING:
+        if (handle->config.gpio_init_cb)
+        {
+            handle->config.gpio_init_cb();
+        }
+        else
+        {
+            /* 如果没有配置 GPIO 初始化回调，默认配置为输出模式 */
+            hal_gpio_config_t gpio_cfg = {
+                .port = handle->config.port,
+                .pin = handle->config.pin,
+                .direction = HAL_GPIO_DIRECTION_OUTPUT,
+                .default_state = (hal_gpio_pin_state_e)!handle->config.active_level};
+            hal_gpio_init(&gpio_cfg);
+        }
         break;
     }
 }
@@ -256,7 +294,7 @@ led_handle_t *LedGetInstance(const char *name)
     led_handle_t *curr = led_master;
     while (curr)
     {
-        if (strcmp(curr->config.led_name, name) == 0)
+        if (__strcmp(curr->config.led_name, name) == 0)
             return curr;
         curr = curr->next;
     }
@@ -273,26 +311,26 @@ led_error_e LedRegisterStatic(const led_config_t *config, led_handle_t *instance
     if (LedGetInstance(config->led_name))
         return LED_ERR_ALREADY_EXIST;
 
-    memset(instance, 0, sizeof(led_handle_t));
-    memcpy(&instance->config, config, sizeof(led_config_t));
+    __memset(instance, 0, sizeof(led_handle_t));
+    __memcpy(&instance->config, config, sizeof(led_config_t));
     instance->is_static = 1;
     instance->initialized = 1;
 
     /* 初始化 FSM (大厂规范) */
-    static const char *led_state_names[] = {"NONE", "OFF", "ON", "BLINK", "BREATH"};
+    static const char *led_state_names[] = {"NONE", "OFF", "ON", "BLINK", "BREATHING"};
     fsm_init(&instance->fsm, config->init_state, instance);
     fsm_register_handler(&instance->fsm, LED_STATE_NONE, led_fsm_none_handler);
     fsm_register_handler(&instance->fsm, LED_STATE_OFF, led_fsm_off_handler);
     fsm_register_handler(&instance->fsm, LED_STATE_ON, led_fsm_on_handler);
     fsm_register_handler(&instance->fsm, LED_STATE_BLINK_CODE, led_fsm_blink_handler);
     fsm_register_handler(&instance->fsm, LED_STATE_BREATHING, led_fsm_breathing_handler);
-    fsm_set_callbacks(&instance->fsm, led_fsm_on_entry, NULL);
-    fsm_set_state_names(&instance->fsm, led_state_names, 5);
+    fsm_set_callbacks(&instance->fsm, led_fsm_on_entry, led_fsm_on_exit);
+    fsm_set_state_names(&instance->fsm, led_state_names, sizeof(led_state_names) / sizeof(led_state_names[0]));
 
     /* 允许任意状态切换 (LED 模块由外部指令驱动) */
-    for (uint8_t i = 0; i < 5; i++)
+    for (uint8_t i = 0; i < LED_STATE_MAX; i++)
     {
-        for (uint8_t j = 0; j < 5; j++)
+        for (uint8_t j = 0; j < LED_STATE_MAX; j++)
         {
             if (i != j)
                 fsm_add_transition(&instance->fsm, i, j, NULL);
@@ -304,22 +342,39 @@ led_error_e LedRegisterStatic(const led_config_t *config, led_handle_t *instance
     if (!instance->cmd_fifo)
         return LED_ERR_NO_MEMORY;
 
-    /* 硬件底层初始化 */
-    hal_gpio_config_t gpio_cfg = {
-        .port = config->port,
-        .pin = config->pin,
-        .direction = HAL_GPIO_DIRECTION_OUTPUT,
-        .default_state = (hal_gpio_pin_state_e)!config->active_level};
-    hal_gpio_init(&gpio_cfg);
-
     if (fsm_get_current_state(&instance->fsm) == LED_STATE_BREATHING)
     {
         /* 如果是呼吸灯，且配置了PWM信息，则初始化PWM */
-        if (config->pwm.timer_instance != 0)
+        if (config->gpio_pwm_init_cb)
         {
-            /* 此处假定 hal_tim_pwm_init 已处理好 PWM 硬件配置 */
-            /* 如果有 raw_cfg 则优先使用 */
+            config->gpio_pwm_init_cb();
         }
+        else
+        {
+            if (instance->config.pwm_cfg.timer_instance != 0)
+            {
+                /* 如果没有配置 PWM 初始化回调，默认配置为输出模式 */
+                hal_tim_pwm_init(&instance->config.pwm_cfg);
+                hal_tim_pwm_start(instance->config.pwm_cfg.timer_instance, instance->config.pwm_cfg.channel);
+                instance->pwm_init_flag = 1;
+            }
+        }
+    }
+
+    /* 硬件底层初始化 */
+    if (config->gpio_init_cb)
+    {
+        config->gpio_init_cb();
+    }
+    else
+    {
+        /* 如果没有配置 GPIO 初始化回调，默认配置为输出模式 */
+        hal_gpio_config_t gpio_cfg = {
+            .port = config->port,
+            .pin = config->pin,
+            .direction = HAL_GPIO_DIRECTION_OUTPUT,
+            .default_state = (hal_gpio_pin_state_e)!config->active_level};
+        hal_gpio_init(&gpio_cfg);
     }
 
     /* 加入链表 (头插法) */

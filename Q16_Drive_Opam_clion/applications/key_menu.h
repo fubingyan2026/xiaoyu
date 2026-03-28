@@ -46,6 +46,6 @@ typedef struct
 void key_func_init(void);
 void key_func_task(void);
 key_fsm_state_e key_func_get_state(void);
-uint32_t Get_KeyFunc_CAN_ID(void);
+uint32_t key_menu_get_can_id(void);
 
-#endif // KEY_FUNCTION_H
+#endif // KEY_MENU_H

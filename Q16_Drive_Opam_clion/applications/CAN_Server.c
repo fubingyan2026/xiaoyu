@@ -204,15 +204,15 @@ void CANCommInit(void)
 
 void FDCAN_Server_Task(void)
 {
-    if (Get_KeyFunc_CAN_ID() <= 0 || Get_KeyFunc_CAN_ID() >= CAN_SLIVER_COUNTS)
+    if (key_menu_get_can_id() <= 0 || key_menu_get_can_id() >= CAN_SLIVER_COUNTS)
     {
         set_velocity = 0;
         return;
     }
 
-    if (Get_KeyFunc_CAN_ID() != can_comm_tx_sliver_instance->config.can_tx_identify)
+    if (key_menu_get_can_id() != can_comm_tx_sliver_instance->config.can_tx_identify)
     {
-        can_comm_tx_sliver_instance->config.can_tx_identify = Get_KeyFunc_CAN_ID();
+        can_comm_tx_sliver_instance->config.can_tx_identify = key_menu_get_can_id();
     }
     else
     {
