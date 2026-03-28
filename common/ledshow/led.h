@@ -92,13 +92,13 @@ extern "C"
         uint16_t breath_min;         /**< 最小亮度 (PWM占空比) */
 
         hal_tim_pwm_config_t pwm_cfg; /**< PWM配置 (仅呼吸灯模式需要) */
-                
+
         /**
          * @brief GPIO 初始化回调
          * @details 用于在LED初始化时调用，配置GPIO引脚为输出模式
          */
-        void (*gpio_init_cb)(void);       /**< GPIO 初始化回调 (led_gpio_init_callback_t) */
-        void (*gpio_pwm_init_cb)(void);   /**< PWM 初始化回调 (led_gpio_pwm_init_callback_t) */
+        void (*gpio_init_cb)(void);     /**< GPIO 初始化回调 (led_gpio_init_callback_t) */
+        void (*gpio_pwm_init_cb)(void); /**< PWM 初始化回调 (led_gpio_pwm_init_callback_t) */
     } led_config_t;
 
     /** @brief LED 异步命令结构体 */
@@ -122,6 +122,8 @@ extern "C"
 
         uint16_t current_blink_counts;     /**< 当前轮次闪烁计数 */
         uint16_t breath_value;             /**< 当前 PWM 值 */
+        uint16_t entry_breath_wait_counts; /**< 当前呼吸等待计数 */
+
         uint8_t breath_direction : 1;      /**< 呼吸方向：1-渐亮，0-渐暗 */
         uint8_t blink_code_phase : 1;      /**< 当前闪烁阶段 (blink_code_phase_t) */
         uint8_t last_blink_code_phase : 1; /**< 上次闪烁阶段，用于检测变化 */
@@ -129,7 +131,7 @@ extern "C"
         uint8_t initialized : 1;           /**< 是否已初始化 */
         uint8_t pending_blink_update : 1;  /**< 是否有待处理的闪烁参数更新（等待 LED 熄灭） */
         uint8_t pwm_init_flag : 1;         /**< PWM 初始化标志位 */
-        
+
         kfifo_t *cmd_fifo;       /**< 异步命令队列句柄 (kfifo_t*) */
         struct led_handle *next; /**< 链表指针 */
 

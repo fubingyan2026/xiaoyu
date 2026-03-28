@@ -298,7 +298,12 @@ static bool stm32_tim_pwm_stop(uint8_t timer_instance, hal_tim_pwm_channel_e cha
 static bool stm32_tim_pwm_set_duty_cycle(uint8_t timer_instance, hal_tim_pwm_channel_e channel, uint32_t duty_cycle)
 {
     TIM_HandleTypeDef *htim = get_timer_handle(timer_instance);
-    if (htim == NULL || duty_cycle > 10000)
+    if (htim == NULL)
+    {
+        return false;
+    }
+
+    if (duty_cycle > htim->Init.Period)
     {
         return false;
     }

@@ -14,6 +14,8 @@
 #include "memory_pool/memory_pool.h"
 #include "debug/debug.h"
 #include <string.h>
+#include "algorithm/maths.h"
+#include <math.h>
 
 /* ==================== 私有宏与常量 ==================== */
 #define LED_PRINTF(...) DEBUG_INFO(__VA_ARGS__)
@@ -142,26 +144,33 @@ static fsm_state_t led_fsm_breathing_handler(fsm_context_t *ctx)
     if (led_time_diff(now, handle->last_breath_time) >= handle->config.breath_interval_ms)
     {
         handle->last_breath_time = now;
-        if (handle->breath_direction)
+
+        if (handle->entry_breath_wait_counts < (handle->config.breath_max + handle->config.breath_step) / 2)
         {
-            handle->breath_value += handle->config.breath_step;
-            if (handle->breath_value >= handle->config.breath_max)
-            {
-                handle->breath_value = handle->config.breath_max;
-                handle->breath_direction = 0;
-            }
+            handle->entry_breath_wait_counts += handle->config.breath_step;
         }
         else
         {
-            if (handle->breath_value <= handle->config.breath_min + handle->config.breath_step)
+            static uint32_t breath_cycle = 0;
+            breath_cycle += 3;
+
+            if (breath_cycle >= 1000)
             {
-                handle->breath_value = handle->config.breath_min;
-                handle->breath_direction = 1;
+                breath_cycle = 0;
             }
-            else
-            {
-                handle->breath_value -= handle->config.breath_step;
-            }
+            // 使用正弦函数实现非线性亮度变化，使呼吸效果更加自然
+            // 计算呼吸周期的相位（0-2π）
+            float phase = (float)breath_cycle * 0.001f * 2.0f * M_PIf;
+
+            // 计算亮度值，使用正弦函数的平方使变化更加平滑
+            float brightness_ratio = (sin_approx(phase) + 1.0f) * 0.5f;
+            // brightness_ratio *= brightness_ratio; // 平方使变化更加平滑
+            // 添加gamma校正，使亮度变化更加自然
+            int gamma = 2;
+            float gamma_corrected = powerf(brightness_ratio, gamma);
+            // 计算最终的PWM值
+            handle->breath_value = (uint16_t)(handle->config.breath_min +
+                                              (uint16_t)((handle->config.breath_max - handle->config.breath_min) * gamma_corrected));
         }
 
         if (handle->pwm_init_flag)
@@ -203,7 +212,7 @@ static void led_fsm_on_entry(fsm_context_t *ctx, fsm_state_t state)
         handle->breath_direction = 1;
         handle->breath_value = handle->config.breath_min;
         handle->last_breath_time = now;
-
+        handle->entry_breath_wait_counts = 0;
         if (handle->config.gpio_pwm_init_cb)
         {
             handle->config.gpio_pwm_init_cb();
