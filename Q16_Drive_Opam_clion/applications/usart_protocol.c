@@ -84,6 +84,7 @@ static uint32_t s_stream_last_tick = 0U;
 extern foc_ctrl_t foc_ctrl;
 extern encoder_calibration_t g_encoder_calib;
 extern motor_flash_config_t g_motor_flash_cfg;
+extern hal_uart_context_t uart1_ctx;
 
 /*============================================================================
  * S7协议帧构建函数
@@ -131,7 +132,7 @@ void usart_protocol_send_response(uint8_t msg_type, uint8_t func_code, const uin
 {
     static uint8_t resp_buffer[280U];
     uint16_t frame_len = s7_build_frame(msg_type, func_code, data, len, resp_buffer);
-    (void)hal_uart_send_dma(HAL_UART_INSTANCE_1, resp_buffer, frame_len);
+    (void)hal_uart_send_dma(&uart1_ctx, HAL_UART_INSTANCE_1, resp_buffer, frame_len);
 }
 
 /**
