@@ -165,7 +165,7 @@ static bool configure_gpio_alternate(const hal_tim_pwm_gpio_config_t *gpio_confi
 {
     if (gpio_config == NULL || gpio_config->port >= HAL_GPIO_PORT_LEN)
     {
-        false;
+        return false;
     }
 
     GPIO_InitTypeDef GPIO_InitStruct = {0};

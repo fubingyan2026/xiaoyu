@@ -210,13 +210,6 @@ static void led_fsm_on_entry(fsm_context_t *ctx, fsm_state_t state)
         }
         else
         {
-            if (handle->pwm_init_flag == 0)
-            {
-                handle->pwm_init_flag = 1;
-                /* 如果没有配置 PWM 初始化回调，默认配置为输出模式 */
-                hal_tim_pwm_init(&handle->config.pwm_cfg);
-                hal_tim_pwm_start(handle->config.pwm_cfg.timer_instance, handle->config.pwm_cfg.channel);
-            }
             hal_tim_pwm_gpio_alternate(&handle->config.pwm_cfg.gpio); // 配置GPIO复用功能
         }
         break;
@@ -342,22 +335,19 @@ led_error_e LedRegisterStatic(const led_config_t *config, led_handle_t *instance
     if (!instance->cmd_fifo)
         return LED_ERR_NO_MEMORY;
 
-    if (fsm_get_current_state(&instance->fsm) == LED_STATE_BREATHING)
+    /* 如果是呼吸灯，且配置了PWM信息，则初始化PWM */
+    if (config->gpio_pwm_init_cb)
     {
-        /* 如果是呼吸灯，且配置了PWM信息，则初始化PWM */
-        if (config->gpio_pwm_init_cb)
+        config->gpio_pwm_init_cb();
+    }
+    else
+    {
+        if (instance->config.pwm_cfg.timer_instance != 0)
         {
-            config->gpio_pwm_init_cb();
-        }
-        else
-        {
-            if (instance->config.pwm_cfg.timer_instance != 0)
-            {
-                /* 如果没有配置 PWM 初始化回调，默认配置为输出模式 */
-                hal_tim_pwm_init(&instance->config.pwm_cfg);
-                hal_tim_pwm_start(instance->config.pwm_cfg.timer_instance, instance->config.pwm_cfg.channel);
-                instance->pwm_init_flag = 1;
-            }
+            /* 如果没有配置 PWM 初始化回调，默认配置为输出模式 */
+            hal_tim_pwm_init(&instance->config.pwm_cfg);
+            hal_tim_pwm_start(instance->config.pwm_cfg.timer_instance, instance->config.pwm_cfg.channel);
+            instance->pwm_init_flag = 1;
         }
     }
 
