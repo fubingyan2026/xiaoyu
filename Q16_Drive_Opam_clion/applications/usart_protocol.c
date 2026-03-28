@@ -108,14 +108,14 @@ static uint16_t s7_build_frame(uint8_t msg_type, uint8_t func_code, const uint8_
 
     if ((len > 0U) && (data != NULL))
     {
-        (void)memcpy(&payload[3U], data, (size_t)len);
+        (void)__memcpy(&payload[3U], data, (size_t)len);
     }
 
     uint16_t crc = crc16_modbus(payload, (uint16_t)(3U + len));
 
     output[0U] = S7_FRAME_HEAD_1;
     output[1U] = S7_FRAME_HEAD_2;
-    (void)memcpy(&output[2U], payload, (size_t)(3U + len));
+    (void)__memcpy(&output[2U], payload, (size_t)(3U + len));
     output[2U + 3U + len] = (uint8_t)(crc & 0xFFU);
     output[2U + 3U + len + 1U] = (uint8_t)((crc >> 8U) & 0xFFU);
     output[2U + 3U + len + 2U] = S7_FRAME_TAIL;
@@ -198,7 +198,7 @@ static int cmd_get_version_handler(uint8_t func_code, uint8_t *data, uint16_t le
                          .hardware_ver = 0x01U,
                          .reserve = 0x00U};
 
-    (void)memcpy(response, &ver, sizeof(VersionInfo_t));
+    (void)__memcpy(response, &ver, sizeof(VersionInfo_t));
     *resp_len = sizeof(VersionInfo_t);
     return 0;
 }
@@ -242,7 +242,7 @@ static int cmd_get_status_handler(uint8_t func_code, uint8_t *data, uint16_t len
     status.voltage = 2400U;
     status.temperature = 65;
 
-    (void)memcpy(response, &status, sizeof(StatusData_t));
+    (void)__memcpy(response, &status, sizeof(StatusData_t));
     *resp_len = sizeof(StatusData_t);
     return 0;
 }
@@ -258,7 +258,7 @@ static int cmd_get_state_handler(uint8_t func_code, uint8_t *data, uint16_t len,
     (void)len;
 
     uint8_t state = (uint8_t)foc_sm_current_state();
-    (void)memcpy(response, &state, 1U);
+    (void)__memcpy(response, &state, 1U);
     *resp_len = 1U;
     return 0;
 }
@@ -419,7 +419,7 @@ static int cmd_get_calib_status_handler(uint8_t func_code, uint8_t *data, uint16
         calib_status.progress = 0U;
     }
 
-    (void)memcpy(response, &calib_status, sizeof(CalibStatusData_t));
+    (void)__memcpy(response, &calib_status, sizeof(CalibStatusData_t));
     *resp_len = sizeof(CalibStatusData_t);
     return 0;
 }
@@ -441,7 +441,7 @@ static int cmd_get_calib_data_handler(uint8_t func_code, uint8_t *data, uint16_t
         calib_data_len = 256U;
     }
 
-    (void)memcpy(response, &g_motor_flash_cfg.angle_map, (size_t)(calib_data_len - 1U));
+    (void)__memcpy(response, &g_motor_flash_cfg.angle_map, (size_t)(calib_data_len - 1U));
     response[calib_data_len - 1U] = (uint8_t)g_motor_flash_cfg.direction;
 
     *resp_len = calib_data_len;
@@ -470,7 +470,7 @@ static int cmd_set_calib_data_handler(uint8_t func_code, uint8_t *data, uint16_t
         map_len = (uint16_t)sizeof(g_motor_flash_cfg.angle_map);
     }
 
-    (void)memcpy(&g_motor_flash_cfg.angle_map, data, (size_t)map_len);
+    (void)__memcpy(&g_motor_flash_cfg.angle_map, data, (size_t)map_len);
     g_motor_flash_cfg.direction = (motor_direction_t)data[len - 1U];
 
     return 0;
@@ -489,7 +489,7 @@ static int cmd_clear_calib_handler(uint8_t func_code, uint8_t *data, uint16_t le
     (void)response;
     *resp_len = 0U;
 
-    (void)memset(&g_motor_flash_cfg, 0, sizeof(motor_flash_config_t));
+    (void)__memset(&g_motor_flash_cfg, 0, sizeof(motor_flash_config_t));
 
     return 0;
 }
@@ -513,7 +513,7 @@ static int cmd_get_params_handler(uint8_t func_code, uint8_t *data, uint16_t len
     {
         PidParam_t pid = {
             .kp = (q16_16_t)6554, .ki = (q16_16_t)655, .kd = (q16_16_t)0, .output_limit = (q16_16_t)65536};
-        (void)memcpy(response, &pid, sizeof(PidParam_t));
+        (void)__memcpy(response, &pid, sizeof(PidParam_t));
         *resp_len = sizeof(PidParam_t);
     }
     else

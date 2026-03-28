@@ -9,12 +9,14 @@
  */
 
 #include "led.h"
+
+#include <string.h>
+
 #include "algorithm/maths.h"
 #include "debug/debug.h"
 #include "kfifo/kfifo.h"
 #include "memory_pool/memory_pool.h"
 #include "message_center/message_center.h"
-#include <string.h>
 
 /* ==================== 私有宏与常量 ==================== */
 #define LED_PRINTF(...) DEBUG_INFO(__VA_ARGS__)
@@ -25,6 +27,7 @@ static led_handle_t *led_master = NULL;
 static led_get_time_func led_get_time = NULL;
 static uint8_t led_system_initialized = 0;
 static uint16_t led_count = 0;
+static hal_gpio_context_t gpio_ctx;
 
 /* ==================== 内部辅助函数 ==================== */
 
@@ -47,9 +50,9 @@ static void led_phys_write(led_handle_t *handle, bool on) {
       on ? handle->config.active_level
          : (hal_gpio_pin_state_t)!handle->config.active_level;
   hal_gpio_pin_state_t old_state;
-  hal_gpio_read(handle->config.port, handle->config.pin, &old_state);
+  hal_gpio_read(&gpio_ctx, handle->config.port, handle->config.pin, &old_state);
 
-  hal_gpio_write(handle->config.port, handle->config.pin, state);
+  hal_gpio_write(&gpio_ctx, handle->config.port, handle->config.pin, state);
 
   /* 检测边沿变化并触发回调 */
   if (handle->gpio_edge_cb && old_state != state) {
@@ -65,7 +68,7 @@ static void led_phys_write(led_handle_t *handle, bool on) {
 /** @brief 物理读逻辑电平 (返回 true 表示逻辑开启) */
 static bool led_phys_read(led_handle_t *handle) {
   hal_gpio_pin_state_t state;
-  hal_gpio_read(handle->config.port, handle->config.pin, &state);
+  hal_gpio_read(&gpio_ctx, handle->config.port, handle->config.pin, &state);
   return (state == handle->config.active_level);
 }
 
@@ -221,10 +224,12 @@ static void led_fsm_on_exit(fsm_context_t *ctx, fsm_state_t state) {
       /* 如果没有配置 GPIO 初始化回调，默认配置为输出模式 */
       hal_gpio_config_t gpio_cfg = {.port = handle->config.port,
                                     .pin = handle->config.pin,
-                                    .direction = HAL_GPIO_DIRECTION_OUTPUT,
+                                    .mode = HAL_GPIO_MODE_OUTPUT_PP,
+                                    .pull = HAL_GPIO_PULL_NONE,
+                                    .speed = HAL_GPIO_SPEED_FREQ_LOW,
                                     .default_state =
                                         !handle->config.active_level};
-      hal_gpio_init(&gpio_cfg);
+      hal_gpio_init(&gpio_ctx, &gpio_cfg);
     }
     break;
   }
@@ -338,11 +343,14 @@ led_error_t LedRegisterStatic(const led_config_t *config,
     config->gpio_init_cb();
   } else {
     /* 如果没有配置 GPIO 初始化回调，默认配置为输出模式 */
+    stm32_gpio_init_context(&gpio_ctx);
     hal_gpio_config_t gpio_cfg = {.port = config->port,
                                   .pin = config->pin,
-                                  .direction = HAL_GPIO_DIRECTION_OUTPUT,
+                                  .mode = HAL_GPIO_MODE_OUTPUT_PP,
+                                  .pull = HAL_GPIO_PULL_NONE,
+                                  .speed = HAL_GPIO_SPEED_FREQ_LOW,
                                   .default_state = !config->active_level};
-    hal_gpio_init(&gpio_cfg);
+    hal_gpio_init(&gpio_ctx, &gpio_cfg);
   }
 
   /* 加入链表 (头插法) */
