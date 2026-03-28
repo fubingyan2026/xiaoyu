@@ -200,7 +200,9 @@ static void dispatch_command(cmd_type_e cmd_id, uint8_t value)
  */
 static uint8_t read_key_pin_level(void)
 {
-    return !HAL_GPIO_ReadPin(KEY0_GPIO_Port, KEY0_Pin);
+    hal_gpio_pin_state_t state;
+    hal_gpio_read(HAL_GPIO_PORT_A, HAL_GPIO_PIN_0, &state);
+    return state == HAL_GPIO_PIN_RESET;
 }
 
 /* ==================== 按键事件处理 ==================== */
@@ -339,7 +341,7 @@ static void on_led_blink_phase_change(led_handle_t *instance,
  * @brief LED GPIO 边沿变化回调
  */
 static void on_led_gpio_edge_change(led_handle_t *instance,
-                                    hal_gpio_pin_state_e edge,
+                                    hal_gpio_pin_state_t edge,
                                     void *user_data)
 {
     (void)instance;
@@ -528,6 +530,17 @@ static const led_config_t s_led_default_config = {
         }},
 };
 
+/* 如果没有配置 GPIO 初始化回调，默认配置为输出模式 */
+hal_gpio_config_t key0_gpio_cfg = {
+    .port = HAL_GPIO_PORT_A,
+    .pin = HAL_GPIO_PIN_0,
+    .direction = HAL_GPIO_DIRECTION_INPUT,
+    .default_state = HAL_GPIO_PIN_RESET,
+    .active_level = HAL_GPIO_PIN_RESET,
+    .pull = HAL_GPIO_PULL_UP,
+    .speed = HAL_GPIO_SPEED_FREQ_LOW,
+};
+
 /**
  * @brief 按键默认配置
  */
@@ -546,6 +559,7 @@ static const key_config_t s_key0_default_config = {
  */
 void key_func_init(void)
 {
+    hal_gpio_init(&key0_gpio_cfg);
     /* 注册按键 */
     KeyBaseRegister((key_config_t *)&s_key0_default_config, &s_key0_instance);
     ASSERT(s_key0_instance);

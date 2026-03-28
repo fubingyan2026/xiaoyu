@@ -188,26 +188,3 @@ else
     print_error "编译失败，代码: $COMPILE_RESULT"
     exit $COMPILE_RESULT
 fi
-
-# ------------------ 4. 后续可选操作 ------------------
-# 如果编译成功，可以询问是否立即下载到设备
-if [[ "$COMPILE_SUCCESS" == true ]]; then
-    echo ""
-    read -p "编译成功！是否立即下载到开发板？(y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        # 这里可以调用你之前配置的下载脚本
-        # 例如：./flash.sh 或 stm32_flash.sh
-        print_info "尝试调用下载脚本..."
-        
-        # 先尝试当前目录的通用下载脚本
-        if [[ -f "./flash.sh" ]]; then
-            bash ./flash.sh
-        elif [[ -f "./scripts/flash.sh" ]]; then
-            bash ./scripts/flash.sh
-        else
-            print_warning "未找到可用的下载脚本 (flash.sh)。"
-            print_info "你可以将下载命令集成在此处，或手动运行你的下载程序。"
-        fi
-    fi
-fi

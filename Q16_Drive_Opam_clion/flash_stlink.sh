@@ -1,7 +1,7 @@
-
+#!/bin/bash
 # ============================================
-# STM32 自动下载脚本
-# 使用方法: ./flash.sh 或 bash flash.sh
+# STM32 ST-Link 下载脚本（仅下载，无调试）
+# 使用方法: ./flash_stlink.sh 或 bash flash_stlink.sh
 # ============================================
 
 # 颜色定义
@@ -9,7 +9,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 # 打印彩色消息
 print_info() {
@@ -30,13 +30,13 @@ print_error() {
 
 # 显示标题
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}     STM32 ST-LINK 下载工具    ${NC}"
+echo -e "${BLUE}     STM32 ST-Link 下载工具（仅下载）    ${NC}"
 echo -e "${BLUE}========================================${NC}"
 
 # 1. 设置变量
-PROJECT_NAME="Float_Drive_Opam_clion"  # 改为你的项目名
+PROJECT_NAME="Q16_Drive_Opam_clion"
 BUILD_DIR="build/RelWithDebInfo"
-DOWNLOAD_ADDR="0x08005000"  # 根据需要修改下载地址
+DOWNLOAD_ADDR="0x08000000"
 HEX_FILE="${BUILD_DIR}/${PROJECT_NAME}.hex"
 BIN_FILE="${BUILD_DIR}/${PROJECT_NAME}.bin"
 
@@ -70,37 +70,28 @@ if ! command -v STM32_Programmer_CLI &> /dev/null; then
     print_info "请安装 STM32CubeProgrammer 并添加到 PATH"
     print_info "下载地址: https://www.st.com/en/development-tools/stm32cubeprog.html"
     
-    # Windows 用户提示
-    if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
-        print_info "Windows 默认安装路径:"
-        print_info "C:\\Program Files\\STMicroelectronics\\STM32Cube\\STM32CubeProgrammer\\bin\\"
+    # Linux 默认路径
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        print_info "Linux 默认安装路径: /opt/st/stm32cubeide_*/plugins/com.st.stm32cube.ide.mcu.externaltools.stlink-gdb-server.linux64_*/tools/bin/"
     fi
     exit 1
 fi
 
-# 5. 检查 ST-LINK 连接
-print_info "检查 ST-LINK 连接..."
+# 5. 检查 ST-Link 连接
+print_info "检查 ST-Link 连接..."
 if STM32_Programmer_CLI -c port=SWD 2>&1 | grep -q "Error"; then
-    print_error "ST-LINK 连接失败！"
+    print_error "ST-Link 连接失败！"
     print_info "请检查："
-    print_info "1. ST-LINK 是否插入 USB"
+    print_info "1. ST-Link 是否插入 USB"
     print_info "2. 接线是否正确（SWDIO, SWCLK, GND）"
     print_info "3. 目标板是否供电"
     print_info "4. 驱动是否安装"
     exit 1
 else
-    print_success "ST-LINK 连接正常"
+    print_success "ST-Link 连接正常"
 fi
 
-# 6. 询问用户是否继续
-# read -p "是否开始下载程序？(y/N): " -n 1 -r
-# echo
-# if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-#     print_info "已取消"
-#     exit 0
-# fi
-
-# 7. 开始下载
+# 6. 开始下载
 print_info "开始下载程序..."
 echo "========================================"
 
@@ -112,8 +103,10 @@ else
     STM32_Programmer_CLI -c port=SWD freq=4000 -w "$FILE_TO_FLASH" "$DOWNLOAD_ADDR" -v -s
 fi
 
-# 8. 检查结果
-if [ $? -eq 0 ]; then
+DOWNLOAD_RESULT=$?
+
+# 7. 检查结果
+if [ $DOWNLOAD_RESULT -eq 0 ]; then
     echo ""
     echo -e "${GREEN}========================================${NC}"
     echo -e "${GREEN}          下载成功！          ${NC}"

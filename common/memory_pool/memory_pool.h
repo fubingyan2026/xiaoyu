@@ -9,7 +9,7 @@ extern "C"
 #endif
 
 #include "stdint.h"
-#include "stdlib.h"
+#include "stddef.h"
 
     // 用户调用函数
     extern void __free(void *ptr);

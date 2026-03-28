@@ -6,12 +6,12 @@ STM32外设硬件抽象层。抽象GPIO、UART、FDCAN和PWM。
 
 ## 查找位置
 
-| 任务 | 文件 | 说明 |
-|------|------|-------|
-| GPIO | `hal_gpio.c` | 引脚配置、读写 |
-| UART | `hal_uart.c` | 串口通信 |
-| FDCAN | `hal_fdcan.c` | CAN FD总线通信 |
-| PWM | `hal_tim_pwm.c` | 基于定时器的PWM输出 |
+| 任务  | 文件            | 说明                |
+| ----- | --------------- | ------------------- |
+| GPIO  | `hal_gpio.c`    | 引脚配置、读写      |
+| UART  | `hal_uart.c`    | 串口通信            |
+| FDCAN | `hal_fdcan.c`   | CAN FD总线通信      |
+| PWM   | `hal_tim_pwm.c` | 基于定时器的PWM输出 |
 
 ## 关键模块
 
