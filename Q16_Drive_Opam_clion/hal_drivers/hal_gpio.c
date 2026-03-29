@@ -119,8 +119,7 @@ hal_gpio_error_t hal_gpio_init(hal_gpio_context_t* ctx,
  * @param  pin GPIO 引脚号
  * @return 操作结果错误码
  */
-hal_gpio_error_t hal_gpio_deinit(hal_gpio_context_t* ctx,
-                                 uint8_t port,
+hal_gpio_error_t hal_gpio_deinit(hal_gpio_context_t* ctx, uint8_t port,
                                  uint8_t pin) {
   // 检查参数有效性
   if (ctx == NULL) {
@@ -153,10 +152,8 @@ hal_gpio_error_t hal_gpio_deinit(hal_gpio_context_t* ctx,
  * @param  state 要设置的引脚状态
  * @return 操作结果错误码
  */
-hal_gpio_error_t hal_gpio_write(hal_gpio_context_t* ctx,
-                                uint8_t port,
-                                uint8_t pin,
-                                hal_gpio_pin_state_t state) {
+hal_gpio_error_t hal_gpio_write(hal_gpio_context_t* ctx, uint8_t port,
+                                uint8_t pin, hal_gpio_pin_state_t state) {
   // 检查参数有效性
   if (ctx == NULL) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
@@ -193,10 +190,8 @@ hal_gpio_error_t hal_gpio_write(hal_gpio_context_t* ctx,
  * @param  state 输出参数，用于存储读取到的引脚状态
  * @return 操作结果错误码
  */
-hal_gpio_error_t hal_gpio_read(hal_gpio_context_t* ctx,
-                               uint8_t port,
-                               uint8_t pin,
-                               hal_gpio_pin_state_t* state) {
+hal_gpio_error_t hal_gpio_read(hal_gpio_context_t* ctx, uint8_t port,
+                               uint8_t pin, hal_gpio_pin_state_t* state) {
   // 检查参数有效性
   if (ctx == NULL || state == NULL) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
@@ -227,8 +222,7 @@ hal_gpio_error_t hal_gpio_read(hal_gpio_context_t* ctx,
  * @param  pin GPIO 引脚号
  * @return 操作结果错误码
  */
-hal_gpio_error_t hal_gpio_toggle(hal_gpio_context_t* ctx,
-                                 uint8_t port,
+hal_gpio_error_t hal_gpio_toggle(hal_gpio_context_t* ctx, uint8_t port,
                                  uint8_t pin) {
   // 检查参数有效性
   if (ctx == NULL) {
@@ -263,8 +257,7 @@ hal_gpio_error_t hal_gpio_toggle(hal_gpio_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_gpio_error_t hal_gpio_register_callback(hal_gpio_context_t* ctx,
-                                            uint8_t port,
-                                            uint8_t pin,
+                                            uint8_t port, uint8_t pin,
                                             hal_gpio_callback_t callback,
                                             void* user_data) {
   // 检查参数有效性

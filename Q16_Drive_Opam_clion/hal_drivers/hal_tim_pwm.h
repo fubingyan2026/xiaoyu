@@ -55,15 +55,15 @@ typedef enum __attribute__((packed)) {
  */
 typedef enum __attribute__((packed)) {
   HAL_TIM_PWM_INSTANCE_1 = 1, /**< TIM1 */
-  HAL_TIM_PWM_INSTANCE_2,       /**< TIM2 */
-  HAL_TIM_PWM_INSTANCE_3,       /**< TIM3 */
-  HAL_TIM_PWM_INSTANCE_4,       /**< TIM4 */
-  HAL_TIM_PWM_INSTANCE_6,       /**< TIM6 */
-  HAL_TIM_PWM_INSTANCE_7,       /**< TIM7 */
-  HAL_TIM_PWM_INSTANCE_8,       /**< TIM8 */
-  HAL_TIM_PWM_INSTANCE_15,      /**< TIM15 */
-  HAL_TIM_PWM_INSTANCE_16,      /**< TIM16 */
-  HAL_TIM_PWM_INSTANCE_17,      /**< TIM17 */
+  HAL_TIM_PWM_INSTANCE_2,     /**< TIM2 */
+  HAL_TIM_PWM_INSTANCE_3,     /**< TIM3 */
+  HAL_TIM_PWM_INSTANCE_4,     /**< TIM4 */
+  HAL_TIM_PWM_INSTANCE_6,     /**< TIM6 */
+  HAL_TIM_PWM_INSTANCE_7,     /**< TIM7 */
+  HAL_TIM_PWM_INSTANCE_8,     /**< TIM8 */
+  HAL_TIM_PWM_INSTANCE_15,    /**< TIM15 */
+  HAL_TIM_PWM_INSTANCE_16,    /**< TIM16 */
+  HAL_TIM_PWM_INSTANCE_17,    /**< TIM17 */
 } hal_tim_pwm_instance_t;
 
 /**
@@ -80,12 +80,12 @@ typedef struct {
  */
 typedef struct {
   hal_tim_pwm_instance_t timer_instance; /**< 定时器实例 */
-  hal_tim_pwm_channel_t channel;   /**< PWM通道 */
-  uint32_t timer_frequency;        /**< 定时器时钟频率(Hz) */
-  uint32_t pwm_frequency;          /**< PWM频率(Hz) */
-  uint32_t duty_cycle;             /**< 占空比(0-10000对应0%-100% */
-  hal_tim_pwm_polarity_t polarity; /**< PWM极性 */
-  hal_tim_pwm_gpio_config_t gpio;  /**< GPIO引脚配置 */
+  hal_tim_pwm_channel_t channel;         /**< PWM通道 */
+  uint32_t timer_frequency;              /**< 定时器时钟频率(Hz) */
+  uint32_t pwm_frequency;                /**< PWM频率(Hz) */
+  uint32_t duty_cycle;                   /**< 占空比(0-10000对应0%-100% */
+  hal_tim_pwm_polarity_t polarity;       /**< PWM极性 */
+  hal_tim_pwm_gpio_config_t gpio;        /**< GPIO引脚配置 */
 } hal_tim_pwm_config_t;
 
 /**
@@ -99,10 +99,10 @@ typedef struct hal_tim_pwm_context hal_tim_pwm_context_t;
  * 用于保存 TIM PWM 实例的状态信息，支持多实例操作。
  */
 struct hal_tim_pwm_context {
-  const struct hal_tim_pwm_ops *ops;     /**< 平台特定的操作函数指针 */
-  volatile uint8_t initialized;        /**< 初始化标志（0=未初始化，1=已初始化） */
-  hal_tim_pwm_config_t config;          /**< 当前 PWM 配置 */
-  volatile uint8_t running;            /**< 运行状态标志（0=停止，1=运行） */
+  const struct hal_tim_pwm_ops *ops; /**< 平台特定的操作函数指针 */
+  volatile uint8_t initialized; /**< 初始化标志（0=未初始化，1=已初始化） */
+  hal_tim_pwm_config_t config; /**< 当前 PWM 配置 */
+  volatile uint8_t running; /**< 运行状态标志（0=停止，1=运行） */
 };
 
 /**
@@ -118,7 +118,7 @@ typedef struct hal_tim_pwm_ops {
    * @return 操作结果错误码
    */
   hal_tim_pwm_error_t (*init)(hal_tim_pwm_context_t *ctx,
-                               const hal_tim_pwm_config_t *config);
+                              const hal_tim_pwm_config_t *config);
 
   /**
    * @brief 反初始化 TIM PWM
@@ -128,8 +128,8 @@ typedef struct hal_tim_pwm_ops {
    * @return 操作结果错误码
    */
   hal_tim_pwm_error_t (*deinit)(hal_tim_pwm_context_t *ctx,
-                                 hal_tim_pwm_instance_t instance,
-                                 hal_tim_pwm_channel_t channel);
+                                hal_tim_pwm_instance_t instance,
+                                hal_tim_pwm_channel_t channel);
 
   /**
    * @brief 配置GPIO复用功能
@@ -137,8 +137,8 @@ typedef struct hal_tim_pwm_ops {
    * @param gpio_config GPIO配置结构体指针
    * @return 操作结果错误码
    */
-  hal_tim_pwm_error_t (*gpio_alternate)(hal_tim_pwm_context_t *ctx,
-                                      const hal_tim_pwm_gpio_config_t *gpio_config);
+  hal_tim_pwm_error_t (*gpio_alternate)(
+      hal_tim_pwm_context_t *ctx, const hal_tim_pwm_gpio_config_t *gpio_config);
 
   /**
    * @brief 启动PWM输出
@@ -171,9 +171,9 @@ typedef struct hal_tim_pwm_ops {
    * @return 操作结果错误码
    */
   hal_tim_pwm_error_t (*set_duty_cycle)(hal_tim_pwm_context_t *ctx,
-                                          hal_tim_pwm_instance_t instance,
-                                          hal_tim_pwm_channel_t channel,
-                                          uint32_t duty_cycle);
+                                        hal_tim_pwm_instance_t instance,
+                                        hal_tim_pwm_channel_t channel,
+                                        uint32_t duty_cycle);
 
   /**
    * @brief 设置PWM频率
@@ -184,9 +184,9 @@ typedef struct hal_tim_pwm_ops {
    * @return 操作结果错误码
    */
   hal_tim_pwm_error_t (*set_frequency)(hal_tim_pwm_context_t *ctx,
-                                         hal_tim_pwm_instance_t instance,
-                                         hal_tim_pwm_channel_t channel,
-                                         uint32_t frequency);
+                                       hal_tim_pwm_instance_t instance,
+                                       hal_tim_pwm_channel_t channel,
+                                       uint32_t frequency);
 
   /**
    * @brief 获取PWM占空比
@@ -197,9 +197,9 @@ typedef struct hal_tim_pwm_ops {
    * @return 操作结果错误码
    */
   hal_tim_pwm_error_t (*get_duty_cycle)(hal_tim_pwm_context_t *ctx,
-                                          hal_tim_pwm_instance_t instance,
-                                          hal_tim_pwm_channel_t channel,
-                                          uint32_t *duty_cycle);
+                                        hal_tim_pwm_instance_t instance,
+                                        hal_tim_pwm_channel_t channel,
+                                        uint32_t *duty_cycle);
 
   /**
    * @brief 获取PWM频率
@@ -210,9 +210,9 @@ typedef struct hal_tim_pwm_ops {
    * @return 操作结果错误码
    */
   hal_tim_pwm_error_t (*get_frequency)(hal_tim_pwm_context_t *ctx,
-                                         hal_tim_pwm_instance_t instance,
-                                         hal_tim_pwm_channel_t channel,
-                                         uint32_t *frequency);
+                                       hal_tim_pwm_instance_t instance,
+                                       hal_tim_pwm_channel_t channel,
+                                       uint32_t *frequency);
 
   /**
    * @brief 设置PWM极性
@@ -223,9 +223,9 @@ typedef struct hal_tim_pwm_ops {
    * @return 操作结果错误码
    */
   hal_tim_pwm_error_t (*set_polarity)(hal_tim_pwm_context_t *ctx,
-                                       hal_tim_pwm_instance_t instance,
-                                       hal_tim_pwm_channel_t channel,
-                                       hal_tim_pwm_polarity_t polarity);
+                                      hal_tim_pwm_instance_t instance,
+                                      hal_tim_pwm_channel_t channel,
+                                      hal_tim_pwm_polarity_t polarity);
 
   /**
    * @brief 获取PWM极性
@@ -236,9 +236,9 @@ typedef struct hal_tim_pwm_ops {
    * @return 操作结果错误码
    */
   hal_tim_pwm_error_t (*get_polarity)(hal_tim_pwm_context_t *ctx,
-                                       hal_tim_pwm_instance_t instance,
-                                       hal_tim_pwm_channel_t channel,
-                                       hal_tim_pwm_polarity_t *polarity);
+                                      hal_tim_pwm_instance_t instance,
+                                      hal_tim_pwm_channel_t channel,
+                                      hal_tim_pwm_polarity_t *polarity);
 } hal_tim_pwm_ops_t;
 
 /* Exported macro ------------------------------------------------------------*/
@@ -249,7 +249,7 @@ typedef struct hal_tim_pwm_ops {
  * 当前为空实现，可根据实际平台需求替换为真正的临界区保护代码。
  */
 #define HAL_TIM_PWM_ENTER_CRITICAL() \
-  do {                            \
+  do {                               \
   } while (0)
 
 /**
@@ -258,7 +258,7 @@ typedef struct hal_tim_pwm_ops {
  * 与 HAL_TIM_PWM_ENTER_CRITICAL 配对使用。
  */
 #define HAL_TIM_PWM_EXIT_CRITICAL() \
-  do {                           \
+  do {                              \
   } while (0)
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -289,8 +289,8 @@ hal_tim_pwm_error_t hal_tim_pwm_deinit(hal_tim_pwm_context_t *ctx,
  * @param gpio_config GPIO配置结构体指针
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_gpio_alternate(hal_tim_pwm_context_t *ctx,
-                                                  const hal_tim_pwm_gpio_config_t *gpio_config);
+hal_tim_pwm_error_t hal_tim_pwm_gpio_alternate(
+    hal_tim_pwm_context_t *ctx, const hal_tim_pwm_gpio_config_t *gpio_config);
 
 /**
  * @brief 启动PWM输出
@@ -300,8 +300,8 @@ hal_tim_pwm_error_t hal_tim_pwm_gpio_alternate(hal_tim_pwm_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_start(hal_tim_pwm_context_t *ctx,
-                                        hal_tim_pwm_instance_t instance,
-                                        hal_tim_pwm_channel_t channel);
+                                      hal_tim_pwm_instance_t instance,
+                                      hal_tim_pwm_channel_t channel);
 
 /**
  * @brief 停止PWM输出
@@ -311,8 +311,8 @@ hal_tim_pwm_error_t hal_tim_pwm_start(hal_tim_pwm_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_stop(hal_tim_pwm_context_t *ctx,
-                                       hal_tim_pwm_instance_t instance,
-                                       hal_tim_pwm_channel_t channel);
+                                     hal_tim_pwm_instance_t instance,
+                                     hal_tim_pwm_channel_t channel);
 
 /**
  * @brief 设置PWM占空比
@@ -323,9 +323,9 @@ hal_tim_pwm_error_t hal_tim_pwm_stop(hal_tim_pwm_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_set_duty_cycle(hal_tim_pwm_context_t *ctx,
-                                                hal_tim_pwm_instance_t instance,
-                                                hal_tim_pwm_channel_t channel,
-                                                uint32_t duty_cycle);
+                                               hal_tim_pwm_instance_t instance,
+                                               hal_tim_pwm_channel_t channel,
+                                               uint32_t duty_cycle);
 
 /**
  * @brief 设置PWM频率
@@ -336,9 +336,9 @@ hal_tim_pwm_error_t hal_tim_pwm_set_duty_cycle(hal_tim_pwm_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_set_frequency(hal_tim_pwm_context_t *ctx,
-                                               hal_tim_pwm_instance_t instance,
-                                               hal_tim_pwm_channel_t channel,
-                                               uint32_t frequency);
+                                              hal_tim_pwm_instance_t instance,
+                                              hal_tim_pwm_channel_t channel,
+                                              uint32_t frequency);
 
 /**
  * @brief 获取PWM占空比
@@ -349,9 +349,9 @@ hal_tim_pwm_error_t hal_tim_pwm_set_frequency(hal_tim_pwm_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_get_duty_cycle(hal_tim_pwm_context_t *ctx,
-                                                hal_tim_pwm_instance_t instance,
-                                                hal_tim_pwm_channel_t channel,
-                                                uint32_t *duty_cycle);
+                                               hal_tim_pwm_instance_t instance,
+                                               hal_tim_pwm_channel_t channel,
+                                               uint32_t *duty_cycle);
 
 /**
  * @brief 获取PWM频率
@@ -362,9 +362,9 @@ hal_tim_pwm_error_t hal_tim_pwm_get_duty_cycle(hal_tim_pwm_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_get_frequency(hal_tim_pwm_context_t *ctx,
-                                               hal_tim_pwm_instance_t instance,
-                                               hal_tim_pwm_channel_t channel,
-                                               uint32_t *frequency);
+                                              hal_tim_pwm_instance_t instance,
+                                              hal_tim_pwm_channel_t channel,
+                                              uint32_t *frequency);
 
 /**
  * @brief 设置 TIM PWM 操作函数
@@ -376,14 +376,15 @@ hal_tim_pwm_error_t hal_tim_pwm_get_frequency(hal_tim_pwm_context_t *ctx,
  *       此函数主要用于多平台切换或单元测试场景。
  */
 hal_tim_pwm_error_t hal_tim_pwm_set_ops(hal_tim_pwm_context_t *ctx,
-                                       const hal_tim_pwm_ops_t *ops);
+                                        const hal_tim_pwm_ops_t *ops);
 
 /**
  * @brief STM32 平台 TIM PWM 上下文初始化函数
  * @param ctx TIM PWM 上下文指针
  * @return 操作结果错误码
  *
- * 使用此函数初始化 STM32 平台的 TIM PWM 上下文，会自动设置好平台特定的操作函数。
+ * 使用此函数初始化 STM32 平台的 TIM PWM
+ * 上下文，会自动设置好平台特定的操作函数。
  */
 hal_tim_pwm_error_t stm32_tim_pwm_init_context(hal_tim_pwm_context_t *ctx);
 
@@ -396,9 +397,9 @@ hal_tim_pwm_error_t stm32_tim_pwm_init_context(hal_tim_pwm_context_t *ctx);
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_set_polarity(hal_tim_pwm_context_t *ctx,
-                                               hal_tim_pwm_instance_t instance,
-                                               hal_tim_pwm_channel_t channel,
-                                               hal_tim_pwm_polarity_t polarity);
+                                             hal_tim_pwm_instance_t instance,
+                                             hal_tim_pwm_channel_t channel,
+                                             hal_tim_pwm_polarity_t polarity);
 
 /**
  * @brief 获取PWM极性
@@ -409,9 +410,9 @@ hal_tim_pwm_error_t hal_tim_pwm_set_polarity(hal_tim_pwm_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_get_polarity(hal_tim_pwm_context_t *ctx,
-                                               hal_tim_pwm_instance_t instance,
-                                               hal_tim_pwm_channel_t channel,
-                                               hal_tim_pwm_polarity_t *polarity);
+                                             hal_tim_pwm_instance_t instance,
+                                             hal_tim_pwm_channel_t channel,
+                                             hal_tim_pwm_polarity_t *polarity);
 
 /**
  * @brief 检查PWM是否正在运行
@@ -419,7 +420,8 @@ hal_tim_pwm_error_t hal_tim_pwm_get_polarity(hal_tim_pwm_context_t *ctx,
  * @param running 输出参数，返回运行状态（true=正在运行，false=已停止）
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_is_running(hal_tim_pwm_context_t *ctx, bool *running);
+hal_tim_pwm_error_t hal_tim_pwm_is_running(hal_tim_pwm_context_t *ctx,
+                                           bool *running);
 
 /**
  * @brief 检查PWM是否已初始化
@@ -427,7 +429,8 @@ hal_tim_pwm_error_t hal_tim_pwm_is_running(hal_tim_pwm_context_t *ctx, bool *run
  * @param initialized 输出参数，返回初始化状态（true=已初始化，false=未初始化）
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_is_initialized(hal_tim_pwm_context_t *ctx, bool *initialized);
+hal_tim_pwm_error_t hal_tim_pwm_is_initialized(hal_tim_pwm_context_t *ctx,
+                                               bool *initialized);
 
 /**
  * @brief 获取当前PWM配置
@@ -435,7 +438,8 @@ hal_tim_pwm_error_t hal_tim_pwm_is_initialized(hal_tim_pwm_context_t *ctx, bool 
  * @param config 输出参数，返回当前配置
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_get_config(hal_tim_pwm_context_t *ctx, hal_tim_pwm_config_t *config);
+hal_tim_pwm_error_t hal_tim_pwm_get_config(hal_tim_pwm_context_t *ctx,
+                                           hal_tim_pwm_config_t *config);
 
 /**
  * @brief 更新PWM配置
@@ -445,7 +449,8 @@ hal_tim_pwm_error_t hal_tim_pwm_get_config(hal_tim_pwm_context_t *ctx, hal_tim_p
  *
  * @note 此函数会更新所有配置参数，包括频率、占空比和极性
  */
-hal_tim_pwm_error_t hal_tim_pwm_update_config(hal_tim_pwm_context_t *ctx, const hal_tim_pwm_config_t *config);
+hal_tim_pwm_error_t hal_tim_pwm_update_config(
+    hal_tim_pwm_context_t *ctx, const hal_tim_pwm_config_t *config);
 
 #ifdef __cplusplus
 }

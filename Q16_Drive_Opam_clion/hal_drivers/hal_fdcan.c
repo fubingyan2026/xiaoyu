@@ -194,9 +194,9 @@ hal_fdcan_error_t hal_fdcan_receive(hal_fdcan_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_fdcan_error_t hal_fdcan_get_receive_level(hal_fdcan_context_t* ctx,
-                                               hal_fdcan_instance_t instance,
-                                               uint8_t fifo_address,
-                                               uint32_t* level) {
+                                              hal_fdcan_instance_t instance,
+                                              uint8_t fifo_address,
+                                              uint32_t* level) {
   // 检查参数有效性
   if (ctx == NULL || level == NULL) {
     return HAL_FDCAN_ERROR_INVALID_PARAM;
@@ -214,7 +214,8 @@ hal_fdcan_error_t hal_fdcan_get_receive_level(hal_fdcan_context_t* ctx,
 
   // 进入临界区，调用平台特定的获取接收FIFO级别函数
   HAL_FDCAN_ENTER_CRITICAL();
-  hal_fdcan_error_t result = ctx->ops->receive_level(ctx, instance, fifo_address, level);
+  hal_fdcan_error_t result =
+      ctx->ops->receive_level(ctx, instance, fifo_address, level);
   HAL_FDCAN_EXIT_CRITICAL();
 
   return result;
@@ -228,8 +229,8 @@ hal_fdcan_error_t hal_fdcan_get_receive_level(hal_fdcan_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_fdcan_error_t hal_fdcan_get_send_fifo_level(hal_fdcan_context_t* ctx,
-                                                 hal_fdcan_instance_t instance,
-                                                 uint32_t* level) {
+                                                hal_fdcan_instance_t instance,
+                                                uint32_t* level) {
   // 检查参数有效性
   if (ctx == NULL || level == NULL) {
     return HAL_FDCAN_ERROR_INVALID_PARAM;
@@ -349,7 +350,8 @@ hal_fdcan_error_t hal_fdcan_get_error_count(hal_fdcan_context_t* ctx,
 
   // 进入临界区，调用平台特定的获取错误计数函数
   HAL_FDCAN_ENTER_CRITICAL();
-  hal_fdcan_error_t result = ctx->ops->get_error_count(ctx, instance, error_count);
+  hal_fdcan_error_t result =
+      ctx->ops->get_error_count(ctx, instance, error_count);
   HAL_FDCAN_EXIT_CRITICAL();
 
   return result;
@@ -360,7 +362,8 @@ hal_fdcan_error_t hal_fdcan_get_error_count(hal_fdcan_context_t* ctx,
  * @param  ctx FDCAN 上下文指针
  * @param  instance FDCAN 实例
  */
-void hal_fdcan_irq_handler(hal_fdcan_context_t* ctx, hal_fdcan_instance_t instance) {
+void hal_fdcan_irq_handler(hal_fdcan_context_t* ctx,
+                           hal_fdcan_instance_t instance) {
   // 检查参数有效性
   if (ctx == NULL) {
     return;
@@ -386,7 +389,8 @@ void hal_fdcan_irq_handler(hal_fdcan_context_t* ctx, hal_fdcan_instance_t instan
  * @param initialized 输出参数，返回是否已初始化
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_is_initialized(hal_fdcan_context_t* ctx, bool* initialized) {
+hal_fdcan_error_t hal_fdcan_is_initialized(hal_fdcan_context_t* ctx,
+                                           bool* initialized) {
   if (ctx == NULL || initialized == NULL) {
     return HAL_FDCAN_ERROR_INVALID_PARAM;
   }
@@ -402,7 +406,8 @@ hal_fdcan_error_t hal_fdcan_is_initialized(hal_fdcan_context_t* ctx, bool* initi
  * @param config 输出参数，返回当前配置
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_get_config(hal_fdcan_context_t* ctx, hal_fdcan_config_t* config) {
+hal_fdcan_error_t hal_fdcan_get_config(hal_fdcan_context_t* ctx,
+                                       hal_fdcan_config_t* config) {
   if (ctx == NULL || config == NULL) {
     return HAL_FDCAN_ERROR_INVALID_PARAM;
   }
@@ -424,7 +429,8 @@ hal_fdcan_error_t hal_fdcan_get_config(hal_fdcan_context_t* ctx, hal_fdcan_confi
  * @param config FDCAN配置结构体指针
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_update_config(hal_fdcan_context_t* ctx, const hal_fdcan_config_t* config) {
+hal_fdcan_error_t hal_fdcan_update_config(hal_fdcan_context_t* ctx,
+                                          const hal_fdcan_config_t* config) {
   if (ctx == NULL || config == NULL) {
     return HAL_FDCAN_ERROR_INVALID_PARAM;
   }

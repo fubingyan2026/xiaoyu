@@ -49,10 +49,9 @@ static hal_gpio_error_t stm32_gpio_read(hal_gpio_context_t *ctx, uint8_t port,
                                         hal_gpio_pin_state_t *state);
 static hal_gpio_error_t stm32_gpio_toggle(hal_gpio_context_t *ctx, uint8_t port,
                                           uint8_t pin);
-static hal_gpio_error_t stm32_gpio_register_callback(hal_gpio_context_t *ctx,
-                                                     uint8_t port, uint8_t pin,
-                                                     hal_gpio_callback_t callback,
-                                                     void *user_data);
+static hal_gpio_error_t stm32_gpio_register_callback(
+    hal_gpio_context_t *ctx, uint8_t port, uint8_t pin,
+    hal_gpio_callback_t callback, void *user_data);
 
 static void stm32_gpio_enable_clock(uint8_t port);
 static uint32_t stm32_gpio_get_mode(hal_gpio_mode_t mode);
@@ -255,15 +254,15 @@ static hal_gpio_error_t stm32_gpio_init(hal_gpio_context_t *ctx,
  * @param  pin: GPIO引脚
  * @return HAL_GPIO_OK 成功，其他值为错误码
  */
-static hal_gpio_error_t stm32_gpio_deinit(hal_gpio_context_t *ctx,
-                                          uint8_t port, uint8_t pin) {
+static hal_gpio_error_t stm32_gpio_deinit(hal_gpio_context_t *ctx, uint8_t port,
+                                          uint8_t pin) {
   if (port >= PORT_MAP_SIZE || pin >= HAL_GPIO_PIN_MAX) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
   }
 
   (void)ctx;
   HAL_GPIO_DeInit(port_map[port], HAL_GPIO_PIN_MASK(pin));
-  
+
   exti_callbacks[pin].ctx = NULL;
   exti_callbacks[pin].port = 0;
 
@@ -278,17 +277,17 @@ static hal_gpio_error_t stm32_gpio_deinit(hal_gpio_context_t *ctx,
  * @param  state: 引脚状态
  * @return HAL_GPIO_OK 成功，其他值为错误码
  */
-static hal_gpio_error_t stm32_gpio_write(hal_gpio_context_t *ctx,
-                                         uint8_t port, uint8_t pin,
+static hal_gpio_error_t stm32_gpio_write(hal_gpio_context_t *ctx, uint8_t port,
+                                         uint8_t pin,
                                          hal_gpio_pin_state_t state) {
   if (port >= PORT_MAP_SIZE || pin >= HAL_GPIO_PIN_MAX) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
   }
 
   (void)ctx;
-  HAL_GPIO_WritePin(port_map[port], HAL_GPIO_PIN_MASK(pin),
-                    (state == HAL_GPIO_PIN_SET) ? GPIO_PIN_SET
-                                                : GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(
+      port_map[port], HAL_GPIO_PIN_MASK(pin),
+      (state == HAL_GPIO_PIN_SET) ? GPIO_PIN_SET : GPIO_PIN_RESET);
 
   return HAL_GPIO_OK;
 }
@@ -301,8 +300,8 @@ static hal_gpio_error_t stm32_gpio_write(hal_gpio_context_t *ctx,
  * @param  state: 指向状态存储的指针
  * @return HAL_GPIO_OK 成功，其他值为错误码
  */
-static hal_gpio_error_t stm32_gpio_read(hal_gpio_context_t *ctx,
-                                        uint8_t port, uint8_t pin,
+static hal_gpio_error_t stm32_gpio_read(hal_gpio_context_t *ctx, uint8_t port,
+                                        uint8_t pin,
                                         hal_gpio_pin_state_t *state) {
   if (port >= PORT_MAP_SIZE || pin >= HAL_GPIO_PIN_MAX || state == NULL) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
@@ -323,8 +322,8 @@ static hal_gpio_error_t stm32_gpio_read(hal_gpio_context_t *ctx,
  * @param  pin: GPIO 引脚
  * @return HAL_GPIO_OK 成功，其他值为错误码
  */
-static hal_gpio_error_t stm32_gpio_toggle(hal_gpio_context_t *ctx,
-                                          uint8_t port, uint8_t pin) {
+static hal_gpio_error_t stm32_gpio_toggle(hal_gpio_context_t *ctx, uint8_t port,
+                                          uint8_t pin) {
   if (port >= PORT_MAP_SIZE || pin >= HAL_GPIO_PIN_MAX) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
   }
@@ -344,10 +343,9 @@ static hal_gpio_error_t stm32_gpio_toggle(hal_gpio_context_t *ctx,
  * @param  user_data: 用户数据指针
  * @return HAL_GPIO_OK 成功，其他值为错误码
  */
-static hal_gpio_error_t stm32_gpio_register_callback(hal_gpio_context_t *ctx,
-                                                     uint8_t port, uint8_t pin,
-                                                     hal_gpio_callback_t callback,
-                                                     void *user_data) {
+static hal_gpio_error_t stm32_gpio_register_callback(
+    hal_gpio_context_t *ctx, uint8_t port, uint8_t pin,
+    hal_gpio_callback_t callback, void *user_data) {
   if (port >= PORT_MAP_SIZE || pin >= HAL_GPIO_PIN_MAX) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
   }

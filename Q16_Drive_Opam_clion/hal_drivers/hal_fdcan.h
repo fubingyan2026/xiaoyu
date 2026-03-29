@@ -10,8 +10,8 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 /**
  * @brief FDCAN 操作错误码枚举
@@ -32,7 +32,7 @@ typedef enum __attribute__((packed)) {
   HAL_FDCAN_INSTANCE_1 = 0, /**< FDCAN实例1 */
   HAL_FDCAN_INSTANCE_2,     /**< FDCAN实例2 */
   HAL_FDCAN_INSTANCE_3,     /**< FDCAN实例3 */
-  HAL_FDCAN_INSTANCE_LEN,    /**< FDCAN实例数量 */
+  HAL_FDCAN_INSTANCE_LEN,   /**< FDCAN实例数量 */
 } hal_fdcan_instance_t;
 
 /**
@@ -110,11 +110,11 @@ typedef void (*hal_fdcan_callback_t)(hal_fdcan_context_t *ctx,
  * 用于保存 FDCAN 实例的状态信息，支持多实例操作。
  */
 struct hal_fdcan_context {
-  const struct hal_fdcan_ops *ops;     /**< 平台特定的操作函数指针 */
-  volatile uint8_t initialized;        /**< 初始化标志（0=未初始化，1=已初始化） */
-  hal_fdcan_callback_t callback;         /**< 中断回调函数指针 */
-  void *user_data;                      /**< 用户自定义数据 */
-  hal_fdcan_config_t config;            /**< 当前 FDCAN 配置 */
+  const struct hal_fdcan_ops *ops; /**< 平台特定的操作函数指针 */
+  volatile uint8_t initialized; /**< 初始化标志（0=未初始化，1=已初始化） */
+  hal_fdcan_callback_t callback; /**< 中断回调函数指针 */
+  void *user_data;               /**< 用户自定义数据 */
+  hal_fdcan_config_t config;     /**< 当前 FDCAN 配置 */
 };
 
 /**
@@ -170,9 +170,8 @@ typedef struct hal_fdcan_ops {
    * @return 操作结果错误码
    */
   hal_fdcan_error_t (*receive_level)(hal_fdcan_context_t *ctx,
-                                      hal_fdcan_instance_t instance,
-                                      uint8_t fifo_address,
-                                      uint32_t *level);
+                                     hal_fdcan_instance_t instance,
+                                     uint8_t fifo_address, uint32_t *level);
 
   /**
    * @brief 获取发送FIFO级别
@@ -182,8 +181,8 @@ typedef struct hal_fdcan_ops {
    * @return 操作结果错误码
    */
   hal_fdcan_error_t (*get_send_level)(hal_fdcan_context_t *ctx,
-                                       hal_fdcan_instance_t instance,
-                                       uint32_t *level);
+                                      hal_fdcan_instance_t instance,
+                                      uint32_t *level);
 
   /**
    * @brief 设置过滤器
@@ -306,9 +305,9 @@ hal_fdcan_error_t hal_fdcan_receive(hal_fdcan_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_fdcan_error_t hal_fdcan_get_receive_level(hal_fdcan_context_t *ctx,
-                                               hal_fdcan_instance_t instance,
-                                               uint8_t fifo_address,
-                                               uint32_t *level);
+                                              hal_fdcan_instance_t instance,
+                                              uint8_t fifo_address,
+                                              uint32_t *level);
 
 /**
  * @brief 获取发送FIFO级别
@@ -318,8 +317,8 @@ hal_fdcan_error_t hal_fdcan_get_receive_level(hal_fdcan_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_fdcan_error_t hal_fdcan_get_send_fifo_level(hal_fdcan_context_t *ctx,
-                                                 hal_fdcan_instance_t instance,
-                                                 uint32_t *level);
+                                                hal_fdcan_instance_t instance,
+                                                uint32_t *level);
 
 /**
  * @brief 设置过滤器
@@ -359,7 +358,8 @@ hal_fdcan_error_t hal_fdcan_get_error_count(hal_fdcan_context_t *ctx,
  * @param ctx FDCAN 上下文指针
  * @param instance FDCAN 实例
  */
-void hal_fdcan_irq_handler(hal_fdcan_context_t *ctx, hal_fdcan_instance_t instance);
+void hal_fdcan_irq_handler(hal_fdcan_context_t *ctx,
+                           hal_fdcan_instance_t instance);
 
 /**
  * @brief 检查FDCAN是否已初始化
@@ -367,7 +367,8 @@ void hal_fdcan_irq_handler(hal_fdcan_context_t *ctx, hal_fdcan_instance_t instan
  * @param initialized 输出参数，返回初始化状态（true=已初始化，false=未初始化）
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_is_initialized(hal_fdcan_context_t *ctx, bool *initialized);
+hal_fdcan_error_t hal_fdcan_is_initialized(hal_fdcan_context_t *ctx,
+                                           bool *initialized);
 
 /**
  * @brief 获取当前FDCAN配置
@@ -375,7 +376,8 @@ hal_fdcan_error_t hal_fdcan_is_initialized(hal_fdcan_context_t *ctx, bool *initi
  * @param config 输出参数，返回当前配置
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_get_config(hal_fdcan_context_t *ctx, hal_fdcan_config_t *config);
+hal_fdcan_error_t hal_fdcan_get_config(hal_fdcan_context_t *ctx,
+                                       hal_fdcan_config_t *config);
 
 /**
  * @brief 更新FDCAN配置
@@ -385,7 +387,8 @@ hal_fdcan_error_t hal_fdcan_get_config(hal_fdcan_context_t *ctx, hal_fdcan_confi
  *
  * @note 此函数会更新所有配置参数
  */
-hal_fdcan_error_t hal_fdcan_update_config(hal_fdcan_context_t *ctx, const hal_fdcan_config_t *config);
+hal_fdcan_error_t hal_fdcan_update_config(hal_fdcan_context_t *ctx,
+                                          const hal_fdcan_config_t *config);
 
 /**
  * @brief STM32 平台 FDCAN 上下文初始化函数

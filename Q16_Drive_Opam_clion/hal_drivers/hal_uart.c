@@ -725,7 +725,8 @@ void hal_uart_dma_irq_handler(hal_uart_context_t* ctx,
  * @param initialized 输出参数，返回UART是否初始化
  * @return 操作结果错误码
  */
-hal_uart_error_t hal_uart_is_initialized(hal_uart_context_t* ctx, bool* initialized) {
+hal_uart_error_t hal_uart_is_initialized(hal_uart_context_t* ctx,
+                                         bool* initialized) {
   if (ctx == NULL || initialized == NULL) {
     return HAL_UART_ERROR_INVALID_PARAM;
   }
@@ -741,7 +742,8 @@ hal_uart_error_t hal_uart_is_initialized(hal_uart_context_t* ctx, bool* initiali
  * @param config 输出参数，返回UART配置
  * @return 操作结果错误码
  */
-hal_uart_error_t hal_uart_get_config(hal_uart_context_t* ctx, hal_uart_config_t* config) {
+hal_uart_error_t hal_uart_get_config(hal_uart_context_t* ctx,
+                                     hal_uart_config_t* config) {
   if (ctx == NULL || config == NULL) {
     return HAL_UART_ERROR_INVALID_PARAM;
   }
@@ -763,7 +765,8 @@ hal_uart_error_t hal_uart_get_config(hal_uart_context_t* ctx, hal_uart_config_t*
  * @param config UART配置指针
  * @return 操作结果错误码
  */
-hal_uart_error_t hal_uart_update_config(hal_uart_context_t* ctx, const hal_uart_config_t* config) {
+hal_uart_error_t hal_uart_update_config(hal_uart_context_t* ctx,
+                                        const hal_uart_config_t* config) {
   if (ctx == NULL || config == NULL) {
     return HAL_UART_ERROR_INVALID_PARAM;
   }
@@ -783,8 +786,8 @@ hal_uart_error_t hal_uart_update_config(hal_uart_context_t* ctx, const hal_uart_
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_set_wordlength(hal_uart_context_t* ctx,
-                                          hal_uart_instance_t instance,
-                                          hal_uart_wordlength_t wordlength) {
+                                         hal_uart_instance_t instance,
+                                         hal_uart_wordlength_t wordlength) {
   if (ctx == NULL) {
     return HAL_UART_ERROR_INVALID_PARAM;
   }
@@ -808,8 +811,8 @@ hal_uart_error_t hal_uart_set_wordlength(hal_uart_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_set_stopbits(hal_uart_context_t* ctx,
-                                        hal_uart_instance_t instance,
-                                        hal_uart_stopbits_t stopbits) {
+                                       hal_uart_instance_t instance,
+                                       hal_uart_stopbits_t stopbits) {
   if (ctx == NULL) {
     return HAL_UART_ERROR_INVALID_PARAM;
   }
@@ -833,8 +836,8 @@ hal_uart_error_t hal_uart_set_stopbits(hal_uart_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_set_parity(hal_uart_context_t* ctx,
-                                      hal_uart_instance_t instance,
-                                      hal_uart_parity_t parity) {
+                                     hal_uart_instance_t instance,
+                                     hal_uart_parity_t parity) {
   if (ctx == NULL) {
     return HAL_UART_ERROR_INVALID_PARAM;
   }
@@ -858,8 +861,8 @@ hal_uart_error_t hal_uart_set_parity(hal_uart_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_set_hwcontrol(hal_uart_context_t* ctx,
-                                         hal_uart_instance_t instance,
-                                         hal_uart_hwcontrol_t hwcontrol) {
+                                        hal_uart_instance_t instance,
+                                        hal_uart_hwcontrol_t hwcontrol) {
   if (ctx == NULL) {
     return HAL_UART_ERROR_INVALID_PARAM;
   }
@@ -882,8 +885,8 @@ hal_uart_error_t hal_uart_set_hwcontrol(hal_uart_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_set_mode(hal_uart_context_t* ctx,
-                                    hal_uart_instance_t instance,
-                                    hal_uart_mode_t mode) {
+                                   hal_uart_instance_t instance,
+                                   hal_uart_mode_t mode) {
   if (ctx == NULL) {
     return HAL_UART_ERROR_INVALID_PARAM;
   }
@@ -905,7 +908,8 @@ hal_uart_error_t hal_uart_set_mode(hal_uart_context_t* ctx,
  * @param instance UART 实例
  * @return 操作结果错误码
  */
-hal_uart_error_t hal_uart_flush_tx(hal_uart_context_t* ctx, hal_uart_instance_t instance) {
+hal_uart_error_t hal_uart_flush_tx(hal_uart_context_t* ctx,
+                                   hal_uart_instance_t instance) {
   (void)instance;
   if (ctx == NULL) {
     return HAL_UART_ERROR_INVALID_PARAM;
@@ -924,7 +928,8 @@ hal_uart_error_t hal_uart_flush_tx(hal_uart_context_t* ctx, hal_uart_instance_t 
  * @param  instance UART 实例
  * @return 操作结果错误码
  */
-hal_uart_error_t hal_uart_flush_rx(hal_uart_context_t* ctx, hal_uart_instance_t instance) {
+hal_uart_error_t hal_uart_flush_rx(hal_uart_context_t* ctx,
+                                   hal_uart_instance_t instance) {
   (void)instance;
   if (ctx == NULL) {
     return HAL_UART_ERROR_INVALID_PARAM;

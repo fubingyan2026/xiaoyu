@@ -160,8 +160,8 @@ typedef struct hal_uart_context hal_uart_context_t;
  * @param user_data 用户自定义数据指针
  */
 typedef void (*hal_uart_callback_t)(hal_uart_context_t *ctx,
-                                     hal_uart_instance_t instance,
-                                     void *user_data);
+                                    hal_uart_instance_t instance,
+                                    void *user_data);
 
 /**
  * @brief UART 上下文结构体
@@ -169,11 +169,11 @@ typedef void (*hal_uart_callback_t)(hal_uart_context_t *ctx,
  * 用于保存 UART 实例的状态信息，支持多实例操作。
  */
 struct hal_uart_context {
-  const struct hal_uart_ops *ops;     /**< 平台特定的操作函数指针 */
-  volatile uint8_t initialized;        /**< 初始化标志（0=未初始化，1=已初始化） */
-  hal_uart_callback_t callback;         /**< 中断回调函数指针 */
-  void *user_data;                      /**< 用户自定义数据 */
-  hal_uart_config_t config;            /**< 当前 UART 配置 */
+  const struct hal_uart_ops *ops; /**< 平台特定的操作函数指针 */
+  volatile uint8_t initialized; /**< 初始化标志（0=未初始化，1=已初始化） */
+  hal_uart_callback_t callback; /**< 中断回调函数指针 */
+  void *user_data;              /**< 用户自定义数据 */
+  hal_uart_config_t config;     /**< 当前 UART 配置 */
 };
 
 /**
@@ -209,8 +209,7 @@ typedef struct hal_uart_ops {
    * @return 操作结果错误码
    */
   hal_uart_error_t (*send)(hal_uart_context_t *ctx,
-                           hal_uart_instance_t instance,
-                           const uint8_t *data,
+                           hal_uart_instance_t instance, const uint8_t *data,
                            uint16_t size);
 
   /**
@@ -222,8 +221,7 @@ typedef struct hal_uart_ops {
    * @return 操作结果错误码
    */
   hal_uart_error_t (*receive)(hal_uart_context_t *ctx,
-                              hal_uart_instance_t instance,
-                              uint8_t *data,
+                              hal_uart_instance_t instance, uint8_t *data,
                               uint16_t size);
 
   /**
@@ -236,10 +234,9 @@ typedef struct hal_uart_ops {
    * @return 操作结果错误码
    */
   hal_uart_error_t (*send_async)(hal_uart_context_t *ctx,
-                                  hal_uart_instance_t instance,
-                                  const uint8_t *data,
-                                  uint16_t size,
-                                  uint16_t *sent_size);
+                                 hal_uart_instance_t instance,
+                                 const uint8_t *data, uint16_t size,
+                                 uint16_t *sent_size);
 
   /**
    * @brief 接收数据（异步）
@@ -251,10 +248,8 @@ typedef struct hal_uart_ops {
    * @return 操作结果错误码
    */
   hal_uart_error_t (*receive_async)(hal_uart_context_t *ctx,
-                                     hal_uart_instance_t instance,
-                                     uint8_t *data,
-                                     uint16_t size,
-                                     uint16_t *received_size);
+                                    hal_uart_instance_t instance, uint8_t *data,
+                                    uint16_t size, uint16_t *received_size);
 
   /**
    * @brief 发送数据（DMA）
@@ -266,8 +261,7 @@ typedef struct hal_uart_ops {
    */
   hal_uart_error_t (*send_dma)(hal_uart_context_t *ctx,
                                hal_uart_instance_t instance,
-                               const uint8_t *data,
-                               uint32_t size);
+                               const uint8_t *data, uint32_t size);
 
   /**
    * @brief 接收数据（DMA）
@@ -278,8 +272,7 @@ typedef struct hal_uart_ops {
    * @return 操作结果错误码
    */
   hal_uart_error_t (*receive_dma)(hal_uart_context_t *ctx,
-                                  hal_uart_instance_t instance,
-                                  uint8_t *data,
+                                  hal_uart_instance_t instance, uint8_t *data,
                                   uint32_t size);
 
   /**
@@ -291,9 +284,8 @@ typedef struct hal_uart_ops {
    * @return 操作结果错误码
    */
   hal_uart_error_t (*receive_dma_to_idle)(hal_uart_context_t *ctx,
-                                            hal_uart_instance_t instance,
-                                            uint8_t *data,
-                                            uint32_t size);
+                                          hal_uart_instance_t instance,
+                                          uint8_t *data, uint32_t size);
 
   /**
    * @brief 中止发送
@@ -320,7 +312,7 @@ typedef struct hal_uart_ops {
    * @return 操作结果错误码
    */
   hal_uart_error_t (*abort_send_dma)(hal_uart_context_t *ctx,
-                                      hal_uart_instance_t instance);
+                                     hal_uart_instance_t instance);
 
   /**
    * @brief 中止DMA接收
@@ -329,7 +321,7 @@ typedef struct hal_uart_ops {
    * @return 操作结果错误码
    */
   hal_uart_error_t (*abort_receive_dma)(hal_uart_context_t *ctx,
-                                         hal_uart_instance_t instance);
+                                        hal_uart_instance_t instance);
 
   /**
    * @brief 获取发送字节数
@@ -361,8 +353,8 @@ typedef struct hal_uart_ops {
    * @return 操作结果错误码
    */
   hal_uart_error_t (*get_dma_status)(hal_uart_context_t *ctx,
-                                      hal_uart_instance_t instance,
-                                      hal_uart_dma_status_t *status);
+                                     hal_uart_instance_t instance,
+                                     hal_uart_dma_status_t *status);
 
   /**
    * @brief 设置波特率
@@ -372,8 +364,8 @@ typedef struct hal_uart_ops {
    * @return 操作结果错误码
    */
   hal_uart_error_t (*set_baudrate)(hal_uart_context_t *ctx,
-                                    hal_uart_instance_t instance,
-                                    hal_uart_baudrate_t baudrate);
+                                   hal_uart_instance_t instance,
+                                   hal_uart_baudrate_t baudrate);
 
   /**
    * @brief 设置接收超时
@@ -383,8 +375,8 @@ typedef struct hal_uart_ops {
    * @return 操作结果错误码
    */
   hal_uart_error_t (*set_rx_timeout)(hal_uart_context_t *ctx,
-                                      hal_uart_instance_t instance,
-                                      uint32_t timeout);
+                                     hal_uart_instance_t instance,
+                                     uint32_t timeout);
 
   /**
    * @brief UART中断处理
@@ -398,7 +390,8 @@ typedef struct hal_uart_ops {
    * @param ctx UART 上下文指针
    * @param instance UART 实例
    */
-  void (*dma_irq_handler)(hal_uart_context_t *ctx, hal_uart_instance_t instance);
+  void (*dma_irq_handler)(hal_uart_context_t *ctx,
+                          hal_uart_instance_t instance);
 } hal_uart_ops_t;
 
 /* Exported constants --------------------------------------------------------*/
@@ -453,8 +446,7 @@ hal_uart_error_t hal_uart_deinit(hal_uart_context_t *ctx,
  */
 hal_uart_error_t hal_uart_send(hal_uart_context_t *ctx,
                                hal_uart_instance_t instance,
-                               const uint8_t *data,
-                               uint16_t size);
+                               const uint8_t *data, uint16_t size);
 
 /**
  * @brief 接收数据（阻塞）
@@ -465,8 +457,7 @@ hal_uart_error_t hal_uart_send(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_receive(hal_uart_context_t *ctx,
-                                  hal_uart_instance_t instance,
-                                  uint8_t *data,
+                                  hal_uart_instance_t instance, uint8_t *data,
                                   uint16_t size);
 
 /**
@@ -479,10 +470,9 @@ hal_uart_error_t hal_uart_receive(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_send_async(hal_uart_context_t *ctx,
-                                      hal_uart_instance_t instance,
-                                      const uint8_t *data,
-                                      uint16_t size,
-                                      uint16_t *sent_size);
+                                     hal_uart_instance_t instance,
+                                     const uint8_t *data, uint16_t size,
+                                     uint16_t *sent_size);
 
 /**
  * @brief 接收数据（异步）
@@ -494,10 +484,9 @@ hal_uart_error_t hal_uart_send_async(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_receive_async(hal_uart_context_t *ctx,
-                                         hal_uart_instance_t instance,
-                                         uint8_t *data,
-                                         uint16_t size,
-                                         uint16_t *received_size);
+                                        hal_uart_instance_t instance,
+                                        uint8_t *data, uint16_t size,
+                                        uint16_t *received_size);
 
 /**
  * @brief 发送数据（DMA）
@@ -508,9 +497,8 @@ hal_uart_error_t hal_uart_receive_async(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_send_dma(hal_uart_context_t *ctx,
-                                    hal_uart_instance_t instance,
-                                    const uint8_t *data,
-                                    uint32_t size);
+                                   hal_uart_instance_t instance,
+                                   const uint8_t *data, uint32_t size);
 
 /**
  * @brief 接收数据（DMA）
@@ -521,9 +509,8 @@ hal_uart_error_t hal_uart_send_dma(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_receive_dma(hal_uart_context_t *ctx,
-                                       hal_uart_instance_t instance,
-                                       uint8_t *data,
-                                       uint32_t size);
+                                      hal_uart_instance_t instance,
+                                      uint8_t *data, uint32_t size);
 
 /**
  * @brief 接收数据（DMA，空闲中断检测）
@@ -534,9 +521,8 @@ hal_uart_error_t hal_uart_receive_dma(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_receive_dma_to_idle(hal_uart_context_t *ctx,
-                                               hal_uart_instance_t instance,
-                                               uint8_t *data,
-                                               uint32_t size);
+                                              hal_uart_instance_t instance,
+                                              uint8_t *data, uint32_t size);
 
 /**
  * @brief 中止发送
@@ -545,7 +531,7 @@ hal_uart_error_t hal_uart_receive_dma_to_idle(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_abort_send(hal_uart_context_t *ctx,
-                                      hal_uart_instance_t instance);
+                                     hal_uart_instance_t instance);
 
 /**
  * @brief 中止接收
@@ -554,7 +540,7 @@ hal_uart_error_t hal_uart_abort_send(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_abort_receive(hal_uart_context_t *ctx,
-                                         hal_uart_instance_t instance);
+                                        hal_uart_instance_t instance);
 
 /**
  * @brief 中止DMA发送
@@ -563,7 +549,7 @@ hal_uart_error_t hal_uart_abort_receive(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_abort_send_dma(hal_uart_context_t *ctx,
-                                           hal_uart_instance_t instance);
+                                         hal_uart_instance_t instance);
 
 /**
  * @brief 中止DMA接收
@@ -572,7 +558,7 @@ hal_uart_error_t hal_uart_abort_send_dma(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_abort_receive_dma(hal_uart_context_t *ctx,
-                                              hal_uart_instance_t instance);
+                                            hal_uart_instance_t instance);
 
 /**
  * @brief 获取发送字节数
@@ -582,8 +568,8 @@ hal_uart_error_t hal_uart_abort_receive_dma(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_get_tx_count(hal_uart_context_t *ctx,
-                                        hal_uart_instance_t instance,
-                                        uint32_t *count);
+                                       hal_uart_instance_t instance,
+                                       uint32_t *count);
 
 /**
  * @brief 获取接收字节数
@@ -593,8 +579,8 @@ hal_uart_error_t hal_uart_get_tx_count(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_get_rx_count(hal_uart_context_t *ctx,
-                                        hal_uart_instance_t instance,
-                                        uint32_t *count);
+                                       hal_uart_instance_t instance,
+                                       uint32_t *count);
 
 /**
  * @brief 获取DMA状态
@@ -604,8 +590,8 @@ hal_uart_error_t hal_uart_get_rx_count(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_get_dma_status(hal_uart_context_t *ctx,
-                                           hal_uart_instance_t instance,
-                                           hal_uart_dma_status_t *status);
+                                         hal_uart_instance_t instance,
+                                         hal_uart_dma_status_t *status);
 
 /**
  * @brief 设置波特率
@@ -615,8 +601,8 @@ hal_uart_error_t hal_uart_get_dma_status(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_set_baudrate(hal_uart_context_t *ctx,
-                                         hal_uart_instance_t instance,
-                                         hal_uart_baudrate_t baudrate);
+                                       hal_uart_instance_t instance,
+                                       hal_uart_baudrate_t baudrate);
 
 /**
  * @brief 设置接收超时
@@ -626,22 +612,24 @@ hal_uart_error_t hal_uart_set_baudrate(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_set_rx_timeout(hal_uart_context_t *ctx,
-                                           hal_uart_instance_t instance,
-                                           uint32_t timeout);
+                                         hal_uart_instance_t instance,
+                                         uint32_t timeout);
 
 /**
  * @brief UART中断处理
  * @param ctx UART 上下文指针
  * @param instance UART 实例
  */
-void hal_uart_irq_handler(hal_uart_context_t *ctx, hal_uart_instance_t instance);
+void hal_uart_irq_handler(hal_uart_context_t *ctx,
+                          hal_uart_instance_t instance);
 
 /**
  * @brief DMA中断处理
  * @param ctx UART 上下文指针
  * @param instance UART 实例
  */
-void hal_uart_dma_irq_handler(hal_uart_context_t *ctx, hal_uart_instance_t instance);
+void hal_uart_dma_irq_handler(hal_uart_context_t *ctx,
+                              hal_uart_instance_t instance);
 
 /**
  * @brief 设置 UART 操作函数
@@ -670,7 +658,8 @@ hal_uart_error_t stm32_uart_init_context(hal_uart_context_t *ctx);
  * @param initialized 输出参数，返回初始化状态（true=已初始化，false=未初始化）
  * @return 操作结果错误码
  */
-hal_uart_error_t hal_uart_is_initialized(hal_uart_context_t *ctx, bool *initialized);
+hal_uart_error_t hal_uart_is_initialized(hal_uart_context_t *ctx,
+                                         bool *initialized);
 
 /**
  * @brief 获取当前UART配置
@@ -678,7 +667,8 @@ hal_uart_error_t hal_uart_is_initialized(hal_uart_context_t *ctx, bool *initiali
  * @param config 输出参数，返回当前配置
  * @return 操作结果错误码
  */
-hal_uart_error_t hal_uart_get_config(hal_uart_context_t *ctx, hal_uart_config_t *config);
+hal_uart_error_t hal_uart_get_config(hal_uart_context_t *ctx,
+                                     hal_uart_config_t *config);
 
 /**
  * @brief 更新UART配置
@@ -688,7 +678,8 @@ hal_uart_error_t hal_uart_get_config(hal_uart_context_t *ctx, hal_uart_config_t 
  *
  * @note 此函数会更新所有配置参数
  */
-hal_uart_error_t hal_uart_update_config(hal_uart_context_t *ctx, const hal_uart_config_t *config);
+hal_uart_error_t hal_uart_update_config(hal_uart_context_t *ctx,
+                                        const hal_uart_config_t *config);
 
 /**
  * @brief 设置数据位
@@ -698,8 +689,8 @@ hal_uart_error_t hal_uart_update_config(hal_uart_context_t *ctx, const hal_uart_
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_set_wordlength(hal_uart_context_t *ctx,
-                                          hal_uart_instance_t instance,
-                                          hal_uart_wordlength_t wordlength);
+                                         hal_uart_instance_t instance,
+                                         hal_uart_wordlength_t wordlength);
 
 /**
  * @brief 设置停止位
@@ -709,8 +700,8 @@ hal_uart_error_t hal_uart_set_wordlength(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_set_stopbits(hal_uart_context_t *ctx,
-                                        hal_uart_instance_t instance,
-                                        hal_uart_stopbits_t stopbits);
+                                       hal_uart_instance_t instance,
+                                       hal_uart_stopbits_t stopbits);
 
 /**
  * @brief 设置校验位
@@ -720,8 +711,8 @@ hal_uart_error_t hal_uart_set_stopbits(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_set_parity(hal_uart_context_t *ctx,
-                                      hal_uart_instance_t instance,
-                                      hal_uart_parity_t parity);
+                                     hal_uart_instance_t instance,
+                                     hal_uart_parity_t parity);
 
 /**
  * @brief 设置硬件流控制
@@ -731,8 +722,8 @@ hal_uart_error_t hal_uart_set_parity(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_set_hwcontrol(hal_uart_context_t *ctx,
-                                         hal_uart_instance_t instance,
-                                         hal_uart_hwcontrol_t hwcontrol);
+                                        hal_uart_instance_t instance,
+                                        hal_uart_hwcontrol_t hwcontrol);
 
 /**
  * @brief 设置工作模式
@@ -742,8 +733,8 @@ hal_uart_error_t hal_uart_set_hwcontrol(hal_uart_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_uart_error_t hal_uart_set_mode(hal_uart_context_t *ctx,
-                                    hal_uart_instance_t instance,
-                                    hal_uart_mode_t mode);
+                                   hal_uart_instance_t instance,
+                                   hal_uart_mode_t mode);
 
 /**
  * @brief 刷新发送缓冲区
@@ -751,7 +742,8 @@ hal_uart_error_t hal_uart_set_mode(hal_uart_context_t *ctx,
  * @param instance UART 实例
  * @return 操作结果错误码
  */
-hal_uart_error_t hal_uart_flush_tx(hal_uart_context_t *ctx, hal_uart_instance_t instance);
+hal_uart_error_t hal_uart_flush_tx(hal_uart_context_t *ctx,
+                                   hal_uart_instance_t instance);
 
 /**
  * @brief 刷新接收缓冲区
@@ -759,7 +751,8 @@ hal_uart_error_t hal_uart_flush_tx(hal_uart_context_t *ctx, hal_uart_instance_t 
  * @param instance UART 实例
  * @return 操作结果错误码
  */
-hal_uart_error_t hal_uart_flush_rx(hal_uart_context_t *ctx, hal_uart_instance_t instance);
+hal_uart_error_t hal_uart_flush_rx(hal_uart_context_t *ctx,
+                                   hal_uart_instance_t instance);
 
 #ifdef __cplusplus
 }

@@ -32,59 +32,59 @@ typedef enum {
  * @brief GPIO 引脚状态枚举
  */
 typedef enum __attribute__((packed)) {
-  HAL_GPIO_PIN_RESET = 0,       /**< 引脚低电平 */
-  HAL_GPIO_PIN_SET = 1,         /**< 引脚高电平 */
+  HAL_GPIO_PIN_RESET = 0, /**< 引脚低电平 */
+  HAL_GPIO_PIN_SET = 1,   /**< 引脚高电平 */
 } hal_gpio_pin_state_t;
 
 /**
  * @brief GPIO 工作模式枚举
  */
 typedef enum __attribute__((packed)) {
-  HAL_GPIO_MODE_INPUT = 0,              /**< 输入模式 */
-  HAL_GPIO_MODE_OUTPUT_PP,               /**< 推挽输出模式 */
-  HAL_GPIO_MODE_OUTPUT_OD,               /**< 开漏输出模式 */
-  HAL_GPIO_MODE_AF_PP,                   /**< 推挽复用功能模式 */
-  HAL_GPIO_MODE_AF_OD,                   /**< 开漏复用功能模式 */
-  HAL_GPIO_MODE_ANALOG,                  /**< 模拟模式 */
-  HAL_GPIO_MODE_IT_RISING,               /**< 上升沿中断触发 */
-  HAL_GPIO_MODE_IT_FALLING,              /**< 下降沿中断触发 */
-  HAL_GPIO_MODE_IT_RISING_FALLING,       /**< 双边沿中断触发 */
-  HAL_GPIO_MODE_EVT_RISING,              /**< 上升沿事件触发 */
-  HAL_GPIO_MODE_EVT_FALLING,             /**< 下降沿事件触发 */
-  HAL_GPIO_MODE_EVT_RISING_FALLING,      /**< 双边沿事件触发 */
+  HAL_GPIO_MODE_INPUT = 0,          /**< 输入模式 */
+  HAL_GPIO_MODE_OUTPUT_PP,          /**< 推挽输出模式 */
+  HAL_GPIO_MODE_OUTPUT_OD,          /**< 开漏输出模式 */
+  HAL_GPIO_MODE_AF_PP,              /**< 推挽复用功能模式 */
+  HAL_GPIO_MODE_AF_OD,              /**< 开漏复用功能模式 */
+  HAL_GPIO_MODE_ANALOG,             /**< 模拟模式 */
+  HAL_GPIO_MODE_IT_RISING,          /**< 上升沿中断触发 */
+  HAL_GPIO_MODE_IT_FALLING,         /**< 下降沿中断触发 */
+  HAL_GPIO_MODE_IT_RISING_FALLING,  /**< 双边沿中断触发 */
+  HAL_GPIO_MODE_EVT_RISING,         /**< 上升沿事件触发 */
+  HAL_GPIO_MODE_EVT_FALLING,        /**< 下降沿事件触发 */
+  HAL_GPIO_MODE_EVT_RISING_FALLING, /**< 双边沿事件触发 */
 } hal_gpio_mode_t;
 
 /**
  * @brief GPIO 端口枚举
  */
 typedef enum __attribute__((packed)) {
-  HAL_GPIO_PORT_A = 0,       /**< GPIOA 端口 */
-  HAL_GPIO_PORT_B,           /**< GPIOB 端口 */
-  HAL_GPIO_PORT_C,           /**< GPIOC 端口 */
-  HAL_GPIO_PORT_D,           /**< GPIOD 端口 */
-  HAL_GPIO_PORT_E,           /**< GPIOE 端口 */
-  HAL_GPIO_PORT_F,           /**< GPIOF 端口 */
-  HAL_GPIO_PORT_G,           /**< GPIOG 端口 */
-  HAL_GPIO_PORT_LEN,         /**< 端口数量 */
+  HAL_GPIO_PORT_A = 0, /**< GPIOA 端口 */
+  HAL_GPIO_PORT_B,     /**< GPIOB 端口 */
+  HAL_GPIO_PORT_C,     /**< GPIOC 端口 */
+  HAL_GPIO_PORT_D,     /**< GPIOD 端口 */
+  HAL_GPIO_PORT_E,     /**< GPIOE 端口 */
+  HAL_GPIO_PORT_F,     /**< GPIOF 端口 */
+  HAL_GPIO_PORT_G,     /**< GPIOG 端口 */
+  HAL_GPIO_PORT_LEN,   /**< 端口数量 */
 } gpio_port_t;
 
 /**
  * @brief GPIO 上下拉配置枚举
  */
 typedef enum __attribute__((packed)) {
-  HAL_GPIO_PULL_NONE = 0,    /**< 无上下拉 */
-  HAL_GPIO_PULL_UP,           /**< 上拉 */
-  HAL_GPIO_PULL_DOWN,         /**< 下拉 */
+  HAL_GPIO_PULL_NONE = 0, /**< 无上下拉 */
+  HAL_GPIO_PULL_UP,       /**< 上拉 */
+  HAL_GPIO_PULL_DOWN,     /**< 下拉 */
 } hal_gpio_pull_t;
 
 /**
  * @brief GPIO 速度配置枚举
  */
 typedef enum __attribute__((packed)) {
-  HAL_GPIO_SPEED_FREQ_LOW = 0,       /**< 低速 */
-  HAL_GPIO_SPEED_FREQ_MEDIUM,         /**< 中速 */
-  HAL_GPIO_SPEED_FREQ_HIGH,           /**< 高速 */
-  HAL_GPIO_SPEED_FREQ_VERY_HIGH,      /**< 超高速 */
+  HAL_GPIO_SPEED_FREQ_LOW = 0,   /**< 低速 */
+  HAL_GPIO_SPEED_FREQ_MEDIUM,    /**< 中速 */
+  HAL_GPIO_SPEED_FREQ_HIGH,      /**< 高速 */
+  HAL_GPIO_SPEED_FREQ_VERY_HIGH, /**< 超高速 */
 } hal_gpio_speed_t;
 
 /**
@@ -146,7 +146,7 @@ typedef struct {
   gpio_port_t port;                   /**< GPIO 端口 */
   hal_gpio_pin_t pin;                 /**< GPIO 引脚号 */
   hal_gpio_mode_t mode;               /**< GPIO 工作模式 */
-  hal_gpio_pin_state_t default_state;  /**< 默认引脚状态（仅输出模式有效） */
+  hal_gpio_pin_state_t default_state; /**< 默认引脚状态（仅输出模式有效） */
   hal_gpio_pull_t pull;               /**< 上下拉配置 */
   hal_gpio_speed_t speed;             /**< 输出速度 */
   hal_gpio_af_t alternate;            /**< 复用功能选择 */
@@ -173,10 +173,10 @@ typedef void (*hal_gpio_callback_t)(hal_gpio_context_t *ctx, uint8_t port,
  * 用于保存 GPIO 实例的状态信息，支持多实例操作。
  */
 struct hal_gpio_context {
-  const struct hal_gpio_ops *ops;     /**< 平台特定的操作函数指针 */
-  volatile uint8_t initialized;        /**< 初始化标志（0=未初始化，1=已初始化） */
-  hal_gpio_callback_t callback;         /**< 中断回调函数指针 */
-  void *user_data;                      /**< 用户自定义数据 */
+  const struct hal_gpio_ops *ops; /**< 平台特定的操作函数指针 */
+  volatile uint8_t initialized; /**< 初始化标志（0=未初始化，1=已初始化） */
+  hal_gpio_callback_t callback; /**< 中断回调函数指针 */
+  void *user_data;              /**< 用户自定义数据 */
 };
 
 /**
@@ -252,7 +252,7 @@ typedef struct hal_gpio_ops {
 } hal_gpio_ops_t;
 
 /* Exported constants --------------------------------------------------------*/
-#define HAL_GPIO_PIN_MAX_VALUE 15   /**< 最大引脚号 */
+#define HAL_GPIO_PIN_MAX_VALUE 15 /**< 最大引脚号 */
 
 /* Exported macro ------------------------------------------------------------*/
 /**
