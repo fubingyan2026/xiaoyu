@@ -25,16 +25,16 @@
 #define CAN_COMM_PRINTF(...)  // DEBUG_INFO(__VA_ARGS__)
 
 /* ==================== Public ==================== */
-can_comm_rx_t *g_can_comm_rx_list = NULL; /**< CAN接收实例链表头指针 */
-can_comm_tx_t *g_can_comm_tx_list = NULL; /**< CAN发送实例链表头指针 */
+can_comm_rx_t* g_can_comm_rx_list = NULL; /**< CAN接收实例链表头指针 */
+can_comm_tx_t* g_can_comm_tx_list = NULL; /**< CAN发送实例链表头指针 */
 can_comm_stats_t g_can_stats = {0};       /**< CAN通信统计信息 */
 static const uint8_t protocol_len =
     sizeof(can_comm_protocol_head_t) + sizeof(can_comm_protocol_end_t);
 static const uint8_t protocol_head_len = sizeof(can_comm_protocol_head_t);
 
 /* ==================== Private ==================== */
-static uint8_t validate_can_rx_config(const can_rx_config_t *config);
-static uint8_t validate_can_tx_config(const can_tx_config_t *config);
+static uint8_t validate_can_rx_config(const can_rx_config_t* config);
+static uint8_t validate_can_tx_config(const can_tx_config_t* config);
 static uint8_t floor_to_std(uint8_t input_value);
 
 /**
@@ -43,7 +43,7 @@ static uint8_t floor_to_std(uint8_t input_value);
  * @return 有效返回1，无效返回0
  * @note 检查配置指针、名称和数据长度的有效性
  */
-static uint8_t validate_can_rx_config(const can_rx_config_t *config) {
+static uint8_t validate_can_rx_config(const can_rx_config_t* config) {
   /* 检查配置指针是否为空 */
   if (config == NULL) {
     CAN_COMM_PRINTF("CAN RX config is NULL\n");
@@ -74,7 +74,7 @@ static uint8_t validate_can_rx_config(const can_rx_config_t *config) {
  * @return 有效返回1，无效返回0
  * @note 检查配置指针、名称和数据长度的有效性
  */
-static uint8_t validate_can_tx_config(const can_tx_config_t *config) {
+static uint8_t validate_can_tx_config(const can_tx_config_t* config) {
   /* 检查配置指针是否为空 */
   if (config == NULL) {
     CAN_COMM_PRINTF("CAN TX config is NULL\n");
@@ -118,17 +118,17 @@ static uint8_t floor_to_std(const uint8_t input_value) {
  * @return 成功返回CAN接收实例指针，失败返回NULL
  * @note 创建新地接收实例并初始化所有相关资源
  */
-can_comm_rx_t *CANRxRegister(const can_rx_config_t *config) {
+can_comm_rx_t* CANRxRegister(const can_rx_config_t* config) {
   /* 验证配置有效性 */
   if (!validate_can_rx_config(config)) return NULL;
   /* 检查是否已存在同名实例 */
-  can_comm_rx_t *existing = CANGetRxInstance(config->name);
+  can_comm_rx_t* existing = CANGetRxInstance(config->name);
   if (existing != NULL) {
     CAN_COMM_PRINTF("CAN RX instance %s already exists\n", config->name);
     return existing; /* 返回已存在的实例 */
   }
   /* 创建新实例内存 */
-  can_comm_rx_t *new_instance = __malloc(sizeof(can_comm_rx_t));
+  can_comm_rx_t* new_instance = __malloc(sizeof(can_comm_rx_t));
   if (new_instance == NULL) {
     CAN_COMM_PRINTF("Failed to allocate memory for CAN RX instance %s\n",
                     config->name);
@@ -193,18 +193,17 @@ can_comm_rx_t *CANRxRegister(const can_rx_config_t *config) {
  * @return 成功返回CAN发送实例指针，失败返回NULL
  * @note 创建新地发送实例并初始化所有相关资源
  */
-can_comm_tx_t *CANTxRegister(const can_tx_config_t *config) {
+can_comm_tx_t* CANTxRegister(const can_tx_config_t* config) {
   /* 验证配置有效性 */
   if (!validate_can_tx_config(config)) return NULL;
   /* 检查是否已存在同名实例 */
-  can_comm_tx_t *existing = CANGetTxInstance(config->name);
+  can_comm_tx_t* existing = CANGetTxInstance(config->name);
   if (existing != NULL) {
     CAN_COMM_PRINTF("CAN TX instance %s already exists\n", config->name);
     return existing; /* 返回已存在的实例 */
   }
   /* 创建新实例内存 */
-  can_comm_tx_t *new_instance =
-      (can_comm_tx_t *)__malloc(sizeof(can_comm_tx_t));
+  can_comm_tx_t* new_instance = (can_comm_tx_t*)__malloc(sizeof(can_comm_tx_t));
   if (new_instance == NULL) {
     CAN_COMM_PRINTF("Failed to allocate memory for CAN TX instance %s\n",
                     config->name);
@@ -245,11 +244,11 @@ can_comm_tx_t *CANTxRegister(const can_tx_config_t *config) {
  * @param instance 要注销的CAN接收实例指针
  * @note 释放实例占用的所有资源并从链表中移除
  */
-void CANCommUnregisterRx(can_comm_rx_t *instance) {
+void CANCommUnregisterRx(can_comm_rx_t* instance) {
   if (instance == NULL) {
     return;
   }
-  can_comm_rx_t **current = &g_can_comm_rx_list;
+  can_comm_rx_t** current = &g_can_comm_rx_list;
   while (*current != NULL) {
     if (*current == instance) {
       *current = instance->next;
@@ -275,11 +274,11 @@ void CANCommUnregisterRx(can_comm_rx_t *instance) {
  * @param instance 要注销的CAN发送实例指针
  * @note 释放实例占用的所有资源并从链表中移除
  */
-void CANCommUnregisterTx(can_comm_tx_t *instance) {
+void CANCommUnregisterTx(can_comm_tx_t* instance) {
   if (instance == NULL) {
     return;
   }
-  can_comm_tx_t **current = &g_can_comm_tx_list;
+  can_comm_tx_t** current = &g_can_comm_tx_list;
   while (*current != NULL) {
     if (*current == instance) {
       *current = instance->next;
@@ -322,7 +321,7 @@ void CANCommUnregisterAll(void) {
  *       3. 如果绑定了指针，直接拷贝，跳过 PubSub
  */
 void CANCommGetDataTransmit_V2(void) {
-  can_comm_rx_t *current = g_can_comm_rx_list;
+  can_comm_rx_t* current = g_can_comm_rx_list;
 
   // 在栈上开辟一个临时缓冲区，大小为最大包长 (64 + 7 协议头尾)
   // STM32 栈访问速度极快
@@ -348,8 +347,7 @@ void CANCommGetDataTransmit_V2(void) {
       kfifo_peek(current->kfifo_ptr, temp_buffer, total_packet_len, 0);
 
       // 3. 快速校验帧头 (Magic Word 'S' 和 长度)
-      can_comm_protocol_head_t *p_head =
-          (can_comm_protocol_head_t *)temp_buffer;
+      can_comm_protocol_head_t* p_head = (can_comm_protocol_head_t*)temp_buffer;
 
       if (p_head->start != 'S' ||
           p_head->data_length != current->config.rx_data_len) {
@@ -391,13 +389,13 @@ void CANCommGetDataTransmit_V2(void) {
       // [优化点4] 极速分发：如果绑定了直接指针，直接 Memcpy
       if (current->direct_binding_ptr != NULL) {
         // 指针运算：跳过头部，只拷贝 Payload
-        __memcpy((void *)current->direct_binding_ptr, temp_buffer + header_len,
+        __memcpy((void*)current->direct_binding_ptr, temp_buffer + header_len,
                  current->config.rx_data_len);
       }
     }
     if (current == GetCanNMRxInstance()) {
       /* NM消息 - 调用NM模块处理 */
-      CANNmProcessMessage((uint8_t *)CANRxBindData(current),
+      CANNmProcessMessage((uint8_t*)CANRxBindData(current),
                           current->config.rx_data_len);
       current = current->next;
       continue;
@@ -414,7 +412,7 @@ void CANCommGetDataTransmit_V2(void) {
  *       4. 使用栈内存，速度更快
  */
 void CANCommSendDataPackage_V2(void) {
-  can_comm_tx_t *current = g_can_comm_tx_list;
+  can_comm_tx_t* current = g_can_comm_tx_list;
 
   // 1. [优化] 统一获取时间戳，保证本次循环所有电机时间同步，且减少函数调用
   uint16_t current_timestamp = (uint16_t)(millis() & 0xFFFF);
@@ -449,8 +447,7 @@ void CANCommSendDataPackage_V2(void) {
 
     if (has_new_data) {
       // 5. 填充协议头 (使用指针转换更直观)
-      can_comm_protocol_head_t *p_head =
-          (can_comm_protocol_head_t *)temp_buffer;
+      can_comm_protocol_head_t* p_head = (can_comm_protocol_head_t*)temp_buffer;
       p_head->start = 'S';
       p_head->data_length = data_len;
       p_head->sequence = current->sequence_counter++;
@@ -458,7 +455,7 @@ void CANCommSendDataPackage_V2(void) {
 
       // 6. 填充 CRC 和 协议尾
       // 注意：这里继续使用 temp_buffer 索引
-      uint8_t *p_crc =
+      uint8_t* p_crc =
           &temp_buffer[sizeof(can_comm_protocol_head_t) + data_len];
       *p_crc = get_CRC8_check_sum(
           &temp_buffer[sizeof(can_comm_protocol_head_t)], data_len, 0);
@@ -481,7 +478,7 @@ void CANCommSendDataPackage_V2(void) {
  *  让硬件在后台自己发送，CPU 去做别的事
  */
 void CANCommSendFlush(void) {
-  const can_comm_tx_t *current = g_can_comm_tx_list;
+  const can_comm_tx_t* current = g_can_comm_tx_list;
   const uint8_t send_one_frame_len = floor_to_std(CAN_ONE_FRAME_SEND_LEN);
   /* 遍历所有发送实例 */
   while (current != NULL) {
@@ -597,14 +594,14 @@ uint8_t CANCommGetBusLoad(void) {
   return load;
 }
 
-void *CANRxBindData(can_comm_rx_t *rx) {
+void* CANRxBindData(can_comm_rx_t* rx) {
   if (rx->direct_binding_ptr) {
     return rx->direct_binding_ptr;
   }
   return NULL;
 }
 
-void *CANTxBindData(can_comm_tx_t *tx) {
+void* CANTxBindData(can_comm_tx_t* tx) {
   if (tx->direct_tx_data_ptr) {
     tx->direct_tx_ready = 1;
     return tx->direct_tx_data_ptr;
@@ -617,9 +614,9 @@ void *CANTxBindData(can_comm_tx_t *tx) {
  * @param name 实例名称
  * @return 找到返回实例指针，未找到返回NULL
  */
-can_comm_tx_t *CANGetTxInstance(const char *name) {
+can_comm_tx_t* CANGetTxInstance(const char* name) {
   if (name == NULL) return NULL;
-  can_comm_tx_t *current = g_can_comm_tx_list;
+  can_comm_tx_t* current = g_can_comm_tx_list;
   while (current != NULL) {
     if (__strcmp(current->config.name, name) == 0) {
       return current;
@@ -634,9 +631,9 @@ can_comm_tx_t *CANGetTxInstance(const char *name) {
  * @param name 实例名称
  * @return 找到返回实例指针，未找到返回NULL
  */
-can_comm_rx_t *CANGetRxInstance(const char *name) {
+can_comm_rx_t* CANGetRxInstance(const char* name) {
   if (name == NULL) return NULL;
-  can_comm_rx_t *current = g_can_comm_rx_list;
+  can_comm_rx_t* current = g_can_comm_rx_list;
   while (current != NULL) {
     if (__strcmp(current->config.name, name) == 0) {
       return current;
@@ -652,7 +649,7 @@ can_comm_rx_t *CANGetRxInstance(const char *name) {
  */
 uint32_t CANCommGetRxCount(void) {
   uint32_t count = 0;
-  const can_comm_rx_t *current = g_can_comm_rx_list;
+  const can_comm_rx_t* current = g_can_comm_rx_list;
   while (current != NULL) {
     count++;
     current = current->next;
@@ -666,7 +663,7 @@ uint32_t CANCommGetRxCount(void) {
  */
 uint32_t CANCommGetTxCount(void) {
   uint32_t count = 0;
-  const can_comm_tx_t *current = g_can_comm_tx_list;
+  const can_comm_tx_t* current = g_can_comm_tx_list;
   while (current != NULL) {
     count++;
     current = current->next;
@@ -678,9 +675,7 @@ uint32_t CANCommGetTxCount(void) {
  * @brief 获取CAN通信统计信息
  * @return 统计信息结构体指针
  */
-can_comm_stats_t *CANCommGetStats(void) {
-  return &g_can_stats;
-}
+can_comm_stats_t* CANCommGetStats(void) { return &g_can_stats; }
 
 /**
  * @brief 重置统计信息
@@ -695,8 +690,8 @@ void CANCommResetStats(void) {
  * @param rx_name 接收实例名称
  * @return 序列号错误计数
  */
-uint32_t CANCommGetSequenceErrors(const char *rx_name) {
-  const can_comm_rx_t *rx_instance = CANGetRxInstance(rx_name);
+uint32_t CANCommGetSequenceErrors(const char* rx_name) {
+  const can_comm_rx_t* rx_instance = CANGetRxInstance(rx_name);
   if (rx_instance == NULL) return 0;
   return rx_instance->sequence_errors;
 }

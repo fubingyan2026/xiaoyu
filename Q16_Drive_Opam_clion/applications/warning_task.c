@@ -10,13 +10,14 @@
  */
 
 #include "warning_task.h"
+
+#include "WS2812_SPI.h"
 #include "daemon/daemon.h"
 #include "key_menu.h"
 #include "ledshow/led.h"
-#include "WS2812_SPI.h"
 
-static daemon_t *daemon_warning;
-static led_handle_t *led_instance;
+static daemon_t* daemon_warning;
+static led_handle_t* led_instance;
 
 #define LED_NAME_TAG "LED0"
 
@@ -29,10 +30,9 @@ static led_handle_t *led_instance;
  * @param None
  * @return None
  */
-void warning_Init(void)
-{
-    daemon_warning = NULL;
-    led_instance = NULL;
+void warning_Init(void) {
+  daemon_warning = NULL;
+  led_instance = NULL;
 }
 
 /**
@@ -45,59 +45,48 @@ void warning_Init(void)
  * @param  None
  * @return None
  */
-void warning_task(void)
-{
-    static uint32_t error_code, last_error_code;
-    error_code = 0;
-    uint8_t err_bits = 0;
-    // 发现错误
-    if (daemon_warning == NULL)
-    {
-        daemon_warning = DaemonGetMasterPointer();
-    }
+void warning_task(void) {
+  static uint32_t error_code, last_error_code;
+  error_code = 0;
+  uint8_t err_bits = 0;
+  // 发现错误
+  if (daemon_warning == NULL) {
+    daemon_warning = DaemonGetMasterPointer();
+  }
 
-    if (led_instance == NULL)
-    {
-        led_instance = LedGetInstance(LED_NAME_TAG);
-    }
+  if (led_instance == NULL) {
+    led_instance = LedGetInstance(LED_NAME_TAG);
+  }
 
-    const daemon_t *this = daemon_warning;
-    while (this->next_daemon_lists)
-    {
-        this = this->next_daemon_lists;
-        if (!DaemonIsOnline(this))
-        {
-            if (err_bits > 31)
-            {
-                err_bits = 31;
-            }
-            error_code |= (1 << err_bits);
-        }
-        err_bits++;
+  const daemon_t* this = daemon_warning;
+  while (this->next_daemon_lists) {
+    this = this->next_daemon_lists;
+    if (!DaemonIsOnline(this)) {
+      if (err_bits > 31) {
+        err_bits = 31;
+      }
+      error_code |= (1 << err_bits);
     }
+    err_bits++;
+  }
 
-    static key_fsm_state_e last_state = KEY_FSM_STATE_NONE;
-    if (last_state != key_func_get_state())
-    {
-        last_state = key_func_get_state();
-        if (last_state == KEY_FSM_STATE_NONE)
-        {
-            goto reset_code;
-        }
+  static key_fsm_state_e last_state = KEY_FSM_STATE_NONE;
+  if (last_state != key_func_get_state()) {
+    last_state = key_func_get_state();
+    if (last_state == KEY_FSM_STATE_NONE) {
+      goto reset_code;
     }
+  }
 
-    if (last_error_code != error_code)
+  if (last_error_code != error_code) {
+    // 有错误.
+    last_error_code = error_code;
+  reset_code:
+    if (last_error_code) {
+      WS2812_Mode_Set(WS2812_MODE_ERROR_CODE, last_error_code);
+    } else  // 没有错误.
     {
-        // 有错误.
-        last_error_code = error_code;
-    reset_code:
-        if (last_error_code)
-        {
-            WS2812_Mode_Set(WS2812_MODE_ERROR_CODE, last_error_code);
-        }
-        else // 没有错误.
-        {
-            WS2812_Mode_Set(WS2812_MODE_FLOW, 0);
-        }
+      WS2812_Mode_Set(WS2812_MODE_FLOW, 0);
     }
+  }
 }

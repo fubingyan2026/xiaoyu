@@ -19,8 +19,8 @@
  * @note 通常不需要直接调用此函数，使用平台特定的初始化函数即可。
  *       此函数主要用于多平台切换或单元测试场景。
  */
-hal_tim_pwm_error_t hal_tim_pwm_set_ops(hal_tim_pwm_context_t *ctx,
-                                        const hal_tim_pwm_ops_t *ops) {
+hal_tim_pwm_error_t hal_tim_pwm_set_ops(hal_tim_pwm_context_t* ctx,
+                                        const hal_tim_pwm_ops_t* ops) {
   if (ctx == NULL || ops == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -38,8 +38,8 @@ hal_tim_pwm_error_t hal_tim_pwm_set_ops(hal_tim_pwm_context_t *ctx,
  * @param config TIM PWM 配置结构体指针
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_init(hal_tim_pwm_context_t *ctx,
-                                     const hal_tim_pwm_config_t *config) {
+hal_tim_pwm_error_t hal_tim_pwm_init(hal_tim_pwm_context_t* ctx,
+                                     const hal_tim_pwm_config_t* config) {
   if (ctx == NULL || config == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -68,7 +68,7 @@ hal_tim_pwm_error_t hal_tim_pwm_init(hal_tim_pwm_context_t *ctx,
  * @param channel PWM通道
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_deinit(hal_tim_pwm_context_t *ctx,
+hal_tim_pwm_error_t hal_tim_pwm_deinit(hal_tim_pwm_context_t* ctx,
                                        hal_tim_pwm_instance_t instance,
                                        hal_tim_pwm_channel_t channel) {
   if (ctx == NULL) {
@@ -99,7 +99,7 @@ hal_tim_pwm_error_t hal_tim_pwm_deinit(hal_tim_pwm_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_gpio_alternate(
-    hal_tim_pwm_context_t *ctx, const hal_tim_pwm_gpio_config_t *gpio_config) {
+    hal_tim_pwm_context_t* ctx, const hal_tim_pwm_gpio_config_t* gpio_config) {
   if (ctx == NULL || gpio_config == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -118,7 +118,7 @@ hal_tim_pwm_error_t hal_tim_pwm_gpio_alternate(
  * @param channel PWM通道
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_start(hal_tim_pwm_context_t *ctx,
+hal_tim_pwm_error_t hal_tim_pwm_start(hal_tim_pwm_context_t* ctx,
                                       hal_tim_pwm_instance_t instance,
                                       hal_tim_pwm_channel_t channel) {
   if (ctx == NULL) {
@@ -151,7 +151,7 @@ hal_tim_pwm_error_t hal_tim_pwm_start(hal_tim_pwm_context_t *ctx,
  * @param channel PWM通道
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_stop(hal_tim_pwm_context_t *ctx,
+hal_tim_pwm_error_t hal_tim_pwm_stop(hal_tim_pwm_context_t* ctx,
                                      hal_tim_pwm_instance_t instance,
                                      hal_tim_pwm_channel_t channel) {
   if (ctx == NULL) {
@@ -185,7 +185,7 @@ hal_tim_pwm_error_t hal_tim_pwm_stop(hal_tim_pwm_context_t *ctx,
  * @param duty_cycle 占空比(0-10000对应0%-100%
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_set_duty_cycle(hal_tim_pwm_context_t *ctx,
+hal_tim_pwm_error_t hal_tim_pwm_set_duty_cycle(hal_tim_pwm_context_t* ctx,
                                                hal_tim_pwm_instance_t instance,
                                                hal_tim_pwm_channel_t channel,
                                                uint32_t duty_cycle) {
@@ -212,7 +212,7 @@ hal_tim_pwm_error_t hal_tim_pwm_set_duty_cycle(hal_tim_pwm_context_t *ctx,
  * @param frequency PWM频率(Hz)
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_set_frequency(hal_tim_pwm_context_t *ctx,
+hal_tim_pwm_error_t hal_tim_pwm_set_frequency(hal_tim_pwm_context_t* ctx,
                                               hal_tim_pwm_instance_t instance,
                                               hal_tim_pwm_channel_t channel,
                                               uint32_t frequency) {
@@ -239,10 +239,10 @@ hal_tim_pwm_error_t hal_tim_pwm_set_frequency(hal_tim_pwm_context_t *ctx,
  * @param duty_cycle 输出参数，返回占空比(0-10000对应0%-100%
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_get_duty_cycle(hal_tim_pwm_context_t *ctx,
+hal_tim_pwm_error_t hal_tim_pwm_get_duty_cycle(hal_tim_pwm_context_t* ctx,
                                                hal_tim_pwm_instance_t instance,
                                                hal_tim_pwm_channel_t channel,
-                                               uint32_t *duty_cycle) {
+                                               uint32_t* duty_cycle) {
   if (ctx == NULL || duty_cycle == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -266,10 +266,10 @@ hal_tim_pwm_error_t hal_tim_pwm_get_duty_cycle(hal_tim_pwm_context_t *ctx,
  * @param frequency 输出参数，返回PWM频率(Hz)
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_get_frequency(hal_tim_pwm_context_t *ctx,
+hal_tim_pwm_error_t hal_tim_pwm_get_frequency(hal_tim_pwm_context_t* ctx,
                                               hal_tim_pwm_instance_t instance,
                                               hal_tim_pwm_channel_t channel,
-                                              uint32_t *frequency) {
+                                              uint32_t* frequency) {
   if (ctx == NULL || frequency == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -293,7 +293,7 @@ hal_tim_pwm_error_t hal_tim_pwm_get_frequency(hal_tim_pwm_context_t *ctx,
  * @param polarity PWM极性
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_set_polarity(hal_tim_pwm_context_t *ctx,
+hal_tim_pwm_error_t hal_tim_pwm_set_polarity(hal_tim_pwm_context_t* ctx,
                                              hal_tim_pwm_instance_t instance,
                                              hal_tim_pwm_channel_t channel,
                                              hal_tim_pwm_polarity_t polarity) {
@@ -329,10 +329,10 @@ hal_tim_pwm_error_t hal_tim_pwm_set_polarity(hal_tim_pwm_context_t *ctx,
  * @param polarity 输出参数，返回PWM极性
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_get_polarity(hal_tim_pwm_context_t *ctx,
+hal_tim_pwm_error_t hal_tim_pwm_get_polarity(hal_tim_pwm_context_t* ctx,
                                              hal_tim_pwm_instance_t instance,
                                              hal_tim_pwm_channel_t channel,
-                                             hal_tim_pwm_polarity_t *polarity) {
+                                             hal_tim_pwm_polarity_t* polarity) {
   if (ctx == NULL || polarity == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -354,8 +354,8 @@ hal_tim_pwm_error_t hal_tim_pwm_get_polarity(hal_tim_pwm_context_t *ctx,
  * @param running 输出参数，返回PWM是否正在运行
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_is_running(hal_tim_pwm_context_t *ctx,
-                                           bool *running) {
+hal_tim_pwm_error_t hal_tim_pwm_is_running(hal_tim_pwm_context_t* ctx,
+                                           bool* running) {
   if (ctx == NULL || running == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -371,8 +371,8 @@ hal_tim_pwm_error_t hal_tim_pwm_is_running(hal_tim_pwm_context_t *ctx,
  * @param initialized 输出参数，返回PWM是否初始化
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_is_initialized(hal_tim_pwm_context_t *ctx,
-                                               bool *initialized) {
+hal_tim_pwm_error_t hal_tim_pwm_is_initialized(hal_tim_pwm_context_t* ctx,
+                                               bool* initialized) {
   if (ctx == NULL || initialized == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -388,8 +388,8 @@ hal_tim_pwm_error_t hal_tim_pwm_is_initialized(hal_tim_pwm_context_t *ctx,
  * @param config 输出参数，返回PWM配置结构体指针
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t hal_tim_pwm_get_config(hal_tim_pwm_context_t *ctx,
-                                           hal_tim_pwm_config_t *config) {
+hal_tim_pwm_error_t hal_tim_pwm_get_config(hal_tim_pwm_context_t* ctx,
+                                           hal_tim_pwm_config_t* config) {
   if (ctx == NULL || config == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -412,7 +412,7 @@ hal_tim_pwm_error_t hal_tim_pwm_get_config(hal_tim_pwm_context_t *ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_update_config(
-    hal_tim_pwm_context_t *ctx, const hal_tim_pwm_config_t *config) {
+    hal_tim_pwm_context_t* ctx, const hal_tim_pwm_config_t* config) {
   if (ctx == NULL || config == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }

@@ -5,16 +5,14 @@
 
 #define CAN_SLIVER_COUNTS 4
 
-typedef struct __attribute__((packed))
-{
-    int16_t velocity[CAN_SLIVER_COUNTS];
-    uint8_t reserved;
+typedef struct __attribute__((packed)) {
+  int16_t velocity[CAN_SLIVER_COUNTS];
+  uint8_t reserved;
 } can_get_master_data_t;
 
-typedef struct __attribute__((packed))
-{
-    float velocity_rpm;
-    uint8_t reserved;
+typedef struct __attribute__((packed)) {
+  float velocity_rpm;
+  uint8_t reserved;
 } can_send_sliver_data_t;
 
 void FDCAN1_Config(void);

@@ -13,6 +13,7 @@
  */
 
 #include "key_menu.h"
+
 #include "CAN_Server.h"
 #include "bsp_delay.h"
 #include "debug/debug.h"
@@ -335,8 +336,7 @@ static void on_led_gpio_edge_change(led_handle_t* instance,
  * @brief LED 状态变化回调
  * @details 在 NONE 状态下循环显示 can_save_id
  */
-static void on_led_state_change(led_handle_t* instance,
-                                led_state_t new_state,
+static void on_led_state_change(led_handle_t* instance, led_state_t new_state,
                                 void* user_data) {
   (void)instance;
   (void)user_data;
@@ -354,8 +354,7 @@ static void on_led_state_change(led_handle_t* instance,
 /**
  * @brief 配置LED闪烁参数
  */
-static inline void configure_led_blink(uint16_t interval_ms,
-                                       uint16_t wait_ms,
+static inline void configure_led_blink(uint16_t interval_ms, uint16_t wait_ms,
                                        uint16_t counts) {
   LedSetBlinkInterval(s_led_instance, interval_ms, wait_ms, counts);
   LedSetState(s_led_instance, LED_STATE_BLINK_CODE);
@@ -598,6 +597,4 @@ key_fsm_state_e key_func_get_state(void) {
 /**
  * @brief 获取当前保存的 CAN ID
  */
-uint32_t key_menu_get_can_id(void) {
-  return can_save_id;
-}
+uint32_t key_menu_get_can_id(void) { return can_save_id; }

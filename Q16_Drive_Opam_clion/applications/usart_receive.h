@@ -28,13 +28,13 @@
  * @brief UART1接收FIFO缓冲区
  * @note 由usart_receive模块管理,仅供只读访问
  */
-extern kfifo_t *fifo_usart1_rx;
+extern kfifo_t* fifo_usart1_rx;
 
 /**
  * @brief UART1发送FIFO缓冲区
  * @note 由usart_receive模块管理,仅供只读访问
  */
-extern kfifo_t *fifo_usart1_tx;
+extern kfifo_t* fifo_usart1_tx;
 
 /*============================================================================
  * 函数声明

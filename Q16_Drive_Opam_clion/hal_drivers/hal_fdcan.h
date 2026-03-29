@@ -83,7 +83,7 @@ typedef struct {
   hal_fdcan_instance_t instance; /**< FDCAN实例 */
   hal_fdcan_mode_t mode;         /**< 工作模式 */
   hal_fdcan_baudrate_t baudrate; /**< 波特率配置 */
-  hal_fdcan_filter_t *filters;   /**< 过滤器数组 */
+  hal_fdcan_filter_t* filters;   /**< 过滤器数组 */
   uint8_t filter_count;          /**< 过滤器数量 */
   uint32_t rx_fifo_size;         /**< RX FIFO大小 */
   uint32_t tx_fifo_size;         /**< TX FIFO大小 */
@@ -100,9 +100,9 @@ typedef struct hal_fdcan_context hal_fdcan_context_t;
  * @param instance FDCAN 实例
  * @param user_data 用户自定义数据指针
  */
-typedef void (*hal_fdcan_callback_t)(hal_fdcan_context_t *ctx,
+typedef void (*hal_fdcan_callback_t)(hal_fdcan_context_t* ctx,
                                      hal_fdcan_instance_t instance,
-                                     void *user_data);
+                                     void* user_data);
 
 /**
  * @brief FDCAN 上下文结构体
@@ -110,11 +110,11 @@ typedef void (*hal_fdcan_callback_t)(hal_fdcan_context_t *ctx,
  * 用于保存 FDCAN 实例的状态信息，支持多实例操作。
  */
 struct hal_fdcan_context {
-  const struct hal_fdcan_ops *ops; /**< 平台特定的操作函数指针 */
-  volatile uint8_t initialized; /**< 初始化标志（0=未初始化，1=已初始化） */
-  hal_fdcan_callback_t callback; /**< 中断回调函数指针 */
-  void *user_data;               /**< 用户自定义数据 */
-  hal_fdcan_config_t config;     /**< 当前 FDCAN 配置 */
+  const struct hal_fdcan_ops* ops; /**< 平台特定的操作函数指针 */
+  volatile uint8_t initialized;    /**< 初始化标志（0=未初始化，1=已初始化） */
+  hal_fdcan_callback_t callback;   /**< 中断回调函数指针 */
+  void* user_data;                 /**< 用户自定义数据 */
+  hal_fdcan_config_t config;       /**< 当前 FDCAN 配置 */
 };
 
 /**
@@ -127,8 +127,8 @@ typedef struct hal_fdcan_ops {
    * @param config FDCAN 配置结构体指针
    * @return 操作结果错误码
    */
-  hal_fdcan_error_t (*init)(hal_fdcan_context_t *ctx,
-                            const hal_fdcan_config_t *config);
+  hal_fdcan_error_t (*init)(hal_fdcan_context_t* ctx,
+                            const hal_fdcan_config_t* config);
 
   /**
    * @brief 反初始化 FDCAN
@@ -136,7 +136,7 @@ typedef struct hal_fdcan_ops {
    * @param instance FDCAN 实例
    * @return 操作结果错误码
    */
-  hal_fdcan_error_t (*deinit)(hal_fdcan_context_t *ctx,
+  hal_fdcan_error_t (*deinit)(hal_fdcan_context_t* ctx,
                               hal_fdcan_instance_t instance);
 
   /**
@@ -146,9 +146,9 @@ typedef struct hal_fdcan_ops {
    * @param message FDCAN消息结构体指针
    * @return 操作结果错误码
    */
-  hal_fdcan_error_t (*send)(hal_fdcan_context_t *ctx,
+  hal_fdcan_error_t (*send)(hal_fdcan_context_t* ctx,
                             hal_fdcan_instance_t instance,
-                            const hal_fdcan_message_t *message);
+                            const hal_fdcan_message_t* message);
 
   /**
    * @brief 接收FDCAN消息
@@ -157,9 +157,9 @@ typedef struct hal_fdcan_ops {
    * @param message FDCAN消息结构体指针
    * @return 操作结果错误码
    */
-  hal_fdcan_error_t (*receive)(hal_fdcan_context_t *ctx,
+  hal_fdcan_error_t (*receive)(hal_fdcan_context_t* ctx,
                                hal_fdcan_instance_t instance,
-                               hal_fdcan_message_t *message);
+                               hal_fdcan_message_t* message);
 
   /**
    * @brief 获取接收FIFO级别
@@ -169,9 +169,9 @@ typedef struct hal_fdcan_ops {
    * @param level 输出参数，返回FIFO级别
    * @return 操作结果错误码
    */
-  hal_fdcan_error_t (*receive_level)(hal_fdcan_context_t *ctx,
+  hal_fdcan_error_t (*receive_level)(hal_fdcan_context_t* ctx,
                                      hal_fdcan_instance_t instance,
-                                     uint8_t fifo_address, uint32_t *level);
+                                     uint8_t fifo_address, uint32_t* level);
 
   /**
    * @brief 获取发送FIFO级别
@@ -180,9 +180,9 @@ typedef struct hal_fdcan_ops {
    * @param level 输出参数，返回FIFO级别
    * @return 操作结果错误码
    */
-  hal_fdcan_error_t (*get_send_level)(hal_fdcan_context_t *ctx,
+  hal_fdcan_error_t (*get_send_level)(hal_fdcan_context_t* ctx,
                                       hal_fdcan_instance_t instance,
-                                      uint32_t *level);
+                                      uint32_t* level);
 
   /**
    * @brief 设置过滤器
@@ -191,9 +191,9 @@ typedef struct hal_fdcan_ops {
    * @param filter FDCAN过滤器结构体指针
    * @return 操作结果错误码
    */
-  hal_fdcan_error_t (*set_filter)(hal_fdcan_context_t *ctx,
+  hal_fdcan_error_t (*set_filter)(hal_fdcan_context_t* ctx,
                                   hal_fdcan_instance_t instance,
-                                  const hal_fdcan_filter_t *filter);
+                                  const hal_fdcan_filter_t* filter);
 
   /**
    * @brief 设置工作模式
@@ -202,7 +202,7 @@ typedef struct hal_fdcan_ops {
    * @param mode 工作模式
    * @return 操作结果错误码
    */
-  hal_fdcan_error_t (*set_mode)(hal_fdcan_context_t *ctx,
+  hal_fdcan_error_t (*set_mode)(hal_fdcan_context_t* ctx,
                                 hal_fdcan_instance_t instance,
                                 hal_fdcan_mode_t mode);
 
@@ -213,16 +213,16 @@ typedef struct hal_fdcan_ops {
    * @param error_count 输出参数，返回错误计数
    * @return 操作结果错误码
    */
-  hal_fdcan_error_t (*get_error_count)(hal_fdcan_context_t *ctx,
+  hal_fdcan_error_t (*get_error_count)(hal_fdcan_context_t* ctx,
                                        hal_fdcan_instance_t instance,
-                                       uint32_t *error_count);
+                                       uint32_t* error_count);
 
   /**
    * @brief FDCAN中断处理
    * @param ctx FDCAN 上下文指针
    * @param instance FDCAN 实例
    */
-  void (*irq_handler)(hal_fdcan_context_t *ctx, hal_fdcan_instance_t instance);
+  void (*irq_handler)(hal_fdcan_context_t* ctx, hal_fdcan_instance_t instance);
 } hal_fdcan_ops_t;
 
 /**
@@ -253,8 +253,8 @@ typedef struct hal_fdcan_ops {
  * @note 通常不需要直接调用此函数，使用平台特定的初始化函数即可。
  *       此函数主要用于多平台切换或单元测试场景。
  */
-hal_fdcan_error_t hal_fdcan_set_ops(hal_fdcan_context_t *ctx,
-                                    const hal_fdcan_ops_t *ops);
+hal_fdcan_error_t hal_fdcan_set_ops(hal_fdcan_context_t* ctx,
+                                    const hal_fdcan_ops_t* ops);
 
 /**
  * @brief 初始化 FDCAN
@@ -262,8 +262,8 @@ hal_fdcan_error_t hal_fdcan_set_ops(hal_fdcan_context_t *ctx,
  * @param config FDCAN 配置结构体指针
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_init(hal_fdcan_context_t *ctx,
-                                 const hal_fdcan_config_t *config);
+hal_fdcan_error_t hal_fdcan_init(hal_fdcan_context_t* ctx,
+                                 const hal_fdcan_config_t* config);
 
 /**
  * @brief 反初始化 FDCAN
@@ -271,7 +271,7 @@ hal_fdcan_error_t hal_fdcan_init(hal_fdcan_context_t *ctx,
  * @param instance FDCAN 实例
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_deinit(hal_fdcan_context_t *ctx,
+hal_fdcan_error_t hal_fdcan_deinit(hal_fdcan_context_t* ctx,
                                    hal_fdcan_instance_t instance);
 
 /**
@@ -281,9 +281,9 @@ hal_fdcan_error_t hal_fdcan_deinit(hal_fdcan_context_t *ctx,
  * @param message FDCAN消息结构体指针
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_send(hal_fdcan_context_t *ctx,
+hal_fdcan_error_t hal_fdcan_send(hal_fdcan_context_t* ctx,
                                  hal_fdcan_instance_t instance,
-                                 const hal_fdcan_message_t *message);
+                                 const hal_fdcan_message_t* message);
 
 /**
  * @brief 接收FDCAN消息
@@ -292,9 +292,9 @@ hal_fdcan_error_t hal_fdcan_send(hal_fdcan_context_t *ctx,
  * @param message FDCAN消息结构体指针
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_receive(hal_fdcan_context_t *ctx,
+hal_fdcan_error_t hal_fdcan_receive(hal_fdcan_context_t* ctx,
                                     hal_fdcan_instance_t instance,
-                                    hal_fdcan_message_t *message);
+                                    hal_fdcan_message_t* message);
 
 /**
  * @brief 获取接收FIFO级别
@@ -304,10 +304,10 @@ hal_fdcan_error_t hal_fdcan_receive(hal_fdcan_context_t *ctx,
  * @param level 输出参数，返回FIFO级别
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_get_receive_level(hal_fdcan_context_t *ctx,
+hal_fdcan_error_t hal_fdcan_get_receive_level(hal_fdcan_context_t* ctx,
                                               hal_fdcan_instance_t instance,
                                               uint8_t fifo_address,
-                                              uint32_t *level);
+                                              uint32_t* level);
 
 /**
  * @brief 获取发送FIFO级别
@@ -316,9 +316,9 @@ hal_fdcan_error_t hal_fdcan_get_receive_level(hal_fdcan_context_t *ctx,
  * @param level 输出参数，返回FIFO级别
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_get_send_fifo_level(hal_fdcan_context_t *ctx,
+hal_fdcan_error_t hal_fdcan_get_send_fifo_level(hal_fdcan_context_t* ctx,
                                                 hal_fdcan_instance_t instance,
-                                                uint32_t *level);
+                                                uint32_t* level);
 
 /**
  * @brief 设置过滤器
@@ -327,9 +327,9 @@ hal_fdcan_error_t hal_fdcan_get_send_fifo_level(hal_fdcan_context_t *ctx,
  * @param filter FDCAN过滤器结构体指针
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_set_filter(hal_fdcan_context_t *ctx,
+hal_fdcan_error_t hal_fdcan_set_filter(hal_fdcan_context_t* ctx,
                                        hal_fdcan_instance_t instance,
-                                       const hal_fdcan_filter_t *filter);
+                                       const hal_fdcan_filter_t* filter);
 
 /**
  * @brief 设置工作模式
@@ -338,7 +338,7 @@ hal_fdcan_error_t hal_fdcan_set_filter(hal_fdcan_context_t *ctx,
  * @param mode 工作模式
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_set_mode(hal_fdcan_context_t *ctx,
+hal_fdcan_error_t hal_fdcan_set_mode(hal_fdcan_context_t* ctx,
                                      hal_fdcan_instance_t instance,
                                      hal_fdcan_mode_t mode);
 
@@ -349,16 +349,16 @@ hal_fdcan_error_t hal_fdcan_set_mode(hal_fdcan_context_t *ctx,
  * @param error_count 输出参数，返回错误计数
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_get_error_count(hal_fdcan_context_t *ctx,
+hal_fdcan_error_t hal_fdcan_get_error_count(hal_fdcan_context_t* ctx,
                                             hal_fdcan_instance_t instance,
-                                            uint32_t *error_count);
+                                            uint32_t* error_count);
 
 /**
  * @brief FDCAN中断处理
  * @param ctx FDCAN 上下文指针
  * @param instance FDCAN 实例
  */
-void hal_fdcan_irq_handler(hal_fdcan_context_t *ctx,
+void hal_fdcan_irq_handler(hal_fdcan_context_t* ctx,
                            hal_fdcan_instance_t instance);
 
 /**
@@ -367,8 +367,8 @@ void hal_fdcan_irq_handler(hal_fdcan_context_t *ctx,
  * @param initialized 输出参数，返回初始化状态（true=已初始化，false=未初始化）
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_is_initialized(hal_fdcan_context_t *ctx,
-                                           bool *initialized);
+hal_fdcan_error_t hal_fdcan_is_initialized(hal_fdcan_context_t* ctx,
+                                           bool* initialized);
 
 /**
  * @brief 获取当前FDCAN配置
@@ -376,8 +376,8 @@ hal_fdcan_error_t hal_fdcan_is_initialized(hal_fdcan_context_t *ctx,
  * @param config 输出参数，返回当前配置
  * @return 操作结果错误码
  */
-hal_fdcan_error_t hal_fdcan_get_config(hal_fdcan_context_t *ctx,
-                                       hal_fdcan_config_t *config);
+hal_fdcan_error_t hal_fdcan_get_config(hal_fdcan_context_t* ctx,
+                                       hal_fdcan_config_t* config);
 
 /**
  * @brief 更新FDCAN配置
@@ -387,8 +387,8 @@ hal_fdcan_error_t hal_fdcan_get_config(hal_fdcan_context_t *ctx,
  *
  * @note 此函数会更新所有配置参数
  */
-hal_fdcan_error_t hal_fdcan_update_config(hal_fdcan_context_t *ctx,
-                                          const hal_fdcan_config_t *config);
+hal_fdcan_error_t hal_fdcan_update_config(hal_fdcan_context_t* ctx,
+                                          const hal_fdcan_config_t* config);
 
 /**
  * @brief STM32 平台 FDCAN 上下文初始化函数
@@ -397,7 +397,7 @@ hal_fdcan_error_t hal_fdcan_update_config(hal_fdcan_context_t *ctx,
  *
  * 使用此函数初始化 STM32 平台的 FDCAN 上下文，会自动设置好平台特定的操作函数。
  */
-hal_fdcan_error_t stm32_fdcan_init_context(hal_fdcan_context_t *ctx);
+hal_fdcan_error_t stm32_fdcan_init_context(hal_fdcan_context_t* ctx);
 
 #ifdef __cplusplus
 }

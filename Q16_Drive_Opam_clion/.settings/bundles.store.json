@@ -9,64 +9,16 @@
       "version": "1.13.2+st.1"
     },
     {
-      "name": "st-arm-clangd",
-      "version": "21.1.0+st.2"
-    },
-    {
-      "name": "cube-wrapper",
-      "version": "0.10.2"
-    },
-    {
-      "name": "gnu-tools-for-stm32-14_3_1-description",
-      "version": "1.0.1+st.2"
-    },
-    {
-      "name": "adoptium-jre",
-      "version": "17.0.14+7.st.6"
-    },
-    {
-      "name": "cube-cmsis-scanner",
-      "version": "2.4.2"
-    },
-    {
-      "name": "cube-code-doc",
-      "version": "0.0.7+st.2"
-    },
-    {
-      "name": "cube-code-manifest",
-      "version": "1.1.3+st.1"
-    },
-    {
-      "name": "gnu-tools-for-stm32",
-      "version": "14.3.1+st.2"
-    },
-    {
-      "name": "jlink-gdbserver",
-      "version": "9.14.1+st.1"
-    },
-    {
       "name": "st-arm-clang",
       "version": "21.1.1+st.6"
     },
     {
-      "name": "stlink-gdbserver",
-      "version": "7.12.0+st.2"
+      "name": "st-arm-clangd",
+      "version": "21.1.0+st.2"
     },
     {
-      "name": "st-arm-clang-19_1_6-description",
-      "version": "0.0.5+st.1"
-    },
-    {
-      "name": "gnu-tools-for-stm32-13_3_1-description",
-      "version": "1.0.1+st.1"
-    },
-    {
-      "name": "pack-manager-snapshot",
-      "version": "2026.2.27"
-    },
-    {
-      "name": "stlink-server",
-      "version": "2.1.1+st.8"
+      "name": "st-arm-clang-hybrid",
+      "version": "21.1.1+st.2"
     }
   ]
 }

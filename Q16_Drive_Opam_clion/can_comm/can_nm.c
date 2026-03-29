@@ -13,6 +13,7 @@
  */
 
 #include "can_nm.h"
+
 #include "bsp_delay.h"
 #include "debug/debug.h"
 
@@ -23,8 +24,8 @@
 nm_manager_t g_nm_manager = {0};
 nm_statistics_t g_nm_stats = {0};
 
-can_comm_rx_t *can_nm_rx;
-can_comm_tx_t *can_nm_tx;
+can_comm_rx_t* can_nm_rx;
+can_comm_tx_t* can_nm_tx;
 
 /* ==================== Private Functions ==================== */
 
@@ -33,12 +34,12 @@ can_comm_tx_t *can_nm_tx;
  * @param nm_type NM消息类型
  */
 static void send_nm_message(uint8_t nm_type) {
-  ((nm_message_t *)(CANTxBindData(GetCanNMTxInstance())))->nm_type = nm_type;
-  ((nm_message_t *)(CANTxBindData(GetCanNMTxInstance())))->source_node_id =
+  ((nm_message_t*)(CANTxBindData(GetCanNMTxInstance())))->nm_type = nm_type;
+  ((nm_message_t*)(CANTxBindData(GetCanNMTxInstance())))->source_node_id =
       g_nm_manager.local_node_id;
-  ((nm_message_t *)(CANTxBindData(GetCanNMTxInstance())))->active_nodes =
+  ((nm_message_t*)(CANTxBindData(GetCanNMTxInstance())))->active_nodes =
       g_nm_manager.active_node_count;
-  ((nm_message_t *)(CANTxBindData(GetCanNMTxInstance())))->nm_data = 0;
+  ((nm_message_t*)(CANTxBindData(GetCanNMTxInstance())))->nm_data = 0;
   /* 使用标准函数发送 */
   g_nm_stats.messages_sent++;
 
@@ -49,7 +50,7 @@ static void send_nm_message(uint8_t nm_type) {
 /**
  * @brief 处理唤醒消息
  */
-static void handle_nm_wakeup_message(const nm_message_t *msg) {
+static void handle_nm_wakeup_message(const nm_message_t* msg) {
   if (g_nm_manager.current_state == NM_STATE_BUS_SLEEP) {
     CAN_NM_PRINTF("NM: Wakeup message received from node %d\n",
                   msg->source_node_id);
@@ -67,7 +68,7 @@ static void handle_nm_wakeup_message(const nm_message_t *msg) {
 /**
  * @brief 处理活跃消息
  */
-static void handle_nm_alive_message(const nm_message_t *msg) {
+static void handle_nm_alive_message(const nm_message_t* msg) {
   /* 更新活跃节点信息 */
   if (msg->source_node_id < CAN_NM_MAX_NODES &&
       msg->source_node_id != g_nm_manager.local_node_id) {
@@ -90,7 +91,7 @@ static void handle_nm_alive_message(const nm_message_t *msg) {
 /**
  * @brief 处理睡眠指示消息
  */
-static void handle_nm_sleep_ind_message(const nm_message_t *msg) {
+static void handle_nm_sleep_ind_message(const nm_message_t* msg) {
   // CAN_NM_PRINTF("NM: Sleep indication from node %d\n", msg->source_node_id);
 
   /* 标记节点准备睡眠 */
@@ -113,7 +114,7 @@ static void handle_nm_sleep_ind_message(const nm_message_t *msg) {
 /**
  * @brief 处理睡眠应答消息
  */
-static void handle_nm_sleep_ack_message(const nm_message_t *msg) {
+static void handle_nm_sleep_ack_message(const nm_message_t* msg) {
   // CAN_NM_PRINTF("NM: Sleep acknowledgement from node %d\n",
   // msg->source_node_id);
 
@@ -383,13 +384,13 @@ void CANNmStateMachine(void) {
  * @param data 数据指针
  * @param len 数据长度
  */
-void CANNmProcessMessage(const uint8_t *data, uint16_t len) {
+void CANNmProcessMessage(const uint8_t* data, uint16_t len) {
   if (!g_nm_manager.is_initialized || data == NULL ||
       len < sizeof(nm_message_t)) {
     return;
   }
 
-  nm_message_t *nm_msg = (nm_message_t *)data;
+  nm_message_t* nm_msg = (nm_message_t*)data;
   const uint32_t current_time = millis();
 
   g_nm_manager.last_rx_time = current_time;
@@ -468,24 +469,20 @@ void CANNmRequestWakeup(void) {
  * @brief 获取当前NM状态
  * @return 当前NM状态
  */
-nm_state_e CANNmGetState(void) {
-  return g_nm_manager.current_state;
-}
+nm_state_e CANNmGetState(void) { return g_nm_manager.current_state; }
 
 /**
  * @brief 获取活跃节点数量
  * @return 活跃节点数
  */
-uint8_t CANNmGetActiveNodeCount(void) {
-  return g_nm_manager.active_node_count;
-}
+uint8_t CANNmGetActiveNodeCount(void) { return g_nm_manager.active_node_count; }
 
 /**
  * @brief 获取节点状态
  * @param node_id 节点ID
  * @return 节点状态信息指针，未找到返回NULL
  */
-const nm_node_info_t *CANNmGetNodeStatus(uint8_t node_id) {
+const nm_node_info_t* CANNmGetNodeStatus(uint8_t node_id) {
   if (node_id < CAN_NM_MAX_NODES) {
     return &g_nm_manager.nodes[node_id];
   }
@@ -508,9 +505,7 @@ uint8_t CANNmIsNodeOnline(uint8_t node_id) {
  * @brief 获取NM统计信息
  * @return 统计信息指针
  */
-nm_statistics_t *CANNmGetStatistics(void) {
-  return &g_nm_stats;
-}
+nm_statistics_t* CANNmGetStatistics(void) { return &g_nm_stats; }
 
 /**
  * @brief 重置NM统计信息
@@ -539,7 +534,7 @@ void CANNmSetStateForced(const nm_state_e state) {
  * @return
  * 返回指向can_comm_rx_t类型的指针，如果实例存在则返回该实例的指针，否则返回NULL
  */
-can_comm_rx_t *GetCanNMRxInstance(void) {
+can_comm_rx_t* GetCanNMRxInstance(void) {
   if (can_nm_rx) return can_nm_rx;
   return NULL;
 }
@@ -548,7 +543,7 @@ can_comm_rx_t *GetCanNMRxInstance(void) {
  * @brief 获取CAN NM发送实例
  * @return 返回指向CAN NM发送实例的指针，如果实例不存在则返回NULL
  */
-can_comm_tx_t *GetCanNMTxInstance(void) {
+can_comm_tx_t* GetCanNMTxInstance(void) {
   if (can_nm_tx) return can_nm_tx;
   return NULL;
 }
@@ -562,7 +557,9 @@ void application_task(void) {
 
   /* 示例：在特定条件下请求睡眠 */
   // if (should_enter_sleep_mode())
-  { CANNmRequestSleep(); }
+  {
+    CANNmRequestSleep();
+  }
 
   /* 示例：处理节点状态变化 */
   if (!CANNmIsNodeOnline(2))  // 检查节点2是否离线

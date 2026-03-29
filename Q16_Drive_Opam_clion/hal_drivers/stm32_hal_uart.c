@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
+
 #include "hal_uart.h"
 #include "main.h"
 #include "stm32g4xx_hal.h"
@@ -42,7 +43,7 @@ extern DMA_HandleTypeDef hdma_uart4_tx;
 extern DMA_HandleTypeDef hdma_uart4_rx;
 
 /* UART实例映射表 */
-static UART_HandleTypeDef *uart_handle_map[HAL_UART_INSTANCE_LEN] = {
+static UART_HandleTypeDef* uart_handle_map[HAL_UART_INSTANCE_LEN] = {
     &huart1,
     NULL,
     NULL,
@@ -50,7 +51,7 @@ static UART_HandleTypeDef *uart_handle_map[HAL_UART_INSTANCE_LEN] = {
 };
 
 /* UART实例基地址映射 */
-static USART_TypeDef *uart_base_map[HAL_UART_INSTANCE_LEN] = {
+static USART_TypeDef* uart_base_map[HAL_UART_INSTANCE_LEN] = {
     USART1,
     USART2,
     USART3,
@@ -58,14 +59,14 @@ static USART_TypeDef *uart_base_map[HAL_UART_INSTANCE_LEN] = {
 };
 
 /* DMA句柄映射表 */
-static DMA_HandleTypeDef *uart_dma_tx_handle_map[HAL_UART_INSTANCE_LEN] = {
+static DMA_HandleTypeDef* uart_dma_tx_handle_map[HAL_UART_INSTANCE_LEN] = {
     &hdma_usart1_tx,
     NULL,
     NULL,
     NULL,
 };
 
-static DMA_HandleTypeDef *uart_dma_rx_handle_map[HAL_UART_INSTANCE_LEN] = {
+static DMA_HandleTypeDef* uart_dma_rx_handle_map[HAL_UART_INSTANCE_LEN] = {
     &hdma_usart1_rx,
     NULL,
     NULL,
@@ -90,60 +91,60 @@ typedef struct {
 static uart_dma_status_t dma_status[HAL_UART_INSTANCE_LEN] = {0};
 
 /* Private function prototypes -----------------------------------------------*/
-static hal_uart_error_t stm32_uart_init(hal_uart_context_t *ctx,
-                                        const hal_uart_config_t *config);
-static hal_uart_error_t stm32_uart_deinit(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_init(hal_uart_context_t* ctx,
+                                        const hal_uart_config_t* config);
+static hal_uart_error_t stm32_uart_deinit(hal_uart_context_t* ctx,
                                           hal_uart_instance_t instance);
-static hal_uart_error_t stm32_uart_send(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_send(hal_uart_context_t* ctx,
                                         hal_uart_instance_t instance,
-                                        const uint8_t *data, uint16_t size);
-static hal_uart_error_t stm32_uart_receive(hal_uart_context_t *ctx,
+                                        const uint8_t* data, uint16_t size);
+static hal_uart_error_t stm32_uart_receive(hal_uart_context_t* ctx,
                                            hal_uart_instance_t instance,
-                                           uint8_t *data, uint16_t size);
-static hal_uart_error_t stm32_uart_send_async(hal_uart_context_t *ctx,
+                                           uint8_t* data, uint16_t size);
+static hal_uart_error_t stm32_uart_send_async(hal_uart_context_t* ctx,
                                               hal_uart_instance_t instance,
-                                              const uint8_t *data,
+                                              const uint8_t* data,
                                               uint16_t size,
-                                              uint16_t *sent_size);
-static hal_uart_error_t stm32_uart_receive_async(hal_uart_context_t *ctx,
+                                              uint16_t* sent_size);
+static hal_uart_error_t stm32_uart_receive_async(hal_uart_context_t* ctx,
                                                  hal_uart_instance_t instance,
-                                                 uint8_t *data, uint16_t size,
-                                                 uint16_t *received_size);
-static hal_uart_error_t stm32_uart_send_dma(hal_uart_context_t *ctx,
+                                                 uint8_t* data, uint16_t size,
+                                                 uint16_t* received_size);
+static hal_uart_error_t stm32_uart_send_dma(hal_uart_context_t* ctx,
                                             hal_uart_instance_t instance,
-                                            const uint8_t *data, uint32_t size);
-static hal_uart_error_t stm32_uart_receive_dma(hal_uart_context_t *ctx,
+                                            const uint8_t* data, uint32_t size);
+static hal_uart_error_t stm32_uart_receive_dma(hal_uart_context_t* ctx,
                                                hal_uart_instance_t instance,
-                                               uint8_t *data, uint32_t size);
+                                               uint8_t* data, uint32_t size);
 static hal_uart_error_t stm32_uart_receive_dma_to_idle(
-    hal_uart_context_t *ctx, hal_uart_instance_t instance, uint8_t *data,
+    hal_uart_context_t* ctx, hal_uart_instance_t instance, uint8_t* data,
     uint32_t size);
-static hal_uart_error_t stm32_uart_abort_send(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_abort_send(hal_uart_context_t* ctx,
                                               hal_uart_instance_t instance);
-static hal_uart_error_t stm32_uart_abort_receive(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_abort_receive(hal_uart_context_t* ctx,
                                                  hal_uart_instance_t instance);
-static hal_uart_error_t stm32_uart_abort_send_dma(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_abort_send_dma(hal_uart_context_t* ctx,
                                                   hal_uart_instance_t instance);
 static hal_uart_error_t stm32_uart_abort_receive_dma(
-    hal_uart_context_t *ctx, hal_uart_instance_t instance);
-static hal_uart_error_t stm32_uart_get_tx_count(hal_uart_context_t *ctx,
+    hal_uart_context_t* ctx, hal_uart_instance_t instance);
+static hal_uart_error_t stm32_uart_get_tx_count(hal_uart_context_t* ctx,
                                                 hal_uart_instance_t instance,
-                                                uint32_t *count);
-static hal_uart_error_t stm32_uart_get_rx_count(hal_uart_context_t *ctx,
+                                                uint32_t* count);
+static hal_uart_error_t stm32_uart_get_rx_count(hal_uart_context_t* ctx,
                                                 hal_uart_instance_t instance,
-                                                uint32_t *count);
+                                                uint32_t* count);
 static hal_uart_error_t stm32_uart_get_dma_status(
-    hal_uart_context_t *ctx, hal_uart_instance_t instance,
-    hal_uart_dma_status_t *status);
-static hal_uart_error_t stm32_uart_set_baudrate(hal_uart_context_t *ctx,
+    hal_uart_context_t* ctx, hal_uart_instance_t instance,
+    hal_uart_dma_status_t* status);
+static hal_uart_error_t stm32_uart_set_baudrate(hal_uart_context_t* ctx,
                                                 hal_uart_instance_t instance,
                                                 hal_uart_baudrate_t baudrate);
-static hal_uart_error_t stm32_uart_set_rx_timeout(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_set_rx_timeout(hal_uart_context_t* ctx,
                                                   hal_uart_instance_t instance,
                                                   uint32_t timeout);
-static void stm32_uart_irq_handler(hal_uart_context_t *ctx,
+static void stm32_uart_irq_handler(hal_uart_context_t* ctx,
                                    hal_uart_instance_t instance);
-static void stm32_uart_dma_irq_handler(hal_uart_context_t *ctx,
+static void stm32_uart_dma_irq_handler(hal_uart_context_t* ctx,
                                        hal_uart_instance_t instance);
 
 static bool validate_uart_instance(hal_uart_instance_t instance);
@@ -151,7 +152,7 @@ static void enable_uart_clock(hal_uart_instance_t instance);
 static void enable_uart_dma_clock(hal_uart_instance_t instance);
 static void configure_uart_interrupts(hal_uart_instance_t instance);
 static void configure_uart_dma(hal_uart_instance_t instance,
-                               const hal_uart_dma_config_t *dma_config);
+                               const hal_uart_dma_config_t* dma_config);
 static uint32_t convert_baudrate(hal_uart_baudrate_t baudrate);
 static uint32_t convert_wordlength(hal_uart_wordlength_t wordlength);
 static uint32_t convert_stopbits(hal_uart_stopbits_t stopbits);
@@ -190,7 +191,7 @@ static const hal_uart_ops_t stm32_uart_ops = {
  * @param  ctx: UART上下文指针
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-hal_uart_error_t stm32_uart_init_context(hal_uart_context_t *ctx) {
+hal_uart_error_t stm32_uart_init_context(hal_uart_context_t* ctx) {
   if (ctx == NULL) {
     return HAL_UART_ERROR_INVALID_PARAM;
   }
@@ -283,11 +284,11 @@ static void configure_uart_interrupts(hal_uart_instance_t instance) {
  * @param  dma_config: DMA配置结构体指针
  */
 static void configure_uart_dma(hal_uart_instance_t instance,
-                               const hal_uart_dma_config_t *dma_config) {
+                               const hal_uart_dma_config_t* dma_config) {
   if (dma_config == NULL || dma_config->dma_mode == HAL_UART_DMA_DISABLE) {
     return;
   }
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
 
   if (dma_config->dma_mode == HAL_UART_DMA_TX ||
       dma_config->dma_mode == HAL_UART_DMA_TX_RX) {
@@ -462,14 +463,14 @@ static uint32_t convert_mode(hal_uart_mode_t mode) {
  * @param  config: UART配置结构体指针
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_init(hal_uart_context_t *ctx,
-                                        const hal_uart_config_t *config) {
+static hal_uart_error_t stm32_uart_init(hal_uart_context_t* ctx,
+                                        const hal_uart_config_t* config) {
   if (config == NULL || !validate_uart_instance(config->instance)) {
     return HAL_UART_ERROR_INVALID_PARAM;
   }
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[config->instance];
+  UART_HandleTypeDef* huart = uart_handle_map[config->instance];
   huart->Instance = uart_base_map[config->instance];
 
   enable_uart_clock(config->instance);
@@ -515,14 +516,14 @@ static hal_uart_error_t stm32_uart_init(hal_uart_context_t *ctx,
  * @param  instance: UART实例
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_deinit(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_deinit(hal_uart_context_t* ctx,
                                           hal_uart_instance_t instance) {
   if (!validate_uart_instance(instance)) {
     return HAL_UART_ERROR_INVALID_PARAM;
   }
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
 
   if (dma_status[instance].tx_busy) {
     HAL_UART_DMAStop(huart);
@@ -565,15 +566,15 @@ static hal_uart_error_t stm32_uart_deinit(hal_uart_context_t *ctx,
  * @param  size: 要发送的数据大小
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_send(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_send(hal_uart_context_t* ctx,
                                         hal_uart_instance_t instance,
-                                        const uint8_t *data, uint16_t size) {
+                                        const uint8_t* data, uint16_t size) {
   if (data == NULL || size == 0 || !validate_uart_instance(instance))
     return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
-  if (HAL_UART_Transmit(huart, (uint8_t *)data, size,
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
+  if (HAL_UART_Transmit(huart, (uint8_t*)data, size,
                         huart->Init.BaudRate / 100) != HAL_OK)
     return HAL_UART_ERROR_HARDWARE;
 
@@ -588,14 +589,14 @@ static hal_uart_error_t stm32_uart_send(hal_uart_context_t *ctx,
  * @param  size: 要接收的数据大小
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_receive(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_receive(hal_uart_context_t* ctx,
                                            hal_uart_instance_t instance,
-                                           uint8_t *data, uint16_t size) {
+                                           uint8_t* data, uint16_t size) {
   if (data == NULL || size == 0 || !validate_uart_instance(instance))
     return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
   if (HAL_UART_Receive(huart, data, size, huart->Init.BaudRate / 100) != HAL_OK)
     return HAL_UART_ERROR_HARDWARE;
 
@@ -611,17 +612,17 @@ static hal_uart_error_t stm32_uart_receive(hal_uart_context_t *ctx,
  * @param  sent_size: 输出参数，返回已发送的字节数
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_send_async(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_send_async(hal_uart_context_t* ctx,
                                               hal_uart_instance_t instance,
-                                              const uint8_t *data,
+                                              const uint8_t* data,
                                               uint16_t size,
-                                              uint16_t *sent_size) {
+                                              uint16_t* sent_size) {
   if (data == NULL || size == 0 || !validate_uart_instance(instance))
     return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
-  if (HAL_UART_Transmit_IT(huart, (uint8_t *)data, size) != HAL_OK)
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
+  if (HAL_UART_Transmit_IT(huart, (uint8_t*)data, size) != HAL_OK)
     return HAL_UART_ERROR_HARDWARE;
 
   *sent_size = size;
@@ -637,15 +638,15 @@ static hal_uart_error_t stm32_uart_send_async(hal_uart_context_t *ctx,
  * @param  received_size: 输出参数，返回已接收的字节数
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_receive_async(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_receive_async(hal_uart_context_t* ctx,
                                                  hal_uart_instance_t instance,
-                                                 uint8_t *data, uint16_t size,
-                                                 uint16_t *received_size) {
+                                                 uint8_t* data, uint16_t size,
+                                                 uint16_t* received_size) {
   if (data == NULL || size == 0 || !validate_uart_instance(instance))
     return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
   if (HAL_UART_Receive_IT(huart, data, size) != HAL_OK)
     return HAL_UART_ERROR_HARDWARE;
 
@@ -661,19 +662,19 @@ static hal_uart_error_t stm32_uart_receive_async(hal_uart_context_t *ctx,
  * @param  size: 要发送的数据大小
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_send_dma(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_send_dma(hal_uart_context_t* ctx,
                                             hal_uart_instance_t instance,
-                                            const uint8_t *data,
+                                            const uint8_t* data,
                                             uint32_t size) {
   if (data == NULL || size == 0 || !validate_uart_instance(instance))
     return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
   if (huart->hdmatx == NULL) return HAL_UART_ERROR_UNSUPPORTED;
   if (dma_status[instance].tx_busy) return HAL_UART_ERROR_BUSY;
 
-  if (HAL_UART_Transmit_DMA(huart, (uint8_t *)data, size) != HAL_OK)
+  if (HAL_UART_Transmit_DMA(huart, (uint8_t*)data, size) != HAL_OK)
     return HAL_UART_ERROR_HARDWARE;
 
   dma_status[instance].tx_busy = true;
@@ -691,14 +692,14 @@ static hal_uart_error_t stm32_uart_send_dma(hal_uart_context_t *ctx,
  * @param  size: 要接收的数据大小
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_receive_dma(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_receive_dma(hal_uart_context_t* ctx,
                                                hal_uart_instance_t instance,
-                                               uint8_t *data, uint32_t size) {
+                                               uint8_t* data, uint32_t size) {
   if (data == NULL || size == 0 || !validate_uart_instance(instance))
     return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
   if (huart->hdmarx == NULL) return HAL_UART_ERROR_UNSUPPORTED;
   if (dma_status[instance].rx_busy) return HAL_UART_ERROR_BUSY;
 
@@ -722,14 +723,14 @@ static hal_uart_error_t stm32_uart_receive_dma(hal_uart_context_t *ctx,
  * @return HAL_UART_OK 成功，其他值为错误码
  */
 static hal_uart_error_t stm32_uart_receive_dma_to_idle(
-    hal_uart_context_t *ctx, hal_uart_instance_t instance, uint8_t *data,
+    hal_uart_context_t* ctx, hal_uart_instance_t instance, uint8_t* data,
     uint32_t size) {
   hal_uart_error_t result = stm32_uart_receive_dma(ctx, instance, data, size);
   if (result != HAL_UART_OK) {
     return result;
   }
 
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
   __HAL_UART_ENABLE_IT(huart, UART_IT_IDLE);
 
   return HAL_UART_OK;
@@ -741,12 +742,12 @@ static hal_uart_error_t stm32_uart_receive_dma_to_idle(
  * @param  instance: UART实例
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_abort_send(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_abort_send(hal_uart_context_t* ctx,
                                               hal_uart_instance_t instance) {
   if (!validate_uart_instance(instance)) return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
   if (HAL_UART_AbortTransmit(huart) != HAL_OK) return HAL_UART_ERROR_HARDWARE;
 
   return HAL_UART_OK;
@@ -758,12 +759,12 @@ static hal_uart_error_t stm32_uart_abort_send(hal_uart_context_t *ctx,
  * @param  instance: UART实例
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_abort_receive(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_abort_receive(hal_uart_context_t* ctx,
                                                  hal_uart_instance_t instance) {
   if (!validate_uart_instance(instance)) return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
   if (HAL_UART_AbortReceive(huart) != HAL_OK) return HAL_UART_ERROR_HARDWARE;
 
   return HAL_UART_OK;
@@ -776,11 +777,11 @@ static hal_uart_error_t stm32_uart_abort_receive(hal_uart_context_t *ctx,
  * @return HAL_UART_OK 成功，其他值为错误码
  */
 static hal_uart_error_t stm32_uart_abort_send_dma(
-    hal_uart_context_t *ctx, hal_uart_instance_t instance) {
+    hal_uart_context_t* ctx, hal_uart_instance_t instance) {
   if (!validate_uart_instance(instance)) return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
   if (HAL_UART_DMAStop(huart) != HAL_OK) return HAL_UART_ERROR_HARDWARE;
 
   dma_status[instance].tx_busy = false;
@@ -794,11 +795,11 @@ static hal_uart_error_t stm32_uart_abort_send_dma(
  * @return HAL_UART_OK 成功，其他值为错误码
  */
 static hal_uart_error_t stm32_uart_abort_receive_dma(
-    hal_uart_context_t *ctx, hal_uart_instance_t instance) {
+    hal_uart_context_t* ctx, hal_uart_instance_t instance) {
   if (!validate_uart_instance(instance)) return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
   if (HAL_UART_DMAStop(huart) != HAL_OK) return HAL_UART_ERROR_HARDWARE;
 
   dma_status[instance].rx_busy = false;
@@ -812,13 +813,13 @@ static hal_uart_error_t stm32_uart_abort_receive_dma(
  * @param  count: 输出参数，返回发送字节数
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_get_tx_count(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_get_tx_count(hal_uart_context_t* ctx,
                                                 hal_uart_instance_t instance,
-                                                uint32_t *count) {
+                                                uint32_t* count) {
   if (!validate_uart_instance(instance)) return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
   *count = huart->TxXferCount;
 
   return HAL_UART_OK;
@@ -831,13 +832,13 @@ static hal_uart_error_t stm32_uart_get_tx_count(hal_uart_context_t *ctx,
  * @param  count: 输出参数，返回接收字节数
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_get_rx_count(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_get_rx_count(hal_uart_context_t* ctx,
                                                 hal_uart_instance_t instance,
-                                                uint32_t *count) {
+                                                uint32_t* count) {
   if (!validate_uart_instance(instance)) return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
   *count = huart->RxXferCount;
 
   return HAL_UART_OK;
@@ -851,12 +852,12 @@ static hal_uart_error_t stm32_uart_get_rx_count(hal_uart_context_t *ctx,
  * @return HAL_UART_OK 成功，其他值为错误码
  */
 static hal_uart_error_t stm32_uart_get_dma_status(
-    hal_uart_context_t *ctx, hal_uart_instance_t instance,
-    hal_uart_dma_status_t *status) {
+    hal_uart_context_t* ctx, hal_uart_instance_t instance,
+    hal_uart_dma_status_t* status) {
   if (!validate_uart_instance(instance)) return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
 
   if (dma_status[instance].tx_busy) {
     if (huart->hdmatx != NULL) {
@@ -886,13 +887,13 @@ static hal_uart_error_t stm32_uart_get_dma_status(
  * @param  baudrate: 波特率
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_set_baudrate(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_set_baudrate(hal_uart_context_t* ctx,
                                                 hal_uart_instance_t instance,
                                                 hal_uart_baudrate_t baudrate) {
   if (!validate_uart_instance(instance)) return HAL_UART_ERROR_INVALID_PARAM;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
 
   if (HAL_UART_DeInit(huart) != HAL_OK) return HAL_UART_ERROR_HARDWARE;
 
@@ -910,7 +911,7 @@ static hal_uart_error_t stm32_uart_set_baudrate(hal_uart_context_t *ctx,
  * @param  timeout: 超时时间(ms)
  * @return HAL_UART_OK 成功，其他值为错误码
  */
-static hal_uart_error_t stm32_uart_set_rx_timeout(hal_uart_context_t *ctx,
+static hal_uart_error_t stm32_uart_set_rx_timeout(hal_uart_context_t* ctx,
                                                   hal_uart_instance_t instance,
                                                   uint32_t timeout) {
   if (!validate_uart_instance(instance)) return HAL_UART_ERROR_INVALID_PARAM;
@@ -926,12 +927,12 @@ static hal_uart_error_t stm32_uart_set_rx_timeout(hal_uart_context_t *ctx,
  * @param  ctx: UART上下文指针
  * @param  instance: UART实例
  */
-static void stm32_uart_irq_handler(hal_uart_context_t *ctx,
+static void stm32_uart_irq_handler(hal_uart_context_t* ctx,
                                    hal_uart_instance_t instance) {
   if (!validate_uart_instance(instance)) return;
 
   (void)ctx;
-  UART_HandleTypeDef *huart = uart_handle_map[instance];
+  UART_HandleTypeDef* huart = uart_handle_map[instance];
   HAL_UART_IRQHandler(huart);
 }
 
@@ -940,12 +941,12 @@ static void stm32_uart_irq_handler(hal_uart_context_t *ctx,
  * @param  ctx: UART上下文指针
  * @param  instance: UART实例
  */
-static void stm32_uart_dma_irq_handler(hal_uart_context_t *ctx,
+static void stm32_uart_dma_irq_handler(hal_uart_context_t* ctx,
                                        hal_uart_instance_t instance) {
   if (!validate_uart_instance(instance)) return;
 
   (void)ctx;
-  const UART_HandleTypeDef *huart = uart_handle_map[instance];
+  const UART_HandleTypeDef* huart = uart_handle_map[instance];
 
   if (huart->hdmatx != NULL) HAL_DMA_IRQHandler(huart->hdmatx);
 
@@ -958,7 +959,7 @@ static void stm32_uart_dma_irq_handler(hal_uart_context_t *ctx,
  * @brief  UART错误回调
  * @param  huart: UART句柄指针
  */
-void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+void HAL_UART_ErrorCallback(UART_HandleTypeDef* huart) {
   for (int i = 0; i < HAL_UART_INSTANCE_LEN; i++) {
     if (uart_handle_map[i] == huart) {
       dma_status[i].tx_busy = false;
@@ -972,7 +973,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
  * @brief  UART发送半完成回调
  * @param  huart: UART句柄指针
  */
-void HAL_UART_TxHalfCpltCallback(UART_HandleTypeDef *huart) {
+void HAL_UART_TxHalfCpltCallback(UART_HandleTypeDef* huart) {
   for (int i = 0; i < HAL_UART_INSTANCE_LEN; i++) {
     if (uart_handle_map[i] == huart) {
       if (dma_status[i].circular_mode) {
@@ -988,7 +989,7 @@ void HAL_UART_TxHalfCpltCallback(UART_HandleTypeDef *huart) {
  * @brief  UART接收半完成回调
  * @param  huart: UART句柄指针
  */
-void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart) {
+void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef* huart) {
   for (int i = 0; i < HAL_UART_INSTANCE_LEN; i++) {
     if (uart_handle_map[i] == huart) {
       dma_status[i].rx_half_transfers++;
@@ -1006,7 +1007,7 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart) {
  * @brief  UART发送完成回调
  * @param  huart: UART句柄指针
  */
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
   for (int i = 0; i < HAL_UART_INSTANCE_LEN; i++) {
     if (uart_handle_map[i] == huart) {
       dma_status[i].tx_busy = false;
@@ -1021,7 +1022,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
  * @brief  UART接收完成回调
  * @param  huart: UART句柄指针
  */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
   for (int i = 0; i < HAL_UART_INSTANCE_LEN; i++) {
     if (uart_handle_map[i] == huart) {
       dma_status[i].rx_full_transfers++;
@@ -1038,7 +1039,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
  * @brief  UART空闲回调
  * @param  huart: UART句柄指针
  */
-void HAL_UART_IdleCallback(UART_HandleTypeDef *huart) {
+void HAL_UART_IdleCallback(UART_HandleTypeDef* huart) {
   for (int i = 0; i < HAL_UART_INSTANCE_LEN; i++) {
     if (uart_handle_map[i] == huart) {
       __HAL_UART_CLEAR_IDLEFLAG(huart);

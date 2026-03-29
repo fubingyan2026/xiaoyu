@@ -15,7 +15,7 @@
 /* 定时器句柄数组 */
 extern TIM_HandleTypeDef htim17;
 
-static TIM_HandleTypeDef *timer_handles[] = {NULL,                      //
+static TIM_HandleTypeDef* timer_handles[] = {NULL,                      //
                                              NULL,   NULL, NULL, NULL,  //
                                              NULL,   NULL, NULL, NULL,  //
                                              NULL,   NULL, NULL, NULL,  //
@@ -27,54 +27,54 @@ static uint32_t channel_map[HAL_TIM_PWM_CHANNEL_LEN] = {
     TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3, TIM_CHANNEL_4};
 
 /* 定时器实例映射 */
-static TIM_TypeDef *timer_instance_map[] = {NULL,                      //
+static TIM_TypeDef* timer_instance_map[] = {NULL,                      //
                                             TIM1, TIM2, TIM3,  TIM4,   //
                                             NULL, TIM6, TIM7,  TIM8,   //
                                             NULL, NULL, NULL,  NULL,   //
                                             NULL, NULL, TIM15, TIM16,  //
                                             TIM17};
 /* GPIO端口映射 */
-static GPIO_TypeDef *gpio_port_map[] = {GPIOA, GPIOB, GPIOC, GPIOD,
+static GPIO_TypeDef* gpio_port_map[] = {GPIOA, GPIOB, GPIOC, GPIOD,
                                         GPIOE, GPIOF, GPIOG};
 
 static const hal_tim_pwm_ops_t stm32_tim_pwm_ops;
 
 /* 私有函数声明 */
 static hal_tim_pwm_error_t stm32_tim_pwm_init(
-    hal_tim_pwm_context_t *ctx, const hal_tim_pwm_config_t *config);
-static hal_tim_pwm_error_t stm32_tim_pwm_deinit(hal_tim_pwm_context_t *ctx,
+    hal_tim_pwm_context_t* ctx, const hal_tim_pwm_config_t* config);
+static hal_tim_pwm_error_t stm32_tim_pwm_deinit(hal_tim_pwm_context_t* ctx,
                                                 hal_tim_pwm_instance_t instance,
                                                 hal_tim_pwm_channel_t channel);
 static hal_tim_pwm_error_t stm32_tim_pwm_gpio_alternate(
-    hal_tim_pwm_context_t *ctx, const hal_tim_pwm_gpio_config_t *gpio_config);
-static hal_tim_pwm_error_t stm32_tim_pwm_start(hal_tim_pwm_context_t *ctx,
+    hal_tim_pwm_context_t* ctx, const hal_tim_pwm_gpio_config_t* gpio_config);
+static hal_tim_pwm_error_t stm32_tim_pwm_start(hal_tim_pwm_context_t* ctx,
                                                hal_tim_pwm_instance_t instance,
                                                hal_tim_pwm_channel_t channel);
-static hal_tim_pwm_error_t stm32_tim_pwm_stop(hal_tim_pwm_context_t *ctx,
+static hal_tim_pwm_error_t stm32_tim_pwm_stop(hal_tim_pwm_context_t* ctx,
                                               hal_tim_pwm_instance_t instance,
                                               hal_tim_pwm_channel_t channel);
 static hal_tim_pwm_error_t stm32_tim_pwm_set_duty_cycle(
-    hal_tim_pwm_context_t *ctx, hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_context_t* ctx, hal_tim_pwm_instance_t instance,
     hal_tim_pwm_channel_t channel, uint32_t duty_cycle);
 static hal_tim_pwm_error_t stm32_tim_pwm_set_frequency(
-    hal_tim_pwm_context_t *ctx, hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_context_t* ctx, hal_tim_pwm_instance_t instance,
     hal_tim_pwm_channel_t channel, uint32_t frequency);
 static hal_tim_pwm_error_t stm32_tim_pwm_get_duty_cycle(
-    hal_tim_pwm_context_t *ctx, hal_tim_pwm_instance_t instance,
-    hal_tim_pwm_channel_t channel, uint32_t *duty_cycle);
+    hal_tim_pwm_context_t* ctx, hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel, uint32_t* duty_cycle);
 static hal_tim_pwm_error_t stm32_tim_pwm_get_frequency(
-    hal_tim_pwm_context_t *ctx, hal_tim_pwm_instance_t instance,
-    hal_tim_pwm_channel_t channel, uint32_t *frequency);
+    hal_tim_pwm_context_t* ctx, hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel, uint32_t* frequency);
 static hal_tim_pwm_error_t stm32_tim_pwm_set_polarity(
-    hal_tim_pwm_context_t *ctx, hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_context_t* ctx, hal_tim_pwm_instance_t instance,
     hal_tim_pwm_channel_t channel, hal_tim_pwm_polarity_t polarity);
 static hal_tim_pwm_error_t stm32_tim_pwm_get_polarity(
-    hal_tim_pwm_context_t *ctx, hal_tim_pwm_instance_t instance,
-    hal_tim_pwm_channel_t channel, hal_tim_pwm_polarity_t *polarity);
+    hal_tim_pwm_context_t* ctx, hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel, hal_tim_pwm_polarity_t* polarity);
 
 static void enable_timer_clock(hal_tim_pwm_instance_t timer_instance);
 static void enable_gpio_clock(uint8_t port);
-static TIM_HandleTypeDef *get_timer_handle(
+static TIM_HandleTypeDef* get_timer_handle(
     hal_tim_pwm_instance_t timer_instance);
 
 /* TIM PWM操作函数结构体 */
@@ -96,7 +96,7 @@ static const hal_tim_pwm_ops_t stm32_tim_pwm_ops = {
  * @param ctx TIM PWM 上下文指针
  * @return 操作结果错误码
  */
-hal_tim_pwm_error_t stm32_tim_pwm_init_context(hal_tim_pwm_context_t *ctx) {
+hal_tim_pwm_error_t stm32_tim_pwm_init_context(hal_tim_pwm_context_t* ctx) {
   if (ctx == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -112,7 +112,7 @@ hal_tim_pwm_error_t stm32_tim_pwm_init_context(hal_tim_pwm_context_t *ctx) {
  * @param timer_instance 定时器实例
  * @return 定时器句柄指针，失败返回NULL
  */
-static TIM_HandleTypeDef *get_timer_handle(
+static TIM_HandleTypeDef* get_timer_handle(
     hal_tim_pwm_instance_t timer_instance) {
   if (timer_instance >= 1  //
       && timer_instance <=
@@ -203,7 +203,7 @@ static void enable_gpio_clock(uint8_t port) {
  * @return 操作结果错误码
  */
 static hal_tim_pwm_error_t stm32_tim_pwm_gpio_alternate(
-    hal_tim_pwm_context_t *ctx, const hal_tim_pwm_gpio_config_t *gpio_config) {
+    hal_tim_pwm_context_t* ctx, const hal_tim_pwm_gpio_config_t* gpio_config) {
   (void)ctx;
 
   if (gpio_config == NULL || gpio_config->port >= HAL_GPIO_PORT_LEN) {
@@ -234,14 +234,14 @@ static hal_tim_pwm_error_t stm32_tim_pwm_gpio_alternate(
  * @return 操作结果错误码
  */
 static hal_tim_pwm_error_t stm32_tim_pwm_init(
-    hal_tim_pwm_context_t *ctx, const hal_tim_pwm_config_t *config) {
+    hal_tim_pwm_context_t* ctx, const hal_tim_pwm_config_t* config) {
   (void)ctx;
 
   if (config == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
 
-  TIM_HandleTypeDef *htim = get_timer_handle(config->timer_instance);
+  TIM_HandleTypeDef* htim = get_timer_handle(config->timer_instance);
 
   if (htim == NULL) {
     return HAL_TIM_PWM_ERROR_HARDWARE;
@@ -321,13 +321,13 @@ static hal_tim_pwm_error_t stm32_tim_pwm_init(
  * @param channel PWM通道
  * @return 操作结果错误码
  */
-static hal_tim_pwm_error_t stm32_tim_pwm_deinit(hal_tim_pwm_context_t *ctx,
+static hal_tim_pwm_error_t stm32_tim_pwm_deinit(hal_tim_pwm_context_t* ctx,
                                                 hal_tim_pwm_instance_t instance,
                                                 hal_tim_pwm_channel_t channel) {
   (void)ctx;
   (void)channel;
 
-  TIM_HandleTypeDef *htim = get_timer_handle(instance);
+  TIM_HandleTypeDef* htim = get_timer_handle(instance);
   if (htim == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -345,12 +345,12 @@ static hal_tim_pwm_error_t stm32_tim_pwm_deinit(hal_tim_pwm_context_t *ctx,
  * @param channel PWM通道
  * @return 操作结果错误码
  */
-static hal_tim_pwm_error_t stm32_tim_pwm_start(hal_tim_pwm_context_t *ctx,
+static hal_tim_pwm_error_t stm32_tim_pwm_start(hal_tim_pwm_context_t* ctx,
                                                hal_tim_pwm_instance_t instance,
                                                hal_tim_pwm_channel_t channel) {
   (void)ctx;
 
-  TIM_HandleTypeDef *htim = get_timer_handle(instance);
+  TIM_HandleTypeDef* htim = get_timer_handle(instance);
   if (htim == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -369,12 +369,12 @@ static hal_tim_pwm_error_t stm32_tim_pwm_start(hal_tim_pwm_context_t *ctx,
  * @param channel PWM通道
  * @return 操作结果错误码
  */
-static hal_tim_pwm_error_t stm32_tim_pwm_stop(hal_tim_pwm_context_t *ctx,
+static hal_tim_pwm_error_t stm32_tim_pwm_stop(hal_tim_pwm_context_t* ctx,
                                               hal_tim_pwm_instance_t instance,
                                               hal_tim_pwm_channel_t channel) {
   (void)ctx;
 
-  TIM_HandleTypeDef *htim = get_timer_handle(instance);
+  TIM_HandleTypeDef* htim = get_timer_handle(instance);
   if (htim == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -395,11 +395,11 @@ static hal_tim_pwm_error_t stm32_tim_pwm_stop(hal_tim_pwm_context_t *ctx,
  * @return 操作结果错误码
  */
 static hal_tim_pwm_error_t stm32_tim_pwm_set_duty_cycle(
-    hal_tim_pwm_context_t *ctx, hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_context_t* ctx, hal_tim_pwm_instance_t instance,
     hal_tim_pwm_channel_t channel, uint32_t duty_cycle) {
   (void)ctx;
 
-  TIM_HandleTypeDef *htim = get_timer_handle(instance);
+  TIM_HandleTypeDef* htim = get_timer_handle(instance);
   if (htim == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -441,11 +441,11 @@ static hal_tim_pwm_error_t stm32_tim_pwm_set_duty_cycle(
  * @return 操作结果错误码
  */
 static hal_tim_pwm_error_t stm32_tim_pwm_set_frequency(
-    hal_tim_pwm_context_t *ctx, hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_context_t* ctx, hal_tim_pwm_instance_t instance,
     hal_tim_pwm_channel_t channel, uint32_t frequency) {
   (void)ctx;
 
-  TIM_HandleTypeDef *htim = get_timer_handle(instance);
+  TIM_HandleTypeDef* htim = get_timer_handle(instance);
   if (htim == NULL || frequency == 0) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -502,11 +502,11 @@ static hal_tim_pwm_error_t stm32_tim_pwm_set_frequency(
  * @return 操作结果错误码
  */
 static hal_tim_pwm_error_t stm32_tim_pwm_get_duty_cycle(
-    hal_tim_pwm_context_t *ctx, hal_tim_pwm_instance_t instance,
-    hal_tim_pwm_channel_t channel, uint32_t *duty_cycle) {
+    hal_tim_pwm_context_t* ctx, hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel, uint32_t* duty_cycle) {
   (void)ctx;
 
-  TIM_HandleTypeDef *htim = get_timer_handle(instance);
+  TIM_HandleTypeDef* htim = get_timer_handle(instance);
   if (htim == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -546,12 +546,12 @@ static hal_tim_pwm_error_t stm32_tim_pwm_get_duty_cycle(
  * @return 操作结果错误码
  */
 static hal_tim_pwm_error_t stm32_tim_pwm_get_frequency(
-    hal_tim_pwm_context_t *ctx, hal_tim_pwm_instance_t instance,
-    hal_tim_pwm_channel_t channel, uint32_t *frequency) {
+    hal_tim_pwm_context_t* ctx, hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel, uint32_t* frequency) {
   (void)ctx;
   (void)channel;
 
-  TIM_HandleTypeDef *htim = get_timer_handle(instance);
+  TIM_HandleTypeDef* htim = get_timer_handle(instance);
   if (htim == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -581,11 +581,11 @@ static hal_tim_pwm_error_t stm32_tim_pwm_get_frequency(
  * @return 操作结果错误码
  */
 static hal_tim_pwm_error_t stm32_tim_pwm_set_polarity(
-    hal_tim_pwm_context_t *ctx, hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_context_t* ctx, hal_tim_pwm_instance_t instance,
     hal_tim_pwm_channel_t channel, hal_tim_pwm_polarity_t polarity) {
   (void)ctx;
 
-  TIM_HandleTypeDef *htim = get_timer_handle(instance);
+  TIM_HandleTypeDef* htim = get_timer_handle(instance);
   if (htim == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }
@@ -615,11 +615,11 @@ static hal_tim_pwm_error_t stm32_tim_pwm_set_polarity(
  * @return 操作结果错误码
  */
 static hal_tim_pwm_error_t stm32_tim_pwm_get_polarity(
-    hal_tim_pwm_context_t *ctx, hal_tim_pwm_instance_t instance,
-    hal_tim_pwm_channel_t channel, hal_tim_pwm_polarity_t *polarity) {
+    hal_tim_pwm_context_t* ctx, hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel, hal_tim_pwm_polarity_t* polarity) {
   (void)ctx;
 
-  TIM_HandleTypeDef *htim = get_timer_handle(instance);
+  TIM_HandleTypeDef* htim = get_timer_handle(instance);
   if (htim == NULL || polarity == NULL) {
     return HAL_TIM_PWM_ERROR_INVALID_PARAM;
   }

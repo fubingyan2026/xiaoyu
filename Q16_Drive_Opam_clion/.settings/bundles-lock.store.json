@@ -1,46 +1,13 @@
 {
   "resolved": [
     {
-      "name": "adoptium-jre",
-      "version": "17.0.14+7.st.6",
-      "platform": "x86_64-linux",
+      "name": "cmake",
+      "version": "4.2.3+st.1",
+      "platform": "darwin",
       "selected_by": [
         {
-          "name": "adoptium-jre",
-          "version": "17.0.14+7.st.6"
-        }
-      ]
-    },
-    {
-      "name": "adoptium-jre",
-      "version": "17.0.14+7.st.6",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "adoptium-jre",
-          "version": "17.0.14+7.st.6"
-        }
-      ]
-    },
-    {
-      "name": "adoptium-jre",
-      "version": "21.0.8+9.st.2",
-      "platform": "x86_64-linux",
-      "selected_by": [
-        {
-          "name": "adoptium-jre",
-          "version": ">=21.0.8+9.st.2"
-        }
-      ]
-    },
-    {
-      "name": "adoptium-jre",
-      "version": "21.0.8+9.st.2",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "adoptium-jre",
-          "version": ">=21.0.8+9.st.2"
+          "name": "cmake",
+          "version": "4.2.3+st.1"
         }
       ]
     },
@@ -52,10 +19,6 @@
         {
           "name": "cmake",
           "version": "4.2.3+st.1"
-        },
-        {
-          "name": "cmake",
-          "version": ">=0.0.0"
         }
       ]
     },
@@ -67,129 +30,28 @@
         {
           "name": "cmake",
           "version": "4.2.3+st.1"
-        },
-        {
-          "name": "cmake",
-          "version": ">=0.0.0"
         }
       ]
     },
     {
-      "name": "cube-cmsis-scanner",
-      "version": "2.4.2",
-      "platform": "x86_64-linux",
-      "selected_by": [
-        {
-          "name": "cube-cmsis-scanner",
-          "version": "2.4.2"
-        },
-        {
-          "name": "cube-cmsis-scanner",
-          "version": ">=1.1.0"
-        },
-        {
-          "name": "cube-cmsis-scanner",
-          "version": ">=2.4.2"
-        }
-      ]
-    },
-    {
-      "name": "cube-cmsis-scanner",
-      "version": "2.4.2",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "cube-cmsis-scanner",
-          "version": "2.4.2"
-        },
-        {
-          "name": "cube-cmsis-scanner",
-          "version": ">=1.1.0"
-        },
-        {
-          "name": "cube-cmsis-scanner",
-          "version": ">=2.4.2"
-        }
-      ]
-    },
-    {
-      "name": "cube-code-doc",
-      "version": "0.0.7+st.2",
-      "platform": "all",
-      "selected_by": [
-        {
-          "name": "cube-code-doc",
-          "version": "0.0.7+st.2"
-        },
-        {
-          "name": "cube-code-doc",
-          "version": ">=0.0.7+st.2"
-        }
-      ]
-    },
-    {
-      "name": "cube-code-manifest",
-      "version": "1.1.3+st.1",
-      "platform": "x86_64-linux",
-      "selected_by": [
-        {
-          "name": "cube-code-manifest",
-          "version": "1.1.3+st.1"
-        }
-      ]
-    },
-    {
-      "name": "cube-code-manifest",
-      "version": "1.1.3+st.1",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "cube-code-manifest",
-          "version": "1.1.3+st.1"
-        }
-      ]
-    },
-    {
-      "name": "cube-wrapper",
-      "version": "0.10.2",
-      "platform": "x86_64-linux",
-      "selected_by": [
-        {
-          "name": "cube-wrapper",
-          "version": "0.10.2"
-        }
-      ]
-    },
-    {
-      "name": "cube-wrapper",
-      "version": "0.10.2",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "cube-wrapper",
-          "version": "0.10.2"
-        }
-      ]
-    },
-    {
-      "name": "gnu-gdb-for-stm32",
+      "name": "gnu-tools-for-stm32",
       "version": "14.3.1+st.2",
-      "platform": "x86_64-linux",
+      "platform": "aarch64-darwin",
       "selected_by": [
         {
-          "name": "gnu-gdb-for-stm32",
-          "version": ">=0.0.0"
+          "name": "gnu-tools-for-stm32",
+          "version": ">=13.3.1+st.1 <14.3.1+st.99999"
         }
       ]
     },
     {
-      "name": "gnu-gdb-for-stm32",
+      "name": "gnu-tools-for-stm32",
       "version": "14.3.1+st.2",
-      "platform": "x86_64-windows",
+      "platform": "x86_64-darwin",
       "selected_by": [
         {
-          "name": "gnu-gdb-for-stm32",
-          "version": ">=0.0.0"
+          "name": "gnu-tools-for-stm32",
+          "version": ">=13.3.1+st.1 <14.3.1+st.99999"
         }
       ]
     },
@@ -200,11 +62,7 @@
       "selected_by": [
         {
           "name": "gnu-tools-for-stm32",
-          "version": "14.3.1+st.2"
-        },
-        {
-          "name": "gnu-tools-for-stm32",
-          "version": ">=10.3.1"
+          "version": ">=13.3.1+st.1 <14.3.1+st.99999"
         }
       ]
     },
@@ -215,22 +73,7 @@
       "selected_by": [
         {
           "name": "gnu-tools-for-stm32",
-          "version": "14.3.1+st.2"
-        },
-        {
-          "name": "gnu-tools-for-stm32",
-          "version": ">=10.3.1"
-        }
-      ]
-    },
-    {
-      "name": "gnu-tools-for-stm32-13_3_1-description",
-      "version": "1.0.1+st.1",
-      "platform": "all",
-      "selected_by": [
-        {
-          "name": "gnu-tools-for-stm32-13_3_1-description",
-          "version": "1.0.1+st.1"
+          "version": ">=13.3.1+st.1 <14.3.1+st.99999"
         }
       ]
     },
@@ -241,33 +84,18 @@
       "selected_by": [
         {
           "name": "gnu-tools-for-stm32-14_3_1-description",
-          "version": "1.0.1+st.2"
-        },
-        {
-          "name": "gnu-tools-for-stm32-14_3_1-description",
           "version": ">=0.0.1"
         }
       ]
     },
     {
-      "name": "jlink-gdbserver",
-      "version": "9.14.1+st.1",
-      "platform": "x86_64-linux",
+      "name": "ninja",
+      "version": "1.13.2+st.1",
+      "platform": "darwin",
       "selected_by": [
         {
-          "name": "jlink-gdbserver",
-          "version": "9.14.1+st.1"
-        }
-      ]
-    },
-    {
-      "name": "jlink-gdbserver",
-      "version": "9.14.1+st.1",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "jlink-gdbserver",
-          "version": "9.14.1+st.1"
+          "name": "ninja",
+          "version": "1.13.2+st.1"
         }
       ]
     },
@@ -279,10 +107,6 @@
         {
           "name": "ninja",
           "version": "1.13.2+st.1"
-        },
-        {
-          "name": "ninja",
-          "version": ">=0.0.0"
         }
       ]
     },
@@ -294,102 +118,36 @@
         {
           "name": "ninja",
           "version": "1.13.2+st.1"
+        }
+      ]
+    },
+    {
+      "name": "st-arm-clang",
+      "version": "21.1.1+st.6",
+      "platform": "aarch64-darwin",
+      "selected_by": [
+        {
+          "name": "st-arm-clang",
+          "version": "21.1.1+st.6"
         },
         {
-          "name": "ninja",
-          "version": ">=0.0.0"
+          "name": "st-arm-clang",
+          "version": ">=21.1.1+st.1 <21.1.1+st.99999"
         }
       ]
     },
     {
-      "name": "node",
-      "version": "22.22.0+st.1",
-      "platform": "x86_64-linux",
+      "name": "st-arm-clang",
+      "version": "21.1.1+st.6",
+      "platform": "x86_64-darwin",
       "selected_by": [
         {
-          "name": "node",
-          "version": "^22.17.1"
-        }
-      ]
-    },
-    {
-      "name": "node",
-      "version": "22.22.0+st.1",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "node",
-          "version": "^22.17.1"
-        }
-      ]
-    },
-    {
-      "name": "pack-manager",
-      "version": "0.5.3",
-      "platform": "all",
-      "selected_by": [
-        {
-          "name": "pack-manager",
-          "version": ">=0.5.3"
-        }
-      ]
-    },
-    {
-      "name": "pack-manager-snapshot",
-      "version": "2026.2.27",
-      "platform": "all",
-      "selected_by": [
-        {
-          "name": "pack-manager-snapshot",
-          "version": "2026.2.27"
+          "name": "st-arm-clang",
+          "version": "21.1.1+st.6"
         },
         {
-          "name": "pack-manager-snapshot",
-          "version": ">=2023.1.1"
-        }
-      ]
-    },
-    {
-      "name": "programmer",
-      "version": "2.22.0+st.1",
-      "platform": "x86_64-linux",
-      "selected_by": [
-        {
-          "name": "programmer",
-          "version": ">=2.22.0"
-        }
-      ]
-    },
-    {
-      "name": "programmer",
-      "version": "2.22.0+st.1",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "programmer",
-          "version": ">=2.22.0"
-        }
-      ]
-    },
-    {
-      "name": "rtos-proxy",
-      "version": "0.18.1+st.3",
-      "platform": "x86_64-linux",
-      "selected_by": [
-        {
-          "name": "rtos-proxy",
-          "version": ">=0.18.0+st.3"
-        }
-      ]
-    },
-    {
-      "name": "rtos-proxy",
-      "version": "0.18.1+st.3",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "rtos-proxy",
-          "version": ">=0.18.0+st.3"
+          "name": "st-arm-clang",
+          "version": ">=21.1.1+st.1 <21.1.1+st.99999"
         }
       ]
     },
@@ -401,6 +159,10 @@
         {
           "name": "st-arm-clang",
           "version": "21.1.1+st.6"
+        },
+        {
+          "name": "st-arm-clang",
+          "version": ">=21.1.1+st.1 <21.1.1+st.99999"
         }
       ]
     },
@@ -412,17 +174,10 @@
         {
           "name": "st-arm-clang",
           "version": "21.1.1+st.6"
-        }
-      ]
-    },
-    {
-      "name": "st-arm-clang-19_1_6-description",
-      "version": "0.0.5+st.1",
-      "platform": "all",
-      "selected_by": [
+        },
         {
-          "name": "st-arm-clang-19_1_6-description",
-          "version": "0.0.5+st.1"
+          "name": "st-arm-clang",
+          "version": ">=21.1.1+st.1 <21.1.1+st.99999"
         }
       ]
     },
@@ -438,6 +193,39 @@
       ]
     },
     {
+      "name": "st-arm-clang-hybrid",
+      "version": "21.1.1+st.2",
+      "platform": "all",
+      "selected_by": [
+        {
+          "name": "st-arm-clang-hybrid",
+          "version": "21.1.1+st.2"
+        }
+      ]
+    },
+    {
+      "name": "st-arm-clang-hybrid-21_1_1-description",
+      "version": "1.0.0+st.1",
+      "platform": "all",
+      "selected_by": [
+        {
+          "name": "st-arm-clang-hybrid-21_1_1-description",
+          "version": ">=0.0.1"
+        }
+      ]
+    },
+    {
+      "name": "st-arm-clangd",
+      "version": "21.1.0+st.2",
+      "platform": "darwin",
+      "selected_by": [
+        {
+          "name": "st-arm-clangd",
+          "version": "21.1.0+st.2"
+        }
+      ]
+    },
+    {
       "name": "st-arm-clangd",
       "version": "21.1.0+st.2",
       "platform": "x86_64-linux",
@@ -445,10 +233,6 @@
         {
           "name": "st-arm-clangd",
           "version": "21.1.0+st.2"
-        },
-        {
-          "name": "st-arm-clangd",
-          "version": ">=0.0.0"
         }
       ]
     },
@@ -460,106 +244,6 @@
         {
           "name": "st-arm-clangd",
           "version": "21.1.0+st.2"
-        },
-        {
-          "name": "st-arm-clangd",
-          "version": ">=0.0.0"
-        }
-      ]
-    },
-    {
-      "name": "stlink-gdbserver",
-      "version": "7.12.0+st.2",
-      "platform": "x86_64-linux",
-      "selected_by": [
-        {
-          "name": "stlink-gdbserver",
-          "version": "7.12.0+st.2"
-        }
-      ]
-    },
-    {
-      "name": "stlink-gdbserver",
-      "version": "7.12.0+st.2",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "stlink-gdbserver",
-          "version": "7.12.0+st.2"
-        }
-      ]
-    },
-    {
-      "name": "stlink-gdbserver",
-      "version": "7.13.0+st.3",
-      "platform": "x86_64-linux",
-      "selected_by": [
-        {
-          "name": "stlink-gdbserver",
-          "version": ">=7.13.0+st.3"
-        }
-      ]
-    },
-    {
-      "name": "stlink-gdbserver",
-      "version": "7.13.0+st.3",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "stlink-gdbserver",
-          "version": ">=7.13.0+st.3"
-        }
-      ]
-    },
-    {
-      "name": "stlink-server",
-      "version": "2.1.1+st.8",
-      "platform": "x86_64-linux",
-      "selected_by": [
-        {
-          "name": "stlink-server",
-          "version": "2.1.1+st.8"
-        },
-        {
-          "name": "stlink-server",
-          "version": ">=0.0.0"
-        }
-      ]
-    },
-    {
-      "name": "stlink-server",
-      "version": "2.1.1+st.8",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "stlink-server",
-          "version": "2.1.1+st.8"
-        },
-        {
-          "name": "stlink-server",
-          "version": ">=0.0.0"
-        }
-      ]
-    },
-    {
-      "name": "stlink-upgrader",
-      "version": "3.17.10+st.1",
-      "platform": "x86_64-linux",
-      "selected_by": [
-        {
-          "name": "stlink-upgrader",
-          "version": ">=3.17.10+st.1"
-        }
-      ]
-    },
-    {
-      "name": "stlink-upgrader",
-      "version": "3.17.10+st.1",
-      "platform": "x86_64-windows",
-      "selected_by": [
-        {
-          "name": "stlink-upgrader",
-          "version": ">=3.17.10+st.1"
         }
       ]
     }

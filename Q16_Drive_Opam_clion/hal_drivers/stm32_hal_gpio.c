@@ -23,35 +23,35 @@
 #include "main.h"
 
 /* Private variables ---------------------------------------------------------*/
-static GPIO_TypeDef *const port_map[HAL_GPIO_PORT_LEN] = {
+static GPIO_TypeDef* const port_map[HAL_GPIO_PORT_LEN] = {
     GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, GPIOG,
 };
 
 #define PORT_MAP_SIZE (sizeof(port_map) / sizeof(port_map[0]))
 
 typedef struct {
-  hal_gpio_context_t *ctx;
+  hal_gpio_context_t* ctx;
   uint8_t port;
 } exti_callback_info_t;
 
 static exti_callback_info_t exti_callbacks[16] = {0};
 
 /* Private function prototypes -----------------------------------------------*/
-static hal_gpio_error_t stm32_gpio_init(hal_gpio_context_t *ctx,
-                                        const hal_gpio_config_t *config);
-static hal_gpio_error_t stm32_gpio_deinit(hal_gpio_context_t *ctx, uint8_t port,
+static hal_gpio_error_t stm32_gpio_init(hal_gpio_context_t* ctx,
+                                        const hal_gpio_config_t* config);
+static hal_gpio_error_t stm32_gpio_deinit(hal_gpio_context_t* ctx, uint8_t port,
                                           uint8_t pin);
-static hal_gpio_error_t stm32_gpio_write(hal_gpio_context_t *ctx, uint8_t port,
+static hal_gpio_error_t stm32_gpio_write(hal_gpio_context_t* ctx, uint8_t port,
                                          uint8_t pin,
                                          hal_gpio_pin_state_t state);
-static hal_gpio_error_t stm32_gpio_read(hal_gpio_context_t *ctx, uint8_t port,
+static hal_gpio_error_t stm32_gpio_read(hal_gpio_context_t* ctx, uint8_t port,
                                         uint8_t pin,
-                                        hal_gpio_pin_state_t *state);
-static hal_gpio_error_t stm32_gpio_toggle(hal_gpio_context_t *ctx, uint8_t port,
+                                        hal_gpio_pin_state_t* state);
+static hal_gpio_error_t stm32_gpio_toggle(hal_gpio_context_t* ctx, uint8_t port,
                                           uint8_t pin);
 static hal_gpio_error_t stm32_gpio_register_callback(
-    hal_gpio_context_t *ctx, uint8_t port, uint8_t pin,
-    hal_gpio_callback_t callback, void *user_data);
+    hal_gpio_context_t* ctx, uint8_t port, uint8_t pin,
+    hal_gpio_callback_t callback, void* user_data);
 
 static void stm32_gpio_enable_clock(uint8_t port);
 static uint32_t stm32_gpio_get_mode(hal_gpio_mode_t mode);
@@ -76,7 +76,7 @@ static const hal_gpio_ops_t stm32_gpio_ops = {
  * @param  ctx: GPIO上下文指针
  * @return HAL_GPIO_OK 成功，其他值为错误码
  */
-hal_gpio_error_t stm32_gpio_init_context(hal_gpio_context_t *ctx) {
+hal_gpio_error_t stm32_gpio_init_context(hal_gpio_context_t* ctx) {
   if (ctx == NULL) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
   }
@@ -202,9 +202,7 @@ static uint32_t stm32_gpio_get_speed(hal_gpio_speed_t speed) {
  * @param  af: HAL AF值
  * @return STM32 HAL AF值
  */
-static uint8_t stm32_gpio_get_af(hal_gpio_af_t af) {
-  return (uint8_t)af;
-}
+static uint8_t stm32_gpio_get_af(hal_gpio_af_t af) { return (uint8_t)af; }
 
 /**
  * @brief  初始化GPIO
@@ -212,8 +210,8 @@ static uint8_t stm32_gpio_get_af(hal_gpio_af_t af) {
  * @param  config: GPIO配置结构体指针
  * @return HAL_GPIO_OK 成功，其他值为错误码
  */
-static hal_gpio_error_t stm32_gpio_init(hal_gpio_context_t *ctx,
-                                        const hal_gpio_config_t *config) {
+static hal_gpio_error_t stm32_gpio_init(hal_gpio_context_t* ctx,
+                                        const hal_gpio_config_t* config) {
   if (config == NULL || config->port >= PORT_MAP_SIZE ||
       config->pin >= HAL_GPIO_PIN_MAX) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
@@ -254,7 +252,7 @@ static hal_gpio_error_t stm32_gpio_init(hal_gpio_context_t *ctx,
  * @param  pin: GPIO引脚
  * @return HAL_GPIO_OK 成功，其他值为错误码
  */
-static hal_gpio_error_t stm32_gpio_deinit(hal_gpio_context_t *ctx, uint8_t port,
+static hal_gpio_error_t stm32_gpio_deinit(hal_gpio_context_t* ctx, uint8_t port,
                                           uint8_t pin) {
   if (port >= PORT_MAP_SIZE || pin >= HAL_GPIO_PIN_MAX) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
@@ -277,7 +275,7 @@ static hal_gpio_error_t stm32_gpio_deinit(hal_gpio_context_t *ctx, uint8_t port,
  * @param  state: 引脚状态
  * @return HAL_GPIO_OK 成功，其他值为错误码
  */
-static hal_gpio_error_t stm32_gpio_write(hal_gpio_context_t *ctx, uint8_t port,
+static hal_gpio_error_t stm32_gpio_write(hal_gpio_context_t* ctx, uint8_t port,
                                          uint8_t pin,
                                          hal_gpio_pin_state_t state) {
   if (port >= PORT_MAP_SIZE || pin >= HAL_GPIO_PIN_MAX) {
@@ -300,9 +298,9 @@ static hal_gpio_error_t stm32_gpio_write(hal_gpio_context_t *ctx, uint8_t port,
  * @param  state: 指向状态存储的指针
  * @return HAL_GPIO_OK 成功，其他值为错误码
  */
-static hal_gpio_error_t stm32_gpio_read(hal_gpio_context_t *ctx, uint8_t port,
+static hal_gpio_error_t stm32_gpio_read(hal_gpio_context_t* ctx, uint8_t port,
                                         uint8_t pin,
-                                        hal_gpio_pin_state_t *state) {
+                                        hal_gpio_pin_state_t* state) {
   if (port >= PORT_MAP_SIZE || pin >= HAL_GPIO_PIN_MAX || state == NULL) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
   }
@@ -322,7 +320,7 @@ static hal_gpio_error_t stm32_gpio_read(hal_gpio_context_t *ctx, uint8_t port,
  * @param  pin: GPIO 引脚
  * @return HAL_GPIO_OK 成功，其他值为错误码
  */
-static hal_gpio_error_t stm32_gpio_toggle(hal_gpio_context_t *ctx, uint8_t port,
+static hal_gpio_error_t stm32_gpio_toggle(hal_gpio_context_t* ctx, uint8_t port,
                                           uint8_t pin) {
   if (port >= PORT_MAP_SIZE || pin >= HAL_GPIO_PIN_MAX) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
@@ -344,8 +342,8 @@ static hal_gpio_error_t stm32_gpio_toggle(hal_gpio_context_t *ctx, uint8_t port,
  * @return HAL_GPIO_OK 成功，其他值为错误码
  */
 static hal_gpio_error_t stm32_gpio_register_callback(
-    hal_gpio_context_t *ctx, uint8_t port, uint8_t pin,
-    hal_gpio_callback_t callback, void *user_data) {
+    hal_gpio_context_t* ctx, uint8_t port, uint8_t pin,
+    hal_gpio_callback_t callback, void* user_data) {
   if (port >= PORT_MAP_SIZE || pin >= HAL_GPIO_PIN_MAX) {
     return HAL_GPIO_ERROR_INVALID_PARAM;
   }
@@ -372,7 +370,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     }
   }
 
-  exti_callback_info_t *info = &exti_callbacks[pin_index];
+  exti_callback_info_t* info = &exti_callbacks[pin_index];
   if (info->ctx != NULL && info->ctx->callback != NULL) {
     info->ctx->callback(info->ctx, info->port, pin_index, info->ctx->user_data);
   }

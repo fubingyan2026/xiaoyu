@@ -15,7 +15,7 @@
 #include "toolkit/toolkit.h"
 #include "warning_task.h"
 
-extern tk_event_t *interrupt_event;
+extern tk_event_t* interrupt_event;
 
 extern const uint8_t TIM_EVENT_FLAG;
 extern const uint8_t ADC_EVENT_FLAG;

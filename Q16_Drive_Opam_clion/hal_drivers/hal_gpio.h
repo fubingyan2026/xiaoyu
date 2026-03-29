@@ -164,8 +164,8 @@ typedef struct hal_gpio_context hal_gpio_context_t;
  * @param pin 触发中断的引脚号
  * @param user_data 用户自定义数据指针
  */
-typedef void (*hal_gpio_callback_t)(hal_gpio_context_t *ctx, uint8_t port,
-                                    uint8_t pin, void *user_data);
+typedef void (*hal_gpio_callback_t)(hal_gpio_context_t* ctx, uint8_t port,
+                                    uint8_t pin, void* user_data);
 
 /**
  * @brief GPIO 上下文结构体
@@ -173,10 +173,10 @@ typedef void (*hal_gpio_callback_t)(hal_gpio_context_t *ctx, uint8_t port,
  * 用于保存 GPIO 实例的状态信息，支持多实例操作。
  */
 struct hal_gpio_context {
-  const struct hal_gpio_ops *ops; /**< 平台特定的操作函数指针 */
-  volatile uint8_t initialized; /**< 初始化标志（0=未初始化，1=已初始化） */
-  hal_gpio_callback_t callback; /**< 中断回调函数指针 */
-  void *user_data;              /**< 用户自定义数据 */
+  const struct hal_gpio_ops* ops; /**< 平台特定的操作函数指针 */
+  volatile uint8_t initialized;   /**< 初始化标志（0=未初始化，1=已初始化） */
+  hal_gpio_callback_t callback;   /**< 中断回调函数指针 */
+  void* user_data;                /**< 用户自定义数据 */
 };
 
 /**
@@ -191,8 +191,8 @@ typedef struct hal_gpio_ops {
    * @param config GPIO 配置结构体指针
    * @return 操作结果错误码
    */
-  hal_gpio_error_t (*init)(hal_gpio_context_t *ctx,
-                           const hal_gpio_config_t *config);
+  hal_gpio_error_t (*init)(hal_gpio_context_t* ctx,
+                           const hal_gpio_config_t* config);
 
   /**
    * @brief 反初始化 GPIO 引脚
@@ -201,7 +201,7 @@ typedef struct hal_gpio_ops {
    * @param pin GPIO 引脚号
    * @return 操作结果错误码
    */
-  hal_gpio_error_t (*deinit)(hal_gpio_context_t *ctx, uint8_t port,
+  hal_gpio_error_t (*deinit)(hal_gpio_context_t* ctx, uint8_t port,
                              uint8_t pin);
 
   /**
@@ -212,7 +212,7 @@ typedef struct hal_gpio_ops {
    * @param state 要设置的引脚状态
    * @return 操作结果错误码
    */
-  hal_gpio_error_t (*write)(hal_gpio_context_t *ctx, uint8_t port, uint8_t pin,
+  hal_gpio_error_t (*write)(hal_gpio_context_t* ctx, uint8_t port, uint8_t pin,
                             hal_gpio_pin_state_t state);
 
   /**
@@ -223,8 +223,8 @@ typedef struct hal_gpio_ops {
    * @param state 输出参数，用于存储读取到的引脚状态
    * @return 操作结果错误码
    */
-  hal_gpio_error_t (*read)(hal_gpio_context_t *ctx, uint8_t port, uint8_t pin,
-                           hal_gpio_pin_state_t *state);
+  hal_gpio_error_t (*read)(hal_gpio_context_t* ctx, uint8_t port, uint8_t pin,
+                           hal_gpio_pin_state_t* state);
 
   /**
    * @brief 翻转 GPIO 引脚状态
@@ -233,7 +233,7 @@ typedef struct hal_gpio_ops {
    * @param pin GPIO 引脚号
    * @return 操作结果错误码
    */
-  hal_gpio_error_t (*toggle)(hal_gpio_context_t *ctx, uint8_t port,
+  hal_gpio_error_t (*toggle)(hal_gpio_context_t* ctx, uint8_t port,
                              uint8_t pin);
 
   /**
@@ -245,10 +245,10 @@ typedef struct hal_gpio_ops {
    * @param user_data 用户自定义数据指针
    * @return 操作结果错误码
    */
-  hal_gpio_error_t (*register_callback)(hal_gpio_context_t *ctx, uint8_t port,
+  hal_gpio_error_t (*register_callback)(hal_gpio_context_t* ctx, uint8_t port,
                                         uint8_t pin,
                                         hal_gpio_callback_t callback,
-                                        void *user_data);
+                                        void* user_data);
 } hal_gpio_ops_t;
 
 /* Exported constants --------------------------------------------------------*/
@@ -282,8 +282,8 @@ typedef struct hal_gpio_ops {
  * @param config GPIO 配置结构体指针
  * @return 操作结果错误码
  */
-hal_gpio_error_t hal_gpio_init(hal_gpio_context_t *ctx,
-                               const hal_gpio_config_t *config);
+hal_gpio_error_t hal_gpio_init(hal_gpio_context_t* ctx,
+                               const hal_gpio_config_t* config);
 
 /**
  * @brief 反初始化 GPIO 引脚
@@ -292,7 +292,7 @@ hal_gpio_error_t hal_gpio_init(hal_gpio_context_t *ctx,
  * @param pin GPIO 引脚号
  * @return 操作结果错误码
  */
-hal_gpio_error_t hal_gpio_deinit(hal_gpio_context_t *ctx, uint8_t port,
+hal_gpio_error_t hal_gpio_deinit(hal_gpio_context_t* ctx, uint8_t port,
                                  uint8_t pin);
 
 /**
@@ -303,7 +303,7 @@ hal_gpio_error_t hal_gpio_deinit(hal_gpio_context_t *ctx, uint8_t port,
  * @param state 要设置的引脚状态
  * @return 操作结果错误码
  */
-hal_gpio_error_t hal_gpio_write(hal_gpio_context_t *ctx, uint8_t port,
+hal_gpio_error_t hal_gpio_write(hal_gpio_context_t* ctx, uint8_t port,
                                 uint8_t pin, hal_gpio_pin_state_t state);
 
 /**
@@ -314,8 +314,8 @@ hal_gpio_error_t hal_gpio_write(hal_gpio_context_t *ctx, uint8_t port,
  * @param state 输出参数，用于存储读取到的引脚状态
  * @return 操作结果错误码
  */
-hal_gpio_error_t hal_gpio_read(hal_gpio_context_t *ctx, uint8_t port,
-                               uint8_t pin, hal_gpio_pin_state_t *state);
+hal_gpio_error_t hal_gpio_read(hal_gpio_context_t* ctx, uint8_t port,
+                               uint8_t pin, hal_gpio_pin_state_t* state);
 
 /**
  * @brief 翻转 GPIO 引脚状态
@@ -324,7 +324,7 @@ hal_gpio_error_t hal_gpio_read(hal_gpio_context_t *ctx, uint8_t port,
  * @param pin GPIO 引脚号
  * @return 操作结果错误码
  */
-hal_gpio_error_t hal_gpio_toggle(hal_gpio_context_t *ctx, uint8_t port,
+hal_gpio_error_t hal_gpio_toggle(hal_gpio_context_t* ctx, uint8_t port,
                                  uint8_t pin);
 
 /**
@@ -336,10 +336,10 @@ hal_gpio_error_t hal_gpio_toggle(hal_gpio_context_t *ctx, uint8_t port,
  * @param user_data 用户自定义数据指针
  * @return 操作结果错误码
  */
-hal_gpio_error_t hal_gpio_register_callback(hal_gpio_context_t *ctx,
+hal_gpio_error_t hal_gpio_register_callback(hal_gpio_context_t* ctx,
                                             uint8_t port, uint8_t pin,
                                             hal_gpio_callback_t callback,
-                                            void *user_data);
+                                            void* user_data);
 
 /**
  * @brief 设置 GPIO 操作函数
@@ -350,8 +350,8 @@ hal_gpio_error_t hal_gpio_register_callback(hal_gpio_context_t *ctx,
  * @note 通常不需要直接调用此函数，使用平台特定的初始化函数即可。
  *       此函数主要用于多平台切换或单元测试场景。
  */
-hal_gpio_error_t hal_gpio_set_ops(hal_gpio_context_t *ctx,
-                                  const hal_gpio_ops_t *ops);
+hal_gpio_error_t hal_gpio_set_ops(hal_gpio_context_t* ctx,
+                                  const hal_gpio_ops_t* ops);
 
 /**
  * @brief STM32 平台 GPIO 上下文初始化函数
@@ -360,7 +360,7 @@ hal_gpio_error_t hal_gpio_set_ops(hal_gpio_context_t *ctx,
  *
  * 使用此函数初始化 STM32 平台的 GPIO 上下文，会自动设置好平台特定的操作函数。
  */
-hal_gpio_error_t stm32_gpio_init_context(hal_gpio_context_t *ctx);
+hal_gpio_error_t stm32_gpio_init_context(hal_gpio_context_t* ctx);
 
 #ifdef __cplusplus
 }

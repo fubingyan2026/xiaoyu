@@ -15,6 +15,6 @@ extern uint32_t millis(void);
 
 extern void Get_Time_Hook(uint8_t count);
 
-extern const uint32_t *get_time_tick_pointer(void);
+extern const uint32_t* get_time_tick_pointer(void);
 
 #endif

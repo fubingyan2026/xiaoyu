@@ -73,7 +73,7 @@ typedef struct {
   offline_callback callback;     /**< 离线回调函数指针 */
   uint16_t offline_ms;           /**< 离线超时时间(ms) */
   uint8_t daemon_error_code;     /**< 守护进程错误码 */
-  const char *name;              /**< 配置名称 */
+  const char* name;              /**< 配置名称 */
   uint16_t rx_data_len;          /**< 接收数据长度 */
   uint8_t priority;              /**< 接收优先级 0-最高, 255-最低 */
 } can_rx_config_t;
@@ -86,7 +86,7 @@ typedef struct {
   hal_fdcan_instance_t instance; /**< CAN实例标识 */
   uint32_t can_tx_identify;      /**< 发送消息ID */
   uint16_t tx_data_len;          /**< 发送数据长度 */
-  const char *name;              /**< 配置名称 */
+  const char* name;              /**< 配置名称 */
   uint8_t priority;              /**< 发送优先级 0-最高, 255-最低 */
 } can_tx_config_t;
 
@@ -96,12 +96,12 @@ typedef struct {
  */
 typedef struct can_comm_rx {
   can_rx_config_t config;      /**< 接收配置信息 */
-  kfifo_t *kfifo_ptr;          /**< 环形缓冲区指针 */
-  daemon_t *daemon_can_rx_ptr; /**< 守护进程指针 */
+  kfifo_t* kfifo_ptr;          /**< 环形缓冲区指针 */
+  daemon_t* daemon_can_rx_ptr; /**< 守护进程指针 */
   uint8_t last_sequence;       /**< 最后接收的序列号 */
   uint32_t sequence_errors;    /**< 序列号错误计数 */
-  void *direct_binding_ptr;    // 新增：直接数据绑定指针
-  struct can_comm_rx *next;    /**< 下一个接收实例指针 */
+  void* direct_binding_ptr;    // 新增：直接数据绑定指针
+  struct can_comm_rx* next;    /**< 下一个接收实例指针 */
 } can_comm_rx_t;
 
 /**
@@ -110,36 +110,36 @@ typedef struct can_comm_rx {
  */
 typedef struct can_comm_tx {
   can_tx_config_t config;    /**< 发送配置信息 */
-  kfifo_t *kfifo_ptr;        /**< 环形缓冲区指针 */
+  kfifo_t* kfifo_ptr;        /**< 环形缓冲区指针 */
   uint8_t sequence_counter;  /**< 实例私有序列号 */
-  void *direct_tx_data_ptr;  // 新增：指向应用层发送数据的指针
+  void* direct_tx_data_ptr;  // 新增：指向应用层发送数据的指针
   uint8_t direct_tx_ready;
-  struct can_comm_tx *next; /**< 下一个发送实例指针 */
+  struct can_comm_tx* next; /**< 下一个发送实例指针 */
 } can_comm_tx_t;
 
 /* 全局变量声明 */
-extern can_comm_rx_t *g_can_comm_rx_list; /**< CAN接收实例链表头指针 */
-extern can_comm_tx_t *g_can_comm_tx_list; /**< CAN发送实例链表头指针 */
+extern can_comm_rx_t* g_can_comm_rx_list; /**< CAN接收实例链表头指针 */
+extern can_comm_tx_t* g_can_comm_tx_list; /**< CAN发送实例链表头指针 */
 extern can_comm_stats_t g_can_stats;      /**< CAN通信统计信息 */
 
 /** can_comm_public **/
-can_comm_rx_t *CANRxRegister(const can_rx_config_t *config);
-can_comm_tx_t *CANTxRegister(const can_tx_config_t *config);
+can_comm_rx_t* CANRxRegister(const can_rx_config_t* config);
+can_comm_tx_t* CANTxRegister(const can_tx_config_t* config);
 
 void CANCommGetDataTransmit_V2(void);
 void CANCommSendDataPackage_V2(void);
 void CANCommSendFlush(void);
 
-void *CANRxBindData(can_comm_rx_t *rx);
-void *CANTxBindData(can_comm_tx_t *tx);
+void* CANRxBindData(can_comm_rx_t* rx);
+void* CANTxBindData(can_comm_tx_t* tx);
 
-void CANCommUnregisterRx(can_comm_rx_t *instance);
-void CANCommUnregisterTx(can_comm_tx_t *instance);
+void CANCommUnregisterRx(can_comm_rx_t* instance);
+void CANCommUnregisterTx(can_comm_tx_t* instance);
 void CANCommUnregisterAll(void);
 void CANCommInit(void);
 
-can_comm_tx_t *CANGetTxInstance(const char *name);
-can_comm_rx_t *CANGetRxInstance(const char *name);
+can_comm_tx_t* CANGetTxInstance(const char* name);
+can_comm_rx_t* CANGetRxInstance(const char* name);
 
 uint32_t CANCommGetRxCount(void);
 uint32_t CANCommGetTxCount(void);
@@ -150,14 +150,14 @@ uint32_t can_comm_get_receive_level(hal_fdcan_instance_t instance,
 uint32_t can_comm_get_send_level(hal_fdcan_instance_t instance);
 
 bool can_comm_receive(hal_fdcan_instance_t instance,
-                      hal_fdcan_message_t *message);
+                      hal_fdcan_message_t* message);
 bool can_comm_send(hal_fdcan_instance_t instance,
-                   const hal_fdcan_message_t *message);
+                   const hal_fdcan_message_t* message);
 
 /** can_comm_state **/
-can_comm_stats_t *CANCommGetStats(void);
+can_comm_stats_t* CANCommGetStats(void);
 void CANCommResetStats(void);
 uint8_t CANCommGetBusLoad(void);
-uint32_t CANCommGetSequenceErrors(const char *rx_name);
+uint32_t CANCommGetSequenceErrors(const char* rx_name);
 
 #endif /* CAN_COMM_H */

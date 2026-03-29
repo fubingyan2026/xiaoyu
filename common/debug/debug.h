@@ -4,11 +4,11 @@
 #include "stdint.h"
 
 /* 调试配置宏 */
-#define ENABLE_ASSERT 1           // 启用断言
-#define ENABLE_DEBUG_PRINT 1      // 启用调试打印
-#define ENABLE_COLOR_OUTPUT 1     // 启用颜色输出
-#define ENABLE_FUNCTION_TRACE 1   // 启用函数跟踪
-#define ENABLE_PRINTF_USING_RTT 1 // 使用RTT打印(0=使用串口)
+#define ENABLE_ASSERT 1            // 启用断言
+#define ENABLE_DEBUG_PRINT 1       // 启用调试打印
+#define ENABLE_COLOR_OUTPUT 1      // 启用颜色输出
+#define ENABLE_FUNCTION_TRACE 1    // 启用函数跟踪
+#define ENABLE_PRINTF_USING_RTT 1  // 使用RTT打印(0=使用串口)
 
 /* 缓冲区配置 */
 #define BSP_PRINTF_BUFF_SIZE 256
@@ -25,32 +25,29 @@
 #else
 #define SEGGER_WRITE(...)
 #endif
-void BSP_Printf(const char *fmt, ...);
+void BSP_Printf(const char* fmt, ...);
 #else
-#define BSP_Printf(...)                                                                                                \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
+#define BSP_Printf(...) \
+  do {                  \
+  } while (0)
 #endif
 
 #if (ENABLE_ASSERT)
-extern void Assert_Failed(const char *func, uint32_t line);
+extern void Assert_Failed(const char* func, uint32_t line);
 #define ASSERT(expr) ((expr) ? (void)0 : Assert_Failed(__func__, __LINE__))
 #else
-#define ASSERT(expr)                                                                                                   \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
+#define ASSERT(expr) \
+  do {               \
+  } while (0)
 #endif
 
 /* 调试级别 */
-typedef enum
-{
-    DEBUG_LEVEL_ERROR = 0,
-    DEBUG_LEVEL_WARN = 1,
-    DEBUG_LEVEL_INFO = 2,
-    DEBUG_LEVEL_DEBUG = 3,
-    DEBUG_LEVEL_TRACE = 4
+typedef enum {
+  DEBUG_LEVEL_ERROR = 0,
+  DEBUG_LEVEL_WARN = 1,
+  DEBUG_LEVEL_INFO = 2,
+  DEBUG_LEVEL_DEBUG = 3,
+  DEBUG_LEVEL_TRACE = 4
 } debug_level_t;
 
 /* ANSI颜色代码 */
@@ -96,45 +93,45 @@ typedef enum
 
 /* 条件调试打印宏 */
 #if (ENABLE_DEBUG_PRINT)
-#define DEBUG_PRINT(level, ...)                                                                                        \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        if (debug_get_level() >= (level))                                                                              \
-        {                                                                                                              \
-            BSP_Printf(__VA_ARGS__);                                                                                   \
-            BSP_Printf("\r\n");                                                                                        \
-        }                                                                                                              \
-    } while (0)
+#define DEBUG_PRINT(level, ...)         \
+  do {                                  \
+    if (debug_get_level() >= (level)) { \
+      BSP_Printf(__VA_ARGS__);          \
+      BSP_Printf("\r\n");               \
+    }                                   \
+  } while (0)
 
-#define DEBUG_ERROR(...) DEBUG_PRINT(DEBUG_LEVEL_ERROR, ERROR_TAG ":" __VA_ARGS__)
+#define DEBUG_ERROR(...) \
+  DEBUG_PRINT(DEBUG_LEVEL_ERROR, ERROR_TAG ":" __VA_ARGS__)
 #define DEBUG_WARN(...) DEBUG_PRINT(DEBUG_LEVEL_WARN, WARN_TAG ":" __VA_ARGS__)
 #define DEBUG_INFO(...) DEBUG_PRINT(DEBUG_LEVEL_INFO, INFO_TAG ":" __VA_ARGS__)
-#define DEBUG_DEBUG(...) DEBUG_PRINT(DEBUG_LEVEL_DEBUG, DEBUG_TAG ":" __VA_ARGS__)
-#define DEBUG_TRACE(...) DEBUG_PRINT(DEBUG_LEVEL_TRACE, TRACE_TAG ":" __VA_ARGS__)
+#define DEBUG_DEBUG(...) \
+  DEBUG_PRINT(DEBUG_LEVEL_DEBUG, DEBUG_TAG ":" __VA_ARGS__)
+#define DEBUG_TRACE(...) \
+  DEBUG_PRINT(DEBUG_LEVEL_TRACE, TRACE_TAG ":" __VA_ARGS__)
 
 /* 函数跟踪宏 */
 #if (ENABLE_FUNCTION_TRACE)
 #define FUNCTION_ENTER() DEBUG_TRACE("--> %s()", __func__)
 #define FUNCTION_EXIT() DEBUG_TRACE("<-- %s()", __func__)
-#define FUNCTION_EXIT_VAL(value) DEBUG_TRACE("<-- %s() = %ld", __func__, (long)(value))
+#define FUNCTION_EXIT_VAL(value) \
+  DEBUG_TRACE("<-- %s() = %ld", __func__, (long)(value))
 #else
-#define FUNCTION_ENTER()                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define FUNCTION_EXIT()                                                                                                \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define FUNCTION_EXIT_VAL(value)                                                                                       \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
+#define FUNCTION_ENTER() \
+  do {                   \
+  } while (0)
+#define FUNCTION_EXIT() \
+  do {                  \
+  } while (0)
+#define FUNCTION_EXIT_VAL(value) \
+  do {                           \
+  } while (0)
 #endif
 
 /* 打印当前函数名 */
 #define PRINT_FUNCTION() DEBUG_TRACE("Current function: %s", __func__)
-#define PRINT_FUNCTION_COLOR(color) BSP_Printf(color "Function: %s" COLOR_RESET "\r\n", __func__)
+#define PRINT_FUNCTION_COLOR(color) \
+  BSP_Printf(color "Function: %s" COLOR_RESET "\r\n", __func__)
 
 /* 彩色打印函数（直接使用颜色） */
 #define PRINT_RED(...) BSP_Printf(COLOR_RED __VA_ARGS__ COLOR_RESET)
@@ -150,93 +147,72 @@ typedef enum
 #define PRINT_UNDERLINE(...) BSP_Printf(COLOR_UNDERLINE __VA_ARGS__ COLOR_RESET)
 
 #else
-#define DEBUG_PRINT(level, ...)                                                                                        \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define DEBUG_ERROR(...)                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define DEBUG_WARN(...)                                                                                                \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define DEBUG_INFO(...)                                                                                                \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define DEBUG_DEBUG(...)                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define DEBUG_TRACE(...)                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
+#define DEBUG_PRINT(level, ...) \
+  do {                          \
+  } while (0)
+#define DEBUG_ERROR(...) \
+  do {                   \
+  } while (0)
+#define DEBUG_WARN(...) \
+  do {                  \
+  } while (0)
+#define DEBUG_INFO(...) \
+  do {                  \
+  } while (0)
+#define DEBUG_DEBUG(...) \
+  do {                   \
+  } while (0)
+#define DEBUG_TRACE(...) \
+  do {                   \
+  } while (0)
 
-#define FUNCTION_ENTER()                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define FUNCTION_EXIT()                                                                                                \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define FUNCTION_EXIT_VAL(value)                                                                                       \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
+#define FUNCTION_ENTER() \
+  do {                   \
+  } while (0)
+#define FUNCTION_EXIT() \
+  do {                  \
+  } while (0)
+#define FUNCTION_EXIT_VAL(value) \
+  do {                           \
+  } while (0)
 
-#define PRINT_FUNCTION()                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define PRINT_FUNCTION_COLOR(color)                                                                                    \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
+#define PRINT_FUNCTION() \
+  do {                   \
+  } while (0)
+#define PRINT_FUNCTION_COLOR(color) \
+  do {                              \
+  } while (0)
 
-#define PRINT_RED(...)                                                                                                 \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define PRINT_GREEN(...)                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define PRINT_YELLOW(...)                                                                                              \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define PRINT_BLUE(...)                                                                                                \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define PRINT_CYAN(...)                                                                                                \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define PRINT_MAGENTA(...)                                                                                             \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define PRINT_WHITE(...)                                                                                               \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define PRINT_GRAY(...)                                                                                                \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define PRINT_BOLD(...)                                                                                                \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
-#define PRINT_UNDERLINE(...)                                                                                           \
-    do                                                                                                                 \
-    {                                                                                                                  \
-    } while (0)
+#define PRINT_RED(...) \
+  do {                 \
+  } while (0)
+#define PRINT_GREEN(...) \
+  do {                   \
+  } while (0)
+#define PRINT_YELLOW(...) \
+  do {                    \
+  } while (0)
+#define PRINT_BLUE(...) \
+  do {                  \
+  } while (0)
+#define PRINT_CYAN(...) \
+  do {                  \
+  } while (0)
+#define PRINT_MAGENTA(...) \
+  do {                     \
+  } while (0)
+#define PRINT_WHITE(...) \
+  do {                   \
+  } while (0)
+#define PRINT_GRAY(...) \
+  do {                  \
+  } while (0)
+#define PRINT_BOLD(...) \
+  do {                  \
+  } while (0)
+#define PRINT_UNDERLINE(...) \
+  do {                       \
+  } while (0)
 #endif
 
 /* 函数声明 */
@@ -247,4 +223,4 @@ uint8_t debug_is_color_enabled(void);
 void debug_enable_function_trace(uint8_t enable);
 uint8_t debug_is_function_trace_enabled(void);
 
-#endif // DEBUG_H
+#endif  // DEBUG_H

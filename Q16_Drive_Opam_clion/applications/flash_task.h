@@ -8,12 +8,13 @@
 #ifndef FLASH_TASK_H
 #define FLASH_TASK_H
 
-#include "message_center/message_center.h"
 #include <stddef.h>
 #include <stdint.h>
+
 #include "easyflash.h"
 #include "encoder_alignment.h"
 #include "hall_adjustment.h"
+#include "message_center/message_center.h"
 
 /*============================================================================
  * 宏定义
@@ -23,14 +24,14 @@
  * @brief Flash存储的Magic名称定义
  * @note 使用宏定义代替数组，避免运行时开销和类型转换问题
  */
-#define FLASH_MAGIC_ENCODER     "FlashEncoder"
-#define FLASH_MAGIC_HALL        "FlashLineHall"
-#define FLASH_MAGIC_CAN         "FlashCanid"
+#define FLASH_MAGIC_ENCODER "FlashEncoder"
+#define FLASH_MAGIC_HALL "FlashLineHall"
+#define FLASH_MAGIC_CAN "FlashCanid"
 
 /**
  * @brief 默认环境变量表大小
  */
-#define FLASH_ENV_SET_SIZE      3
+#define FLASH_ENV_SET_SIZE 3
 
 /*============================================================================
  * 类型定义
@@ -39,13 +40,12 @@
 /**
  * @brief Flash任务类型
  */
-typedef enum __attribute__((packed))
-{
-    FLASH_TASK_WRITE_ENCODER = 0, ///< 写入校准数据
-    FLASH_TASK_WRITE_HALL,        ///< 写入霍尔参数
-    FLASH_TASK_WRITE_CAN,         ///< 写入CAN-ID
-    FLASH_TASK_ERASE_ALL,         ///< 擦除所有
-    FLASH_TASK_COUNT
+typedef enum __attribute__((packed)) {
+  FLASH_TASK_WRITE_ENCODER = 0,  ///< 写入校准数据
+  FLASH_TASK_WRITE_HALL,         ///< 写入霍尔参数
+  FLASH_TASK_WRITE_CAN,          ///< 写入CAN-ID
+  FLASH_TASK_ERASE_ALL,          ///< 擦除所有
+  FLASH_TASK_COUNT
 } flash_task_type_t;
 
 extern motor_flash_config_t g_motor_flash_cfg;
@@ -61,22 +61,20 @@ extern const ef_env default_env_set[FLASH_ENV_SET_SIZE];
 /**
  * @brief Flash任务请求结构
  */
-typedef struct __attribute__((packed))
-{
-    flash_task_type_t type; ///< 任务类型
-    void *data;             ///< 指向要写入的数据
-    size_t size;            ///< 数据大小
+typedef struct __attribute__((packed)) {
+  flash_task_type_t type;  ///< 任务类型
+  void* data;              ///< 指向要写入的数据
+  size_t size;             ///< 数据大小
 } flash_task_request_t;
 
 /**
  * @brief Flash任务管理器（基于message_center）
  */
-typedef struct __attribute__((packed))
-{
-    Publisher_t *publisher;   ///< 消息发布者
-    Subscriber_t *subscriber; ///< 消息订阅者
-    uint32_t pending_count;   ///< 等待执行的任务数
-    uint8_t idle_threshold;   ///< CPU空闲阈值(%)
+typedef struct __attribute__((packed)) {
+  Publisher_t* publisher;    ///< 消息发布者
+  Subscriber_t* subscriber;  ///< 消息订阅者
+  uint32_t pending_count;    ///< 等待执行的任务数
+  uint8_t idle_threshold;    ///< CPU空闲阈值(%)
 } flash_task_mgr_t;
 
 /*============================================================================
@@ -96,7 +94,7 @@ int flash_task_init(void);
  * @param size 数据大小
  * @note 任务会被放入队列，等待flash_task_process()执行
  */
-void flash_task_request(flash_task_type_t type, void *data, size_t size);
+void flash_task_request(flash_task_type_t type, void* data, size_t size);
 
 /**
  * @brief 处理Flash任务（低优先级任务中调用）
@@ -114,7 +112,7 @@ uint32_t flash_task_get_pending_count(void);
  * @brief 获取任务管理器实例
  * @return 任务管理器指针
  */
-flash_task_mgr_t *flash_task_get_instance(void);
+flash_task_mgr_t* flash_task_get_instance(void);
 
 /**
  * @brief 销毁Flash任务管理器（释放资源）

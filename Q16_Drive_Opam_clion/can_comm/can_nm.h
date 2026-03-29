@@ -103,7 +103,7 @@ void CANNmInit(uint8_t node_id, void (*sleep_cb)(void), void (*wakeup_cb)(void),
 
 void CANNmStateMachine(void);
 
-void CANNmProcessMessage(const uint8_t *data, uint16_t len);
+void CANNmProcessMessage(const uint8_t* data, uint16_t len);
 
 void CANNmRequestSleep(void);
 
@@ -113,19 +113,19 @@ nm_state_e CANNmGetState(void);
 
 uint8_t CANNmGetActiveNodeCount(void);
 
-const nm_node_info_t *CANNmGetNodeStatus(uint8_t node_id);
+const nm_node_info_t* CANNmGetNodeStatus(uint8_t node_id);
 
 uint8_t CANNmIsNodeOnline(uint8_t node_id);
 
-nm_statistics_t *CANNmGetStatistics(void);
+nm_statistics_t* CANNmGetStatistics(void);
 
 void CANNmResetStatistics(void);
 
 void CANNmSetStateForced(nm_state_e state);
 
-can_comm_rx_t *GetCanNMRxInstance(void);
+can_comm_rx_t* GetCanNMRxInstance(void);
 
-can_comm_tx_t *GetCanNMTxInstance(void);
+can_comm_tx_t* GetCanNMTxInstance(void);
 
 void can_nm_task(void);
 

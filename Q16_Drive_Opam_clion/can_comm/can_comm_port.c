@@ -34,14 +34,14 @@ uint32_t can_comm_get_send_level(hal_fdcan_instance_t instance) {
 }
 
 bool can_comm_receive(hal_fdcan_instance_t instance,
-                      hal_fdcan_message_t *message) {
+                      hal_fdcan_message_t* message) {
   ensure_fdcan_initialized();
   hal_fdcan_error_t ret = hal_fdcan_receive(&fdcan1_ctx, instance, message);
   return (ret == HAL_FDCAN_OK);
 }
 
 bool can_comm_send(hal_fdcan_instance_t instance,
-                   const hal_fdcan_message_t *message) {
+                   const hal_fdcan_message_t* message) {
   ensure_fdcan_initialized();
   hal_fdcan_error_t ret = hal_fdcan_send(&fdcan1_ctx, instance, message);
   return (ret == HAL_FDCAN_OK);
@@ -55,7 +55,7 @@ bool can_comm_send(hal_fdcan_instance_t instance,
  * @param RxFifo0ITs 接收FIFO中断标志
  * @note 在CAN接收中断中调用，处理接收到的数据
  */
-void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan,
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan,
                                const uint32_t RxFifo0ITs) {
   static hal_fdcan_message_t rx_msg;
 
@@ -67,7 +67,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan,
         g_can_stats.total_rx_bytes += rx_msg.data_length;
         g_can_stats.total_rx_frames++;  // 记得在结构体里加上这个成员
         /* 遍历接收实例链表，匹配消息ID */
-        can_comm_rx_t *current = g_can_comm_rx_list;
+        can_comm_rx_t* current = g_can_comm_rx_list;
         while (current != NULL) {
           if (current->config.instance == HAL_FDCAN_INSTANCE_1 &&
               current->config.can_rx_identify == rx_msg.id) {
@@ -88,7 +88,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan,
  * @param RxFifo1ITs 接收FIFO1中断标志
  * @note 用于处理高优先级消息，提高系统响应速度
  */
-void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan,
+void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef* hfdcan,
                                uint32_t RxFifo1ITs) {
   if ((RxFifo1ITs & FDCAN_IT_RX_FIFO1_NEW_MESSAGE) != RESET) {
     static hal_fdcan_message_t rx_msg;
@@ -99,7 +99,7 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan,
         /* 高优先级消息处理 */
         g_can_stats.total_rx_bytes += rx_msg.data_length;
         g_can_stats.total_rx_frames++;  // 记得在结构体里加上这个成员
-        can_comm_rx_t *current = g_can_comm_rx_list;
+        can_comm_rx_t* current = g_can_comm_rx_list;
         while (current != NULL) {
           if (current->config.instance == HAL_FDCAN_INSTANCE_1 &&
               current->config.can_rx_identify == rx_msg.id) {
@@ -116,14 +116,14 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan,
   }
 }
 
-void HAL_FDCAN_TxFifoEmptyCallback(FDCAN_HandleTypeDef *hfdcan) {}
+void HAL_FDCAN_TxFifoEmptyCallback(FDCAN_HandleTypeDef* hfdcan) {}
 
 /**
  * @brief  FDCAN 错误状态回调，所有错误中断都会先进这里
  * @param  hfdcan          : 外设句柄
  * @param  ErrorStatusITs  : HAL 汇总来的错误标志位集合
  */
-void HAL_FDCAN_ErrorStatusCallback(FDCAN_HandleTypeDef *hfdcan,
+void HAL_FDCAN_ErrorStatusCallback(FDCAN_HandleTypeDef* hfdcan,
                                    uint32_t ErrorStatusITs) {
   /* 1. 读当前错误计数器 --------------------------------------------------*/
   const uint32_t ecr = hfdcan->Instance->ECR;

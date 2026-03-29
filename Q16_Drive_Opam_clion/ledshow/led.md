@@ -20,15 +20,15 @@
 
 ### 1. LED 基础配置 (`led_config_t`)
 
-| 字段 | 类型 | 说明 |
-| :--- | :--- | :--- |
-| `led_name` | `const char*` | LED 唯一名称，用于查找和消息中心话题名 |
-| `port` / `pin` | `uint8_t` | GPIO 端口与引脚号 |
-| `active_level` | `hal_gpio_pin_state_e` | 有效电平（`HAL_GPIO_PIN_SET` 或 `RESET`） |
-| `init_state` | `led_state_t` | 注册后的初始状态（常亮/关闭/闪烁/呼吸） |
-| `blink_interval_ms` | `uint16_t` | 闪烁模式下的翻转间隔 (ms) |
-| `blink_counts` | `uint16_t` | 编码闪烁模式下，每一轮闪烁的次数 |
-| `pwm` | `led_pwm_config_t` | 呼吸灯模式所需的定时器实例与通道 |
+| 字段                | 类型                   | 说明                                      |
+| :------------------ | :--------------------- | :---------------------------------------- |
+| `led_name`          | `const char*`          | LED 唯一名称，用于查找和消息中心话题名    |
+| `port` / `pin`      | `uint8_t`              | GPIO 端口与引脚号                         |
+| `active_level`      | `hal_gpio_pin_state_e` | 有效电平（`HAL_GPIO_PIN_SET` 或 `RESET`） |
+| `init_state`        | `led_state_t`          | 注册后的初始状态（常亮/关闭/闪烁/呼吸）   |
+| `blink_interval_ms` | `uint16_t`             | 闪烁模式下的翻转间隔 (ms)                 |
+| `blink_counts`      | `uint16_t`             | 编码闪烁模式下，每一轮闪烁的次数          |
+| `pwm`               | `led_pwm_config_t`     | 呼吸灯模式所需的定时器实例与通道          |
 
 ---
 
@@ -102,16 +102,16 @@ if (SubGetMessage(led_sub, &current_state)) {
 
 ## 📊 API 参考
 
-| 函数 | 功能说明 |
-| :--- | :--- |
-| `LedInit(cb)` | 初始化 LED 子系统，注入时间回调 |
-| `LedRegisterStatic(cfg, h)` | 静态注册 LED，使用预分配内存 |
-| `LedRegister(cfg)` | 动态注册 LED |
-| `LedUnregister(name)` | 注销并释放指定名称的 LED 资源 |
-| `LedSetState(h, state)` | 异步设置 LED 运行状态 |
-| `LedSetBlinkInterval(...)` | 异步配置并触发编码闪烁事件 |
-| `LedTaskRefresh()` | **核心任务**，需在主循环中高频调用 |
-| `LedGetInstance(name)` | 根据名称获取 LED 句柄指针 |
+| 函数                        | 功能说明                           |
+| :-------------------------- | :--------------------------------- |
+| `LedInit(cb)`               | 初始化 LED 子系统，注入时间回调    |
+| `LedRegisterStatic(cfg, h)` | 静态注册 LED，使用预分配内存       |
+| `LedRegister(cfg)`          | 动态注册 LED                       |
+| `LedUnregister(name)`       | 注销并释放指定名称的 LED 资源      |
+| `LedSetState(h, state)`     | 异步设置 LED 运行状态              |
+| `LedSetBlinkInterval(...)`  | 异步配置并触发编码闪烁事件         |
+| `LedTaskRefresh()`          | **核心任务**，需在主循环中高频调用 |
+| `LedGetInstance(name)`      | 根据名称获取 LED 句柄指针          |
 
 ---
 

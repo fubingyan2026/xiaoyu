@@ -16,19 +16,19 @@
  */
 
 #include "usart_receive.h"
-#include "debug/debug.h"
-#include "usart.h"
-#include "usart_protocol.h"
+
+#include <string.h>
 
 #include "app.h"
 #include "daemon/daemon.h"
+#include "debug/debug.h"
 #include "hal_uart.h"
 #include "kfifo/kfifo.h"
 #include "lwshell/lwshell.h"
 #include "protocol/b_protocol_core.h"
-
-#include <string.h>
 #include "stm32g4xx_hal.h"
+#include "usart.h"
+#include "usart_protocol.h"
 
 extern DMA_HandleTypeDef hdma_usart1_rx;
 
