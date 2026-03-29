@@ -15,8 +15,8 @@
 #include <stdint.h>
 #include "CAN_Server.h"
 #include "WS2812_SPI.h"
-#include "can_comm/can_comm.h"
-#include "can_comm/can_nm.h"
+#include "can_comm.h"
+#include "can_nm.h"
 #include "controller/pid.h"
 #include "debug/debug.h"
 #include "easyflash.h"
@@ -134,8 +134,6 @@ void AppInit(void) {
     ef_print_env();
   }
 
-  extern void platform_fdcan_init(void);
-  platform_fdcan_init();
   DaemonInit(millis);  // 初始化守护进程系统
 
   warning_Init();  // led任务初始化

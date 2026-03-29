@@ -12,11 +12,11 @@
 #ifndef CAN_COMM_H
 #define CAN_COMM_H
 
-#include "daemon/daemon.h"
+#include "stdint.h"
 #include "hal_fdcan.h"
+#include "daemon/daemon.h"
 #include "kfifo/kfifo.h"
 #include "message_center/message_center.h"
-#include "stdint.h"
 
 /* CAN通信配置宏定义 */
 #define CAN_ONE_FRAME_SEND_LEN 24  /**< define一帧率发送的长度*/
@@ -72,7 +72,7 @@ typedef struct
  */
 typedef struct
 {
-    hal_fdcan_instance_e instance; /**< CAN实例标识 */
+    hal_fdcan_instance_t instance; /**< CAN实例标识 */
     uint32_t can_rx_identify;      /**< 接收消息ID */
     offline_callback callback;     /**< 离线回调函数指针 */
     uint16_t offline_ms;           /**< 离线超时时间(ms) */
@@ -88,7 +88,7 @@ typedef struct
  */
 typedef struct
 {
-    hal_fdcan_instance_e instance; /**< CAN实例标识 */
+    hal_fdcan_instance_t instance; /**< CAN实例标识 */
     uint32_t can_tx_identify;      /**< 发送消息ID */
     uint16_t tx_data_len;          /**< 发送数据长度 */
     const char *name;              /**< 配置名称 */

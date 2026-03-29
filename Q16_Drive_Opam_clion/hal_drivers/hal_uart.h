@@ -173,6 +173,7 @@ struct hal_uart_context {
   volatile uint8_t initialized;        /**< 初始化标志（0=未初始化，1=已初始化） */
   hal_uart_callback_t callback;         /**< 中断回调函数指针 */
   void *user_data;                      /**< 用户自定义数据 */
+  hal_uart_config_t config;            /**< 当前 UART 配置 */
 };
 
 /**
@@ -662,6 +663,103 @@ hal_uart_error_t hal_uart_set_ops(hal_uart_context_t *ctx,
  * 使用此函数初始化 STM32 平台的 UART 上下文，会自动设置好平台特定的操作函数。
  */
 hal_uart_error_t stm32_uart_init_context(hal_uart_context_t *ctx);
+
+/**
+ * @brief 检查UART是否已初始化
+ * @param ctx UART 上下文指针
+ * @param initialized 输出参数，返回初始化状态（true=已初始化，false=未初始化）
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_is_initialized(hal_uart_context_t *ctx, bool *initialized);
+
+/**
+ * @brief 获取当前UART配置
+ * @param ctx UART 上下文指针
+ * @param config 输出参数，返回当前配置
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_get_config(hal_uart_context_t *ctx, hal_uart_config_t *config);
+
+/**
+ * @brief 更新UART配置
+ * @param ctx UART 上下文指针
+ * @param config 新的配置结构体指针
+ * @return 操作结果错误码
+ *
+ * @note 此函数会更新所有配置参数
+ */
+hal_uart_error_t hal_uart_update_config(hal_uart_context_t *ctx, const hal_uart_config_t *config);
+
+/**
+ * @brief 设置数据位
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @param wordlength 数据位
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_set_wordlength(hal_uart_context_t *ctx,
+                                          hal_uart_instance_t instance,
+                                          hal_uart_wordlength_t wordlength);
+
+/**
+ * @brief 设置停止位
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @param stopbits 停止位
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_set_stopbits(hal_uart_context_t *ctx,
+                                        hal_uart_instance_t instance,
+                                        hal_uart_stopbits_t stopbits);
+
+/**
+ * @brief 设置校验位
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @param parity 校验位
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_set_parity(hal_uart_context_t *ctx,
+                                      hal_uart_instance_t instance,
+                                      hal_uart_parity_t parity);
+
+/**
+ * @brief 设置硬件流控制
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @param hwcontrol 硬件流控制
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_set_hwcontrol(hal_uart_context_t *ctx,
+                                         hal_uart_instance_t instance,
+                                         hal_uart_hwcontrol_t hwcontrol);
+
+/**
+ * @brief 设置工作模式
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @param mode 工作模式
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_set_mode(hal_uart_context_t *ctx,
+                                    hal_uart_instance_t instance,
+                                    hal_uart_mode_t mode);
+
+/**
+ * @brief 刷新发送缓冲区
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_flush_tx(hal_uart_context_t *ctx, hal_uart_instance_t instance);
+
+/**
+ * @brief 刷新接收缓冲区
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_flush_rx(hal_uart_context_t *ctx, hal_uart_instance_t instance);
 
 #ifdef __cplusplus
 }

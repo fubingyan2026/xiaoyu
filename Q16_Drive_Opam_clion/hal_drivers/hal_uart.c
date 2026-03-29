@@ -85,11 +85,6 @@ hal_uart_error_t hal_uart_init(hal_uart_context_t* ctx,
     return HAL_UART_ERROR_INVALID_PARAM;
   }
 
-  // 如果是第一次初始化，标记为已初始化
-  if (!ctx->initialized) {
-    ctx->initialized = 1;
-  }
-
   // 检查操作函数是否已设置
   if (ctx->ops == NULL || ctx->ops->init == NULL) {
     return HAL_UART_ERROR_UNINITIALIZED;
@@ -98,6 +93,10 @@ hal_uart_error_t hal_uart_init(hal_uart_context_t* ctx,
   // 进入临界区，调用平台特定的初始化函数
   HAL_UART_ENTER_CRITICAL();
   hal_uart_error_t result = ctx->ops->init(ctx, config);
+  if (result == HAL_UART_OK) {
+    ctx->initialized = 1;
+    ctx->config = *config;
+  }
   HAL_UART_EXIT_CRITICAL();
 
   return result;
@@ -718,4 +717,222 @@ void hal_uart_dma_irq_handler(hal_uart_context_t* ctx,
 
   // 调用平台特定的DMA中断处理函数
   ctx->ops->dma_irq_handler(ctx, instance);
+}
+
+/**
+ * @brief  检查UART是否初始化
+ * @param ctx UART 上下文指针
+ * @param initialized 输出参数，返回UART是否初始化
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_is_initialized(hal_uart_context_t* ctx, bool* initialized) {
+  if (ctx == NULL || initialized == NULL) {
+    return HAL_UART_ERROR_INVALID_PARAM;
+  }
+
+  *initialized = (ctx->initialized != 0);
+
+  return HAL_UART_OK;
+}
+
+/**
+ * @brief  获取UART配置
+ * @param ctx UART 上下文指针
+ * @param config 输出参数，返回UART配置
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_get_config(hal_uart_context_t* ctx, hal_uart_config_t* config) {
+  if (ctx == NULL || config == NULL) {
+    return HAL_UART_ERROR_INVALID_PARAM;
+  }
+
+  if (ctx->initialized == 0) {
+    return HAL_UART_ERROR_UNINITIALIZED;
+  }
+
+  HAL_UART_ENTER_CRITICAL();
+  *config = ctx->config;
+  HAL_UART_EXIT_CRITICAL();
+
+  return HAL_UART_OK;
+}
+
+/**
+ * @brief  更新UART配置
+ * @param ctx UART 上下文指针
+ * @param config UART配置指针
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_update_config(hal_uart_context_t* ctx, const hal_uart_config_t* config) {
+  if (ctx == NULL || config == NULL) {
+    return HAL_UART_ERROR_INVALID_PARAM;
+  }
+
+  if (ctx->initialized == 0) {
+    return HAL_UART_ERROR_UNINITIALIZED;
+  }
+
+  return hal_uart_init(ctx, config);
+}
+
+/**
+ * @brief  设置UART字长
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @param wordlength UART字长
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_set_wordlength(hal_uart_context_t* ctx,
+                                          hal_uart_instance_t instance,
+                                          hal_uart_wordlength_t wordlength) {
+  if (ctx == NULL) {
+    return HAL_UART_ERROR_INVALID_PARAM;
+  }
+
+  if (ctx->initialized == 0) {
+    return HAL_UART_ERROR_UNINITIALIZED;
+  }
+
+  HAL_UART_ENTER_CRITICAL();
+  ctx->config.wordlength = wordlength;
+  HAL_UART_EXIT_CRITICAL();
+
+  return HAL_UART_OK;
+}
+
+/**
+ * @brief  设置UART停止位
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @param stopbits UART停止位
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_set_stopbits(hal_uart_context_t* ctx,
+                                        hal_uart_instance_t instance,
+                                        hal_uart_stopbits_t stopbits) {
+  if (ctx == NULL) {
+    return HAL_UART_ERROR_INVALID_PARAM;
+  }
+
+  if (ctx->initialized == 0) {
+    return HAL_UART_ERROR_UNINITIALIZED;
+  }
+
+  HAL_UART_ENTER_CRITICAL();
+  ctx->config.stopbits = stopbits;
+  HAL_UART_EXIT_CRITICAL();
+
+  return HAL_UART_OK;
+}
+
+/**
+ * @brief  设置UART校验位
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @param parity UART校验位
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_set_parity(hal_uart_context_t* ctx,
+                                      hal_uart_instance_t instance,
+                                      hal_uart_parity_t parity) {
+  if (ctx == NULL) {
+    return HAL_UART_ERROR_INVALID_PARAM;
+  }
+
+  if (ctx->initialized == 0) {
+    return HAL_UART_ERROR_UNINITIALIZED;
+  }
+
+  HAL_UART_ENTER_CRITICAL();
+  ctx->config.parity = parity;
+  HAL_UART_EXIT_CRITICAL();
+
+  return HAL_UART_OK;
+}
+
+/**
+ * @brief  设置UART硬件控制
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @param hwcontrol UART硬件控制
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_set_hwcontrol(hal_uart_context_t* ctx,
+                                         hal_uart_instance_t instance,
+                                         hal_uart_hwcontrol_t hwcontrol) {
+  if (ctx == NULL) {
+    return HAL_UART_ERROR_INVALID_PARAM;
+  }
+
+  if (ctx->initialized == 0) {
+    return HAL_UART_ERROR_UNINITIALIZED;
+  }
+
+  HAL_UART_ENTER_CRITICAL();
+  ctx->config.hwcontrol = hwcontrol;
+  HAL_UART_EXIT_CRITICAL();
+
+  return HAL_UART_OK;
+}
+/**
+ * @brief  设置UART模式
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @param mode UART模式
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_set_mode(hal_uart_context_t* ctx,
+                                    hal_uart_instance_t instance,
+                                    hal_uart_mode_t mode) {
+  if (ctx == NULL) {
+    return HAL_UART_ERROR_INVALID_PARAM;
+  }
+
+  if (ctx->initialized == 0) {
+    return HAL_UART_ERROR_UNINITIALIZED;
+  }
+
+  HAL_UART_ENTER_CRITICAL();
+  ctx->config.mode = mode;
+  HAL_UART_EXIT_CRITICAL();
+
+  return HAL_UART_OK;
+}
+
+/**
+ * @brief 刷新发送缓冲区
+ * @param ctx UART 上下文指针
+ * @param instance UART 实例
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_flush_tx(hal_uart_context_t* ctx, hal_uart_instance_t instance) {
+  (void)instance;
+  if (ctx == NULL) {
+    return HAL_UART_ERROR_INVALID_PARAM;
+  }
+
+  if (ctx->initialized == 0) {
+    return HAL_UART_ERROR_UNINITIALIZED;
+  }
+
+  return HAL_UART_OK;
+}
+
+/**
+ * @brief  清空接收缓冲区
+ * @param  ctx UART 上下文指针
+ * @param  instance UART 实例
+ * @return 操作结果错误码
+ */
+hal_uart_error_t hal_uart_flush_rx(hal_uart_context_t* ctx, hal_uart_instance_t instance) {
+  (void)instance;
+  if (ctx == NULL) {
+    return HAL_UART_ERROR_INVALID_PARAM;
+  }
+
+  if (ctx->initialized == 0) {
+    return HAL_UART_ERROR_UNINITIALIZED;
+  }
+
+  return HAL_UART_OK;
 }

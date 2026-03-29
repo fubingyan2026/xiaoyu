@@ -54,9 +54,15 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/hal_drivers HAL)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Q16_FOC FOC)
 
 # common目录下的所有子目录 (手动处理fsm以排除示例文件)
-foreach(subdir algorithm can_comm controller crc daemon debug encoder keybase kfifo ledshow memory_pool message_center protocol toolkit)
+foreach(subdir algorithm controller crc daemon debug encoder keybase kfifo memory_pool message_center protocol toolkit)
     aux_source_directory(${CMAKE_SOURCE_DIR}/../common/${subdir} COMMON_${subdir})
 endforeach()
+
+# 本地can_comm目录
+aux_source_directory(${CMAKE_SOURCE_DIR}/can_comm COMMON_can_comm)
+
+# 本地ledshow目录
+aux_source_directory(${CMAKE_SOURCE_DIR}/ledshow COMMON_ledshow)
 
 # 特殊处理的模块 (有子目录的)
 aux_source_directory(${CMAKE_SOURCE_DIR}/../common/SEGGER_RTT/RTT COMMON_SEGGER_RTT)
@@ -103,6 +109,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         applications
         hal_drivers
         Q16_FOC
+        can_comm
         ../common
         ../common/CmBacktrace/cm_backtrace
         ../common/SEGGER_RTT/RTT/config

@@ -48,30 +48,43 @@ static FDCAN_GlobalTypeDef *fdcan_base_map[HAL_FDCAN_INSTANCE_LEN] = {
 static const hal_fdcan_ops_t stm32_fdcan_ops;
 
 /* Private function prototypes */
-static bool stm32_fdcan_init(const hal_fdcan_config_t *config);
-static bool stm32_fdcan_send(hal_fdcan_instance_e instance,
-                             const hal_fdcan_message_t *message);
-static bool stm32_fdcan_receive(hal_fdcan_instance_e instance,
-                                hal_fdcan_message_t *message);
-static uint32_t stm32_fdcan_receive_level(hal_fdcan_instance_e instance,
-                                          uint8_t fifo_address);
-static uint32_t stm32_fdcan_get_send_level(hal_fdcan_instance_e instance);
-
-static bool stm32_fdcan_set_filter(hal_fdcan_instance_e instance,
-                                   const hal_fdcan_filter_t *filter);
-static bool stm32_fdcan_set_mode(hal_fdcan_instance_e instance,
-                                 hal_fdcan_mode_e mode);
-static uint32_t stm32_fdcan_get_error_count(hal_fdcan_instance_e instance);
-static void stm32_fdcan_irq_handler(hal_fdcan_instance_e instance);
+static hal_fdcan_error_t stm32_fdcan_init(hal_fdcan_context_t *ctx,
+                                            const hal_fdcan_config_t *config);
+static hal_fdcan_error_t stm32_fdcan_deinit(hal_fdcan_context_t *ctx,
+                                              hal_fdcan_instance_t instance);
+static hal_fdcan_error_t stm32_fdcan_send(hal_fdcan_context_t *ctx,
+                                            hal_fdcan_instance_t instance,
+                                            const hal_fdcan_message_t *message);
+static hal_fdcan_error_t stm32_fdcan_receive(hal_fdcan_context_t *ctx,
+                                               hal_fdcan_instance_t instance,
+                                               hal_fdcan_message_t *message);
+static hal_fdcan_error_t stm32_fdcan_receive_level(hal_fdcan_context_t *ctx,
+                                                    hal_fdcan_instance_t instance,
+                                                    uint8_t fifo_address,
+                                                    uint32_t *level);
+static hal_fdcan_error_t stm32_fdcan_get_send_level(hal_fdcan_context_t *ctx,
+                                                     hal_fdcan_instance_t instance,
+                                                     uint32_t *level);
+static hal_fdcan_error_t stm32_fdcan_set_filter(hal_fdcan_context_t *ctx,
+                                                  hal_fdcan_instance_t instance,
+                                                  const hal_fdcan_filter_t *filter);
+static hal_fdcan_error_t stm32_fdcan_set_mode(hal_fdcan_context_t *ctx,
+                                                hal_fdcan_instance_t instance,
+                                                hal_fdcan_mode_t mode);
+static hal_fdcan_error_t stm32_fdcan_get_error_count(hal_fdcan_context_t *ctx,
+                                                       hal_fdcan_instance_t instance,
+                                                       uint32_t *error_count);
+static void stm32_fdcan_irq_handler(hal_fdcan_context_t *ctx, hal_fdcan_instance_t instance);
 static uint8_t round_up_special(uint8_t x);
 static uint8_t get_can_rx_length(uint32_t rx_DL);
-static bool validate_fdcan_instance(hal_fdcan_instance_e instance);
-static void enable_fdcan_clock(hal_fdcan_instance_e instance);
-static void configure_fdcan_interrupts(hal_fdcan_instance_e instance);
+static bool validate_fdcan_instance(hal_fdcan_instance_t instance);
+static void enable_fdcan_clock(hal_fdcan_instance_t instance);
+static void configure_fdcan_interrupts(hal_fdcan_instance_t instance);
 
 /* FDCAN操作函数结构体 */
 static const hal_fdcan_ops_t stm32_fdcan_ops = {
     .init = stm32_fdcan_init,
+    .deinit = stm32_fdcan_deinit,
     .send = stm32_fdcan_send,
     .receive = stm32_fdcan_receive,
     .get_send_level = stm32_fdcan_get_send_level,
@@ -82,9 +95,26 @@ static const hal_fdcan_ops_t stm32_fdcan_ops = {
     .irq_handler = stm32_fdcan_irq_handler};
 
 /**
+ * @brief STM32 平台 FDCAN 上下文初始化函数
+ * @param ctx FDCAN 上下文指针
+ * @return 操作结果错误码
+ */
+hal_fdcan_error_t stm32_fdcan_init_context(hal_fdcan_context_t *ctx)
+{
+  if (ctx == NULL) {
+    return HAL_FDCAN_ERROR_INVALID_PARAM;
+  }
+
+  ctx->ops = &stm32_fdcan_ops;
+  ctx->initialized = 0;
+
+  return HAL_FDCAN_OK;
+}
+
+/**
  * @brief  验证FDCAN实例是否有效
  */
-static bool validate_fdcan_instance(hal_fdcan_instance_e instance) {
+static bool validate_fdcan_instance(hal_fdcan_instance_t instance) {
   if (instance >= HAL_FDCAN_INSTANCE_LEN) {
     return false;
   }
@@ -97,7 +127,7 @@ static bool validate_fdcan_instance(hal_fdcan_instance_e instance) {
 /**
  * @brief  启用FDCAN时钟
  */
-static void enable_fdcan_clock(hal_fdcan_instance_e instance) {
+static void enable_fdcan_clock(hal_fdcan_instance_t instance) {
   switch (instance) {
     case HAL_FDCAN_INSTANCE_1:
       __HAL_RCC_FDCAN_CLK_ENABLE();
@@ -118,9 +148,11 @@ static void enable_fdcan_clock(hal_fdcan_instance_e instance) {
 }
 
 /**
- * @brief  配置FDCAN中断
+ * @brief  配置FDCAN中断优先级和使能
+ * @param instance FDCAN实例
+ * @return 操作结果错误码
  */
-static void configure_fdcan_interrupts(const hal_fdcan_instance_e instance) {
+static void configure_fdcan_interrupts(const hal_fdcan_instance_t instance) {
   switch (instance) {
     case HAL_FDCAN_INSTANCE_1:
       HAL_NVIC_SetPriority(FDCAN1_IT0_IRQn, 3, 0);
@@ -149,14 +181,18 @@ static void configure_fdcan_interrupts(const hal_fdcan_instance_e instance) {
   }
 }
 
-void platform_fdcan_init(void) {
-  /* 设置FDCAN操作函数 */
-  hal_fdcan_set_ops(&stm32_fdcan_ops);
-}
+/**
+ * @brief  初始化FDCAN
+ * @param ctx FDCAN 上下文指针
+ * @param config FDCAN配置结构体指针
+ * @return 操作结果错误码
+ */
+static hal_fdcan_error_t stm32_fdcan_init(hal_fdcan_context_t *ctx,
+                                            const hal_fdcan_config_t *config) {
+  (void)ctx;
 
-static bool stm32_fdcan_init(const hal_fdcan_config_t *config) {
   if (config == NULL || !validate_fdcan_instance(config->instance)) {
-    return false;
+    return HAL_FDCAN_ERROR_INVALID_PARAM;
   }
 
   FDCAN_HandleTypeDef *hfdcan = fdcan_handle_map[config->instance];
@@ -212,7 +248,7 @@ static bool stm32_fdcan_init(const hal_fdcan_config_t *config) {
   }
 
   if (HAL_FDCAN_Init(hfdcan) != HAL_OK) {
-    return false;
+    return HAL_FDCAN_ERROR_HARDWARE;
   }
 
   /* 配置过滤器 */
@@ -227,13 +263,13 @@ static bool stm32_fdcan_init(const hal_fdcan_config_t *config) {
         .FilterID2 = config->filters[i].mask};
 
     if (HAL_FDCAN_ConfigFilter(hfdcan, &bsp_filter) != HAL_OK) {
-      return false;
+      return HAL_FDCAN_ERROR_HARDWARE;
     }
   }
 
   /* 启动FDCAN */
   if (HAL_FDCAN_Start(hfdcan) != HAL_OK) {
-    return false;
+    return HAL_FDCAN_ERROR_HARDWARE;
   }
 
   /* 激活通知 */
@@ -242,11 +278,40 @@ static bool stm32_fdcan_init(const hal_fdcan_config_t *config) {
   /* 配置中断 */
   configure_fdcan_interrupts(config->instance);
 
-  return true;
+  return HAL_FDCAN_OK;
+}
+
+/**
+ * @brief  反初始化FDCAN
+ * @param ctx FDCAN 上下文指针
+ * @param instance FDCAN实例
+ * @return 操作结果错误码
+ */
+static hal_fdcan_error_t stm32_fdcan_deinit(hal_fdcan_context_t *ctx,
+                                              hal_fdcan_instance_t instance) {
+  (void)ctx;
+
+  if (!validate_fdcan_instance(instance)) {
+    return HAL_FDCAN_ERROR_INVALID_PARAM;
+  }
+
+  FDCAN_HandleTypeDef *hfdcan = fdcan_handle_map[instance];
+
+  if (HAL_FDCAN_Stop(hfdcan) != HAL_OK) {
+    return HAL_FDCAN_ERROR_HARDWARE;
+  }
+
+  if (HAL_FDCAN_DeInit(hfdcan) != HAL_OK) {
+    return HAL_FDCAN_ERROR_HARDWARE;
+  }
+
+  return HAL_FDCAN_OK;
 }
 
 /**
  * @brief   把输入规整到最近的更大或相等的标准值
+ * @param x 输入值
+ * @return 规整后的值
  */
 static uint8_t round_up_special(const uint8_t x) {
   static const uint8_t tbl[] = {8, 12, 16, 20, 24, 32, 48, 64};
@@ -257,10 +322,20 @@ static uint8_t round_up_special(const uint8_t x) {
   return 64;
 }
 
-static bool stm32_fdcan_send(const hal_fdcan_instance_e instance,
-                             const hal_fdcan_message_t *message) {
+/**
+ * @brief   发送FDCAN消息
+ * @param ctx FDCAN 上下文指针
+ * @param instance FDCAN实例
+ * @param message 要发送的消息
+ * @return 操作结果错误码
+ */
+static hal_fdcan_error_t stm32_fdcan_send(hal_fdcan_context_t *ctx,
+                                            hal_fdcan_instance_t instance,
+                                            const hal_fdcan_message_t *message) {
+  (void)ctx;
+
   if (message == NULL || !validate_fdcan_instance(instance)) {
-    return false;
+    return HAL_FDCAN_ERROR_INVALID_PARAM;
   }
 
   FDCAN_HandleTypeDef *hfdcan = fdcan_handle_map[instance];
@@ -309,12 +384,19 @@ static bool stm32_fdcan_send(const hal_fdcan_instance_e instance,
 
   if (HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &tx_header, message->data) !=
       HAL_OK) {
-    return false;
+    return HAL_FDCAN_ERROR_HARDWARE;
   }
 
-  return true;
+  return HAL_FDCAN_OK;
 }
 
+/**
+ * @brief   接收FDCAN消息
+ * @param ctx FDCAN 上下文指针
+ * @param instance FDCAN实例
+ * @param message 接收到的消息
+ * @return 操作结果错误码
+ */
 static uint8_t get_can_rx_length(const uint32_t rx_DL) {
   switch (rx_DL) {
     case FDCAN_DLC_BYTES_12:
@@ -336,10 +418,20 @@ static uint8_t get_can_rx_length(const uint32_t rx_DL) {
   }
 }
 
-static bool stm32_fdcan_receive(const hal_fdcan_instance_e instance,
-                                hal_fdcan_message_t *message) {
+/**
+ * @brief   获取接收FIFO0的剩余空间
+ * @param ctx FDCAN 上下文指针
+ * @param instance FDCAN实例
+ * @param message 接收到的消息
+ * @return 操作结果错误码
+ */
+static hal_fdcan_error_t stm32_fdcan_receive(hal_fdcan_context_t *ctx,
+                                               hal_fdcan_instance_t instance,
+                                               hal_fdcan_message_t *message) {
+  (void)ctx;
+
   if (message == NULL || !validate_fdcan_instance(instance)) {
-    return false;
+    return HAL_FDCAN_ERROR_INVALID_PARAM;
   }
 
   FDCAN_HandleTypeDef *hfdcan = fdcan_handle_map[instance];
@@ -347,7 +439,7 @@ static bool stm32_fdcan_receive(const hal_fdcan_instance_e instance,
 
   if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header,
                              message->data) != HAL_OK) {
-    return false;
+    return HAL_FDCAN_ERROR_HARDWARE;
   }
 
   message->id = rx_header.Identifier;
@@ -355,29 +447,74 @@ static bool stm32_fdcan_receive(const hal_fdcan_instance_e instance,
   message->is_remote = (rx_header.RxFrameType == FDCAN_REMOTE_FRAME);
   message->data_length = get_can_rx_length(rx_header.DataLength);
 
-  return true;
+  return HAL_FDCAN_OK;
 }
 
-static uint32_t stm32_fdcan_receive_level(hal_fdcan_instance_e instance,
-                                          uint8_t fifo_address) {
+/**
+ * @brief   获取接收FIFO0的剩余空间
+ * @param ctx FDCAN 上下文指针
+ * @param instance FDCAN实例
+ * @param message 接收到的消息
+ * @return 操作结果错误码
+ */
+static hal_fdcan_error_t stm32_fdcan_receive_level(hal_fdcan_context_t *ctx,
+                                                    hal_fdcan_instance_t instance,
+                                                    uint8_t fifo_address,
+                                                    uint32_t *level) {
+  (void)ctx;
+
+  if (level == NULL || !validate_fdcan_instance(instance)) {
+    return HAL_FDCAN_ERROR_INVALID_PARAM;
+  }
+
   const FDCAN_HandleTypeDef *hfdcan = fdcan_handle_map[instance];
   if (fifo_address) {
-    return HAL_FDCAN_GetRxFifoFillLevel(
+    *level = HAL_FDCAN_GetRxFifoFillLevel(
         hfdcan, FDCAN_RX_FIFO1);  // FIFO不为空,有可能在其他中断时有多帧数据进入
+  } else {
+    *level = HAL_FDCAN_GetRxFifoFillLevel(
+        hfdcan, FDCAN_RX_FIFO0);  // FIFO不为空,有可能在其他中断时有多帧数据进入
   }
-  return HAL_FDCAN_GetRxFifoFillLevel(
-      hfdcan, FDCAN_RX_FIFO0);  // FIFO不为空,有可能在其他中断时有多帧数据进入
+
+  return HAL_FDCAN_OK;
 }
 
-static uint32_t stm32_fdcan_get_send_level(hal_fdcan_instance_e instance) {
+/**
+ * @brief   获取发送FIFO的剩余空间
+ * @param ctx FDCAN 上下文指针
+ * @param instance FDCAN实例
+ * @param message 接收到的消息
+ * @return 操作结果错误码
+ */
+static hal_fdcan_error_t stm32_fdcan_get_send_level(hal_fdcan_context_t *ctx,
+                                                     hal_fdcan_instance_t instance,
+                                                     uint32_t *level) {
+  (void)ctx;
+
+  if (level == NULL || !validate_fdcan_instance(instance)) {
+    return HAL_FDCAN_ERROR_INVALID_PARAM;
+  }
+
   const FDCAN_HandleTypeDef *hfdcan = fdcan_handle_map[instance];
-  return HAL_FDCAN_GetTxFifoFreeLevel(hfdcan);
+  *level = HAL_FDCAN_GetTxFifoFreeLevel(hfdcan);
+
+  return HAL_FDCAN_OK;
 }
 
-static bool stm32_fdcan_set_filter(const hal_fdcan_instance_e instance,
-                                   const hal_fdcan_filter_t *filter) {
+/**
+ * @brief   设置过滤器
+ * @param ctx FDCAN 上下文指针
+ * @param instance FDCAN实例
+ * @param message 接收到的消息
+ * @return 操作结果错误码
+ */
+static hal_fdcan_error_t stm32_fdcan_set_filter(hal_fdcan_context_t *ctx,
+                                                  hal_fdcan_instance_t instance,
+                                                  const hal_fdcan_filter_t *filter) {
+  (void)ctx;
+
   if (filter == NULL || !validate_fdcan_instance(instance)) {
-    return false;
+    return HAL_FDCAN_ERROR_INVALID_PARAM;
   }
 
   FDCAN_HandleTypeDef *hfdcan = fdcan_handle_map[instance];
@@ -390,15 +527,25 @@ static bool stm32_fdcan_set_filter(const hal_fdcan_instance_e instance,
       .FilterID2 = filter->mask};
 
   if (HAL_FDCAN_ConfigFilter(hfdcan, &bsp_filter) != HAL_OK) {
-    return false;
+    return HAL_FDCAN_ERROR_HARDWARE;
   }
-  return true;
+  return HAL_FDCAN_OK;
 }
 
-static bool stm32_fdcan_set_mode(const hal_fdcan_instance_e instance,
-                                 hal_fdcan_mode_e mode) {
+/**
+ * @brief   设置FDCAN模式
+ * @param ctx FDCAN 上下文指针
+ * @param instance FDCAN实例
+ * @param message 接收到的消息
+ * @return 操作结果错误码
+ */
+static hal_fdcan_error_t stm32_fdcan_set_mode(hal_fdcan_context_t *ctx,
+                                                hal_fdcan_instance_t instance,
+                                                hal_fdcan_mode_t mode) {
+  (void)ctx;
+
   if (!validate_fdcan_instance(instance)) {
-    return false;
+    return HAL_FDCAN_ERROR_INVALID_PARAM;
   }
 
   FDCAN_HandleTypeDef *hfdcan = fdcan_handle_map[instance];
@@ -418,12 +565,12 @@ static bool stm32_fdcan_set_mode(const hal_fdcan_instance_e instance,
       fdcan_mode = FDCAN_MODE_INTERNAL_LOOPBACK | FDCAN_MODE_BUS_MONITORING;
       break;
     default:
-      return false;
+      return HAL_FDCAN_ERROR_INVALID_PARAM;
   }
 
   // 停止FDCAN以更改模式
   if (HAL_FDCAN_Stop(hfdcan) != HAL_OK) {
-    return false;
+    return HAL_FDCAN_ERROR_HARDWARE;
   }
 
   // 更改模式
@@ -431,30 +578,50 @@ static bool stm32_fdcan_set_mode(const hal_fdcan_instance_e instance,
 
   // 重新初始化FDCAN
   if (HAL_FDCAN_Init(hfdcan) != HAL_OK) {
-    return false;
+    return HAL_FDCAN_ERROR_HARDWARE;
   }
 
   // 重新启动FDCAN
   if (HAL_FDCAN_Start(hfdcan) != HAL_OK) {
-    return false;
+    return HAL_FDCAN_ERROR_HARDWARE;
   }
 
-  return true;
+  return HAL_FDCAN_OK;
 }
 
-static uint32_t stm32_fdcan_get_error_count(
-    const hal_fdcan_instance_e instance) {
-  if (!validate_fdcan_instance(instance)) {
-    return 0;
+/**
+ * @brief   获取错误计数
+ * @param ctx FDCAN 上下文指针
+ * @param instance FDCAN实例
+ * @param message 接收到的消息
+ * @return 操作结果错误码
+ */
+static hal_fdcan_error_t stm32_fdcan_get_error_count(hal_fdcan_context_t *ctx,
+                                                       hal_fdcan_instance_t instance,
+                                                       uint32_t *error_count) {
+  (void)ctx;
+
+  if (error_count == NULL || !validate_fdcan_instance(instance)) {
+    return HAL_FDCAN_ERROR_INVALID_PARAM;
   }
 
   const FDCAN_HandleTypeDef *hfdcan = fdcan_handle_map[instance];
   FDCAN_ErrorCountersTypeDef error_counters;
   HAL_FDCAN_GetErrorCounters(hfdcan, &error_counters);
-  return error_counters.RxErrorCnt + error_counters.TxErrorCnt;
+  *error_count = error_counters.RxErrorCnt + error_counters.TxErrorCnt;
+
+  return HAL_FDCAN_OK;
 }
 
-static void stm32_fdcan_irq_handler(const hal_fdcan_instance_e instance) {
+/**
+ * @brief   FDCAN中断处理函数
+ * @param ctx FDCAN 上下文指针
+ * @param instance FDCAN实例
+ * @param message 接收到消息
+ */ 
+static void stm32_fdcan_irq_handler(hal_fdcan_context_t *ctx, hal_fdcan_instance_t instance) {
+  (void)ctx;
+
   if (!validate_fdcan_instance(instance)) {
     return;
   }
@@ -476,20 +643,20 @@ static void stm32_fdcan_irq_handler(const hal_fdcan_instance_e instance) {
 
 #if defined(FDCAN2)
 void FDCAN2_IT0_IRQHandler(void) {
-  hal_fdcan_irq_handler(HAL_FDCAN_INSTANCE_2);
+  hal_fdcan_irq_handler(NULL, HAL_FDCAN_INSTANCE_2);
 }
 
 void FDCAN2_IT1_IRQHandler(void) {
-  hal_fdcan_irq_handler(HAL_FDCAN_INSTANCE_2);
+  hal_fdcan_irq_handler(NULL, HAL_FDCAN_INSTANCE_2);
 }
 #endif
 
 #if defined(FDCAN3)
 void FDCAN3_IT0_IRQHandler(void) {
-  hal_fdcan_irq_handler(HAL_FDCAN_INSTANCE_3);
+  hal_fdcan_irq_handler(NULL, HAL_FDCAN_INSTANCE_3);
 }
 
 void FDCAN3_IT1_IRQHandler(void) {
-  hal_fdcan_irq_handler(HAL_FDCAN_INSTANCE_3);
+  hal_fdcan_irq_handler(NULL, HAL_FDCAN_INSTANCE_3);
 }
 #endif

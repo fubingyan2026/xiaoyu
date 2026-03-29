@@ -10,8 +10,8 @@
  */
 
 #include "CAN_Server.h"
-#include "can_comm/can_comm.h"
-#include "can_comm/can_nm.h"
+#include "can_comm.h"
+#include "can_nm.h"
 #include "daemon/daemon.h"
 #include "debug/debug.h"
 #include "foc_ctrl_q16.h"
