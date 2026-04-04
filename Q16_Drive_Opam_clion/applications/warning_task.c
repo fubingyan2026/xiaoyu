@@ -55,7 +55,7 @@ void warning_task(void) {
   }
 
   if (led_instance == NULL) {
-    led_instance = LedGetInstance(LED_NAME_TAG);
+    led_instance = led_get_instance(LED_NAME_TAG);
   }
 
   const daemon_t* this = daemon_warning;

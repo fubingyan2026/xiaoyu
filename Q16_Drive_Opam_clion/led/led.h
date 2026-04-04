@@ -1,13 +1,6 @@
-/**
- * @file led.h
- * @author fubingyan qq:3245784484
- * @brief LED控制模块头文件 (大厂重构版)
- * @details 支持静态/动态注册，PWM/GPIO双模式，时间解耦，异步命令队列控制。
- * @version 2.0.0
- * @date 2025-03-25
- *
- * @copyright Copyright (c) 2025 fubingyan, All Rights Reserved.
- */
+//
+// Created by fubingyan on 25-9-20.
+//
 
 #ifndef __LED_H
 #define __LED_H
@@ -16,30 +9,34 @@
 extern "C" {
 #endif
 
+/* Includes ------------------------------------------------------------------*/
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "fsm/fsm.h"
 #include "hal_gpio.h"
 #include "hal_tim_pwm.h"
 #include "kfifo/kfifo.h"
-/* ==================== 错误码定义 ==================== */
+
+/* Exported types ------------------------------------------------------------*/
+
+/**
+ * @brief LED 操作错误码枚举
+ */
 typedef enum {
-  LED_OK = 0,                 /**< 成功 */
-  LED_OK_EXISTED = 1,         /**< 已存在 */
-  LED_ERR_INVALID_PARAM = -1, /**< 无效参数 */
-  LED_ERR_NO_MEMORY = -2,     /**< 内存不足 */
-  LED_ERR_NOT_FOUND = -3,     /**< 未找到 */
-  LED_ERR_ALREADY_EXIST = -4, /**< 已存在 */
-  LED_ERR_INTERNAL = -5,      /**< 内部错误 */
+  LED_OK = 0,                   /**< 操作成功 */
+  LED_OK_EXISTED = 1,           /**< 已存在 */
+  LED_ERROR_INVALID_PARAM = -1, /**< 无效参数 */
+  LED_ERROR_NO_MEMORY = -2,     /**< 内存不足 */
+  LED_ERROR_NOT_FOUND = -3,     /**< 未找到 */
+  LED_ERROR_ALREADY_EXIST = -4, /**< 已存在 */
+  LED_ERROR_INTERNAL = -5,      /**< 内部错误 */
 } led_error_t;
 
-#define LED_IS_OK(err) ((err) >= 0)
-#define LED_IS_ERR(err) ((err) < 0)
-
-/* ==================== 枚举与宏定义 ==================== */
-
-/** @brief LED状态枚举 */
+/**
+ * @brief LED 状态枚举
+ */
 typedef enum __attribute__((packed)) {
   LED_STATE_NONE = 0,   /**< 无状态 */
   LED_STATE_OFF,        /**< 关闭 */
@@ -49,26 +46,48 @@ typedef enum __attribute__((packed)) {
   LED_STATE_MAX,        /**< 最大状态 */
 } led_state_t;
 
-/** @brief 编码闪烁阶段枚举 */
-typedef enum {
-  BLINK_CODE_PHASE_BLINKING = 0, /**< 闪烁中 */
-  BLINK_CODE_PHASE_INTERVAL,     /**< 间隔中 */
-} blink_code_phase_t;
+/**
+ * @brief LED 闪烁阶段枚举
+ */
+typedef enum __attribute__((packed)) {
+  LED_BLINK_PHASE_BLINKING = 0, /**< 闪烁中 */
+  LED_BLINK_PHASE_INTERVAL,     /**< 间隔中 */
+} led_blink_phase_t;
 
-/** @brief 时间获取函数指针 */
-typedef uint32_t (*led_get_time_func)(void);
+/**
+ * @brief LED 控制句柄结构体前向声明
+ */
+typedef struct led_handle led_handle_t;
 
-/* ==================== 配置与句柄结构体 ==================== */
+/**
+ * @brief 时间获取函数指针类型
+ */
+typedef uint32_t (*led_get_time_func_t)(void);
 
-/** @brief PWM硬件配置 */
-typedef struct {
-  hal_tim_pwm_instance_t timer_instance; /**< 定时器实例 (如 17) */
-  hal_tim_pwm_channel_t channel; /**< PWM通道 (如 HAL_TIM_PWM_CHANNEL_1) */
-  hal_tim_pwm_config_t*
-      raw_cfg; /**< 指向外部完整的PWM配置 (可选，用于高级控制) */
-} led_pwm_config_t;
+/**
+ * @brief LED 状态变化回调函数类型
+ */
+typedef void (*led_state_change_callback_t)(led_handle_t* instance,
+                                            led_state_t new_state,
+                                            void* user_data);
 
-/** @brief LED初始化配置 */
+/**
+ * @brief LED 闪烁阶段变化回调函数类型
+ */
+typedef void (*led_blink_phase_callback_t)(led_handle_t* instance,
+                                           led_blink_phase_t phase,
+                                           void* user_data);
+
+/**
+ * @brief LED 引脚电平变化回调函数类型
+ */
+typedef void (*led_gpio_edge_callback_t)(led_handle_t* instance,
+                                         hal_gpio_pin_state_t edge,
+                                         void* user_data);
+
+/**
+ * @brief LED 初始化配置结构体
+ */
 typedef struct {
   const char* led_name; /**< LED名称 (唯一标识) */
   hal_gpio_port_t port; /**< GPIO端口 */
@@ -77,10 +96,10 @@ typedef struct {
       active_level; /**< 有效电平 (HAL_GPIO_PIN_SET 或 HAL_GPIO_PIN_RESET) */
   led_state_t init_state; /**< 初始状态 */
 
-  /* 闪烁参数 */
-  uint16_t led_blink_cycle_ms;    /**< 闪烁半周期间隔 (ms) */
-  uint16_t led_blink_wait_ms;     /**< 一轮闪烁后的等待间隔 (ms) */
-  uint16_t led_blink_code_counts; /**< 默认一轮闪烁次数 */
+  // /* 闪烁参数 */
+  // uint16_t led_blink_cycle_ms;    /**< 闪烁半周期间隔 (ms) */
+  // uint16_t led_blink_wait_ms;     /**< 一轮闪烁后的等待间隔 (ms) */
+  // uint16_t led_blink_code_counts; /**< 默认一轮闪烁次数 */
 
   /* 呼吸灯参数 */
   uint16_t led_refresh_time_ms;  /**< 呼吸步进更新间隔 (ms) */
@@ -94,12 +113,13 @@ typedef struct {
    * @brief GPIO 初始化回调
    * @details 用于在LED初始化时调用，配置GPIO引脚为输出模式
    */
-  void (*gpio_init_cb)(void); /**< GPIO 初始化回调 (led_gpio_init_callback_t) */
-  void (*gpio_pwm_init_cb)(
-      void); /**< PWM 初始化回调 (led_gpio_pwm_init_callback_t) */
+  void (*gpio_init_cb)(void);     /**< GPIO 初始化回调 */
+  void (*gpio_pwm_init_cb)(void); /**< PWM 初始化回调 */
 } led_config_t;
 
-/** @brief LED 异步命令结构体 */
+/**
+ * @brief LED 异步命令结构体
+ */
 typedef struct {
   led_state_t led_set_state;      /**< 目标状态 */
   uint16_t led_blink_cycle_ms;    /**< 新闪烁间隔 */
@@ -107,27 +127,28 @@ typedef struct {
   uint16_t led_blink_code_counts; /**< 新闪烁次数 */
 } led_cmd_t;
 
-/** @brief LED 控制句柄 */
-typedef struct led_handle {
-  led_config_t config; /**< 配置副本 */
-  fsm_context_t fsm;   /**< FSM 上下文 */
-
+/**
+ * @brief LED 控制句柄结构体
+ */
+struct led_handle {
+  led_config_t config;          /**< 配置副本 */
+  fsm_context_t fsm;            /**< FSM 上下文 */
+  led_cmd_t current_cmd;        /**< 当前命令 */
   uint32_t last_toggle_time;    /**< 上次翻转时间 */
   uint32_t last_breath_time;    /**< 上次呼吸更新时间 */
   uint32_t interval_start_time; /**< 间隔开始时间 */
+  uint32_t breath_cycle;        /**< 呼吸周期计数器 */
 
   uint16_t current_led_blink_code_counts; /**< 当前轮次闪烁计数 */
   uint16_t breath_value;                  /**< 当前 PWM 值 */
-  uint16_t entry_breath_wait_counts;      /**< 当前呼吸等待计数 */
 
-  uint8_t breath_direction : 1;      /**< 呼吸方向：1-渐亮，0-渐暗 */
-  uint8_t blink_code_phase : 1;      /**< 当前闪烁阶段 (blink_code_phase_t) */
-  uint8_t last_blink_code_phase : 1; /**< 上次闪烁阶段，用于检测变化 */
+  uint8_t blink_code_phase : 2;      /**< 当前闪烁阶段 (led_blink_phase_t) */
+  uint8_t last_blink_code_phase : 2; /**< 上次闪烁阶段，用于检测变化 */
   uint8_t is_static : 1;             /**< 是否为静态分配 */
   uint8_t initialized : 1;           /**< 是否已初始化 */
-  uint8_t pending_blink_update : 1;  /**< 是否有待处理的闪烁参数更新（等待 LED
-                                        熄灭） */
-  uint8_t pwm_init_flag : 1;         /**< PWM 初始化标志位 */
+  uint8_t pending_blink_update
+      : 1;                   /**< 是否有待处理的闪烁参数更新（等待 LED 熄灭） */
+  uint8_t pwm_init_flag : 1; /**< PWM 初始化标志位 */
 
   kfifo_t* cmd_fifo;       /**< 异步命令队列句柄 (kfifo_t*) */
   struct led_handle* next; /**< 链表指针 */
@@ -137,109 +158,107 @@ typedef struct led_handle {
   void* blink_phase_cb;  /**< 闪烁阶段变化回调 (led_blink_phase_callback_t) */
   void* gpio_edge_cb;    /**< GPIO 边沿变化回调 (led_gpio_edge_callback_t) */
   void* callback_user_data; /**< 回调用户数据 */
-} led_handle_t;
+};
 
-/** @brief LED 状态变化回调函数类型 */
-typedef void (*led_state_change_callback_t)(led_handle_t* instance,
-                                            led_state_t new_state,
-                                            void* user_data);
+/* Exported constants --------------------------------------------------------*/
 
-/** @brief LED 闪烁阶段变化回调函数类型 */
-typedef void (*led_blink_phase_callback_t)(led_handle_t* instance,
-                                           blink_code_phase_t phase,
-                                           void* user_data);
-
-/** @brief LED 引脚电平变化回调函数类型 */
-typedef void (*led_gpio_edge_callback_t)(led_handle_t* instance,
-                                         hal_gpio_pin_state_t edge,
-                                         void* user_data);
-
-/* ==================== API 声明 ==================== */
+/* Exported macro ------------------------------------------------------------*/
 
 /**
- * @brief 初始化LED子系统
- * @param get_time_cb 毫秒级时间获取回调
- * @return led_error_t
+ * @brief 检查错误码是否为成功
  */
-led_error_t LedInit(led_get_time_func get_time_cb);
+#define LED_IS_OK(err) ((err) >= 0)
 
 /**
- * @brief 反初始化LED子系统
+ * @brief 检查错误码是否为错误
  */
-void LedDeinit(void);
+#define LED_IS_ERR(err) ((err) < 0)
+
+/* Exported functions prototypes ---------------------------------------------*/
 
 /**
- * @brief 动态注册LED实例
- * @param config 配置指针
- * @return led_handle_t* 实例指针，失败返回NULL
+ * @brief  初始化 LED 子系统
+ * @param  get_time_cb 毫秒级时间获取回调函数
+ * @return 操作结果错误码
  */
-led_handle_t* LedRegister(const led_config_t* config);
+led_error_t led_init(led_get_time_func_t get_time_cb);
 
 /**
- * @brief 静态注册LED实例
- * @param config 配置指针
- * @param instance 用户提供的句柄空间
- * @return led_error_t
+ * @brief  反初始化 LED 子系统
  */
-led_error_t LedRegisterStatic(const led_config_t* config,
-                              led_handle_t* instance);
+void led_deinit(void);
 
 /**
- * @brief 注销LED实例
- * @param name LED名称
- * @return led_error_t
+ * @brief  动态注册 LED 实例
+ * @param  config 配置指针
+ * @return 实例指针，失败返回 NULL
  */
-led_error_t LedUnregister(const char* name);
+led_handle_t* led_register(const led_config_t* config);
 
 /**
- * @brief 设置LED状态 (异步)
- * @param instance 句柄
- * @param state 目标状态
+ * @brief  静态注册 LED 实例
+ * @param  config 配置指针
+ * @param  instance 用户提供的句柄空间
+ * @return 操作结果错误码
  */
-void LedSetState(led_handle_t* instance, led_state_t state);
+led_error_t led_register_static(const led_config_t* config,
+                                led_handle_t* instance);
 
 /**
- * @brief 设置LED闪烁参数 (通过事件/命令触发)
- * @param instance 句柄
- * @param interval_ms 闪烁间隔
- * @param interval_wait_ms 等待间隔
- * @param counts 闪烁次数
- * @return led_error_t
+ * @brief  注销 LED 实例
+ * @param  name LED 名称
+ * @return 操作结果错误码
  */
-led_error_t LedSetBlinkInterval(led_handle_t* instance, uint16_t interval_ms,
-                                uint16_t interval_wait_ms, uint16_t counts);
+led_error_t led_unregister(const char* name);
 
 /**
- * @brief 获取LED实例
- * @param name 名称
- * @return led_handle_t*
+ * @brief  设置 LED 状态 (异步)
+ * @param  instance 句柄
+ * @param  state 目标状态
  */
-led_handle_t* LedGetInstance(const char* name);
+void led_set_state(led_handle_t* instance, led_state_t state);
 
 /**
- * @brief 获取 LED 闪烁阶段
- * @param instance 句柄
- * @return blink_code_phase_t
+ * @brief  设置 LED 闪烁参数 (通过事件/命令触发)
+ * @param  instance 句柄
+ * @param  cmd 闪烁参数结构体指针
+ * @return 操作结果错误码
  */
-blink_code_phase_t LedGetBlinkPhase(led_handle_t* instance);
+led_error_t led_set_blink_interval(led_handle_t* instance,
+                                   const led_cmd_t* cmd);
 
 /**
- * @brief 设置 LED 状态变化回调函数
- * @param instance 句柄
- * @param state_cb 状态变化回调
- * @param blink_phase_cb 闪烁阶段变化回调
- * @param user_data 用户数据，将传递给回调函数
+ * @brief  获取 LED 实例
+ * @param  name 名称
+ * @return LED 实例指针，未找到返回 NULL
  */
-void LedSetStateChangeCallback(led_handle_t* instance,
-                               led_state_change_callback_t state_cb,
-                               led_blink_phase_callback_t blink_phase_cb,
-                               led_gpio_edge_callback_t gpio_edge_cb,
-                               void* user_data);
+led_handle_t* led_get_instance(const char* name);
 
 /**
- * @brief 刷新任务，需在主循环周期调用
+ * @brief  获取 LED 闪烁阶段
+ * @param  instance 句柄
+ * @return 闪烁阶段
  */
-void LedTaskRefresh(void);
+led_blink_phase_t led_get_blink_phase(led_handle_t* instance);
+
+/**
+ * @brief  设置 LED 状态变化回调函数
+ * @param  instance 句柄
+ * @param  state_cb 状态变化回调
+ * @param  blink_phase_cb 闪烁阶段变化回调
+ * @param  gpio_edge_cb GPIO 边沿变化回调
+ * @param  user_data 用户数据，将传递给回调函数
+ */
+void led_set_state_change_callback(led_handle_t* instance,
+                                   led_state_change_callback_t state_cb,
+                                   led_blink_phase_callback_t blink_phase_cb,
+                                   led_gpio_edge_callback_t gpio_edge_cb,
+                                   void* user_data);
+
+/**
+ * @brief  刷新任务，需在主循环周期调用
+ */
+void led_task_refresh(void);
 
 #ifdef __cplusplus
 }

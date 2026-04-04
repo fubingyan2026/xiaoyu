@@ -297,12 +297,12 @@ static key_event_e on_key_event_callback(const key_event_e event,
  *          触发相应的状态机转换操作
  */
 static void on_led_blink_phase_change(led_handle_t* instance,
-                                      blink_code_phase_t phase,
+                                      led_blink_phase_t phase,
                                       void* user_data) {
   (void)instance;
   (void)user_data;
 
-  if (phase != BLINK_CODE_PHASE_INTERVAL) {
+  if (phase != LED_BLINK_PHASE_INTERVAL) {
     return;
   }
 
@@ -343,9 +343,9 @@ static void on_led_state_change(led_handle_t* instance, led_state_t new_state,
 
   if (is_in_state(KEY_FSM_STATE_NONE) && new_state == LED_STATE_OFF) {
     KEY_FUNC_PRINTF("[LED] GPIO Release (LED wait)\r\n");
-    // LedSetBlinkInterval(s_led_instance, LED_BLINK_INTERVAL_SLOW_MS,
+    // led_set_blink_interval(s_led_instance, LED_BLINK_INTERVAL_SLOW_MS,
     // LED_BLINK_WAIT_MS, can_save_id);
-    LedSetState(s_led_instance, LED_STATE_BREATHING);
+    led_set_state(s_led_instance, LED_STATE_BREATHING);
   }
 }
 
@@ -356,10 +356,12 @@ static void on_led_state_change(led_handle_t* instance, led_state_t new_state,
  */
 static inline void configure_led_blink(uint16_t interval_ms, uint16_t wait_ms,
                                        uint16_t counts) {
-  LedSetBlinkInterval(s_led_instance, interval_ms, wait_ms, counts);
-  LedSetState(s_led_instance, LED_STATE_BLINK_CODE);
-  KEY_FUNC_PRINTF("[LED]:set blink interval: %d, wait: %d, counts: %d\r\n",
-                  interval_ms, wait_ms, counts);
+  led_set_blink_interval(s_led_instance, &(led_cmd_t){
+                                             .led_blink_cycle_ms = interval_ms,
+                                             .led_blink_wait_ms = wait_ms,
+                                             .led_blink_code_counts = counts,
+                                         });
+  led_set_state(s_led_instance, LED_STATE_BLINK_CODE);
 }
 
 /**
@@ -472,9 +474,6 @@ static const led_config_t s_led_default_config = {
     .pin = HAL_GPIO_PIN_9,
     .active_level = HAL_GPIO_PIN_RESET,
     .init_state = LED_STATE_BLINK_CODE,
-    .led_blink_cycle_ms = LED_BLINK_INTERVAL_SLOW_MS,
-    .led_blink_wait_ms = LED_BLINK_WAIT_MS,
-    .led_blink_code_counts = 0,
     .led_refresh_time_ms = 10,
     .led_refresh_cycle_ms = 1000,
     .led_refresh_max_duty = 10000,
@@ -527,16 +526,16 @@ void key_func_init(void) {
   ASSERT(s_key0_instance);
 
   /* 初始化 LED 子系统 */
-  LedInit(millis);
+  led_init(millis);
 
   /* 注册 LED */
-  s_led_instance = LedRegister(&s_led_default_config);
+  s_led_instance = led_register(&s_led_default_config);
   ASSERT(s_led_instance);
 
   /* 注册 LED 回调 */
-  LedSetStateChangeCallback(s_led_instance, on_led_state_change,
-                            on_led_blink_phase_change, on_led_gpio_edge_change,
-                            NULL);
+  led_set_state_change_callback(s_led_instance, on_led_state_change,
+                                on_led_blink_phase_change,
+                                on_led_gpio_edge_change, NULL);
 
   /* 初始化按键 FSM */
   __memset(&s_key_fsm_ctx, 0, sizeof(key_fsm_ctx_t));

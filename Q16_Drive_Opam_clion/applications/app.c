@@ -70,7 +70,7 @@ tk_timer_t* timer_driverTask = NULL;
 
 /* 定时器3超时回调函数 */
 void timer_ledTask_timeout_callback(tk_timer_t* timer) {
-  LedTaskRefresh();
+  led_task_refresh();
   WS2812_SPI_Loop();
 
   key_func_task();
