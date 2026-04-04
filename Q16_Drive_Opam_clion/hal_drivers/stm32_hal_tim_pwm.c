@@ -11,15 +11,16 @@
 #include "hal_gpio.h"
 #include "hal_tim_pwm.h"
 #include "stm32g4xx_hal.h"
+#include "tim.h"
 
 /* 定时器句柄数组 */
 extern TIM_HandleTypeDef htim17;
 
-static TIM_HandleTypeDef* timer_handles[] = {NULL,                      //
-                                             NULL,   NULL, NULL, NULL,  //
-                                             NULL,   NULL, NULL, NULL,  //
-                                             NULL,   NULL, NULL, NULL,  //
-                                             NULL,   NULL, NULL, NULL,  //
+static TIM_HandleTypeDef* timer_handles[] = {NULL,                        //
+                                             &htim1, NULL,   NULL, NULL,  //
+                                             NULL,   &htim6, NULL, NULL,  //
+                                             NULL,   NULL,   NULL, NULL,  //
+                                             NULL,   NULL,   NULL, NULL,  //
                                              &htim17};
 
 /* 定时器通道映射 */
@@ -114,10 +115,9 @@ hal_tim_pwm_error_t stm32_tim_pwm_init_context(hal_tim_pwm_context_t* ctx) {
  */
 static TIM_HandleTypeDef* get_timer_handle(
     hal_tim_pwm_instance_t timer_instance) {
-  if (timer_instance >= 1  //
-      && timer_instance <=
-             (sizeof(timer_handles) / sizeof(timer_handles[0]) - 1))  //
-  {
+  if (timer_instance >= 1 &&
+      timer_instance <=
+          (sizeof(timer_handles) / sizeof(timer_handles[0]) - 1)) {
     return timer_handles[timer_instance];
   }
   return NULL;

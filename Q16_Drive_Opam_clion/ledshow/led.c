@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include "algorithm/maths.h"
+#include "bsp_delay.h"
 #include "debug/debug.h"
 #include "kfifo/kfifo.h"
 #include "memory_pool/memory_pool.h"
@@ -205,6 +206,18 @@ static void led_fsm_on_entry(fsm_context_t* ctx, fsm_state_t state) {
       if (handle->config.gpio_pwm_init_cb) {
         handle->config.gpio_pwm_init_cb();
       } else {
+        if (handle->config.gpio_pwm_init_cb) {
+          handle->config.gpio_pwm_init_cb();
+        } else {
+          if (handle->config.pwm_cfg.timer_instance != 0) {
+            /* 如果没有配置 PWM 初始化回调，默认配置为输出模式 */
+            hal_tim_pwm_init(&tim_pwm_ctx, &handle->config.pwm_cfg);
+            hal_tim_pwm_start(&tim_pwm_ctx,
+                              handle->config.pwm_cfg.timer_instance,
+                              handle->config.pwm_cfg.channel);
+            handle->pwm_init_flag = 1;
+          }
+        }
         hal_tim_pwm_gpio_alternate(
             &tim_pwm_ctx,
             &handle->config.pwm_cfg.gpio);  // 配置GPIO复用功能
@@ -319,17 +332,6 @@ led_error_t LedRegisterStatic(const led_config_t* config,
   if (!instance->cmd_fifo) return LED_ERR_NO_MEMORY;
 
   /* 如果是呼吸灯，且配置了PWM信息，则初始化PWM */
-  if (config->gpio_pwm_init_cb) {
-    config->gpio_pwm_init_cb();
-  } else {
-    if (instance->config.pwm_cfg.timer_instance != 0) {
-      /* 如果没有配置 PWM 初始化回调，默认配置为输出模式 */
-      hal_tim_pwm_init(&tim_pwm_ctx, &instance->config.pwm_cfg);
-      hal_tim_pwm_start(&tim_pwm_ctx, instance->config.pwm_cfg.timer_instance,
-                        instance->config.pwm_cfg.channel);
-      instance->pwm_init_flag = 1;
-    }
-  }
 
   /* 硬件底层初始化 */
   if (config->gpio_init_cb) {

@@ -75,5 +75,22 @@
     "clang-format.style": "file",
     "[markdown]": {
         "editor.defaultFormatter": "yzhang.markdown-all-in-one"
-    }
+    },
+    "ROS2.distro": "rolling",
+    "python.autoComplete.extraPaths": [
+        "/opt/ros/rolling/opt/gz_sim_vendor/lib/python",
+        "/opt/ros/rolling/opt/gz_transport_vendor/lib/python",
+        "/opt/ros/rolling/opt/sdformat_vendor/lib/python",
+        "/opt/ros/rolling/opt/gz_msgs_vendor/lib/python",
+        "/opt/ros/rolling/opt/gz_math_vendor/lib/python",
+        "/opt/ros/rolling/lib/python3.12/site-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/opt/ros/rolling/opt/gz_sim_vendor/lib/python",
+        "/opt/ros/rolling/opt/gz_transport_vendor/lib/python",
+        "/opt/ros/rolling/opt/sdformat_vendor/lib/python",
+        "/opt/ros/rolling/opt/gz_msgs_vendor/lib/python",
+        "/opt/ros/rolling/opt/gz_math_vendor/lib/python",
+        "/opt/ros/rolling/lib/python3.12/site-packages"
+    ]
 }
