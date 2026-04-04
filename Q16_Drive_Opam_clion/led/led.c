@@ -97,21 +97,22 @@ static fsm_state_t led_fsm_blink_handler(fsm_context_t* ctx) {
 
   if (handle->blink_code_phase == BLINK_CODE_PHASE_BLINKING) {
     if (led_time_diff(now, handle->last_toggle_time) >=
-        handle->config.blink_interval_ms) {
+        handle->config.led_blink_cycle_ms) {
       handle->last_toggle_time = now;
       bool is_on = led_phys_read(handle);
       led_phys_write(handle, !is_on);
       if (!led_phys_read(handle)) {
-        handle->current_blink_counts++;
+        handle->current_led_blink_code_counts++;
         /* 当 counts=0 时，每次闪烁后进入间隔；或者达到指定次数后进入间隔 */
-        if (handle->config.blink_counts == 0 ||
-            handle->current_blink_counts >= handle->config.blink_counts) {
+        if (handle->config.led_blink_code_counts == 0 ||
+            handle->current_led_blink_code_counts >=
+                handle->config.led_blink_code_counts) {
           handle->last_blink_code_phase = handle->blink_code_phase;
           handle->blink_code_phase = BLINK_CODE_PHASE_INTERVAL;
           handle->interval_start_time = now;
-          handle->current_blink_counts = 0;
-          /* 如果 blink_counts > 0，表示单次闪烁模式，完成后自动关闭 */
-          if (handle->config.blink_counts > 0) {
+          handle->current_led_blink_code_counts = 0;
+          /* 如果 led_blink_code_counts > 0，表示单次闪烁模式，完成后自动关闭 */
+          if (handle->config.led_blink_code_counts > 0) {
             return LED_STATE_OFF; /* 单次闪烁完成，自动关闭 */
           }
         }
@@ -120,7 +121,7 @@ static fsm_state_t led_fsm_blink_handler(fsm_context_t* ctx) {
   } else {
     /* INTERVAL 阶段：检查是否完成单次闪烁模式 */
     if (led_time_diff(now, handle->interval_start_time) >=
-        handle->config.blink_interval_wait_ms) {
+        handle->config.led_blink_wait_ms) {
       /* 否则是连续闪烁模式，继续闪烁 */
       handle->blink_code_phase = BLINK_CODE_PHASE_BLINKING;
       handle->last_toggle_time = now;
@@ -134,35 +135,34 @@ static fsm_state_t led_fsm_breathing_handler(fsm_context_t* ctx) {
   uint32_t now = get_times();
 
   if (led_time_diff(now, handle->last_breath_time) >=
-      handle->config.breath_interval_ms) {
+      handle->config.led_refresh_time_ms) {
     handle->last_breath_time = now;
+    static uint32_t breath_cycle = 0;
+    static const uint16_t s_led_max_resolution = 1000;
+    uint16_t led_breath_steps =
+        s_led_max_resolution / (handle->config.led_refresh_cycle_ms /
+                                handle->config.led_refresh_time_ms);
+    breath_cycle += led_breath_steps;
 
-    if (handle->entry_breath_wait_counts <
-        (handle->config.breath_max + handle->config.breath_step) / 2) {
-      handle->entry_breath_wait_counts += handle->config.breath_step;
-    } else {
-      static uint32_t breath_cycle = 0;
-      breath_cycle += 3;
-
-      if (breath_cycle >= 1000) {
-        breath_cycle = 0;
-      }
-      // 使用正弦函数实现非线性亮度变化，使呼吸效果更加自然
-      // 计算呼吸周期的相位（0-2π）
-      float phase = (float)breath_cycle * 0.001f * 2.0f * M_PIf;
-
-      // 计算亮度值，使用正弦函数的平方使变化更加平滑
-      float brightness_ratio = (sin_approx(phase) + 1.0f) * 0.5f;
-      // brightness_ratio *= brightness_ratio; // 平方使变化更加平滑
-      // 添加gamma校正，使亮度变化更加自然
-      int gamma = 2;
-      float gamma_corrected = powerf(brightness_ratio, gamma);
-      // 计算最终的PWM值
-      handle->breath_value = (uint16_t)(handle->config.breath_min +
-                                        (uint16_t)((handle->config.breath_max -
-                                                    handle->config.breath_min) *
-                                                   gamma_corrected));
+    if (breath_cycle >= s_led_max_resolution) {
+      breath_cycle = 0;
     }
+    // 使用正弦函数实现非线性亮度变化，使呼吸效果更加自然
+    // 计算呼吸周期的相位（0-2π）
+    float phase = (float)breath_cycle * 0.001f * 2.0f * M_PIf;
+
+    // 计算亮度值，使用正弦函数的平方使变化更加平滑
+    float brightness_ratio = (sin_approx(phase) + 1.0f) * 0.5f;
+    // brightness_ratio *= brightness_ratio; // 平方使变化更加平滑
+    // 添加gamma校正，使亮度变化更加自然
+    static const int gamma = 2;
+    float gamma_corrected = powerf(brightness_ratio, gamma);
+    // 计算最终的PWM值
+    handle->breath_value =
+        (uint16_t)(handle->config.led_refresh_min_duty +
+                   (uint16_t)((handle->config.led_refresh_max_duty -
+                               handle->config.led_refresh_min_duty) *
+                              gamma_corrected));
 
     if (handle->pwm_init_flag) {
       hal_tim_pwm_set_duty_cycle(
@@ -191,7 +191,7 @@ static void led_fsm_on_entry(fsm_context_t* ctx, fsm_state_t state) {
       led_phys_write(handle, false);
       break;
     case LED_STATE_BLINK_CODE:
-      handle->current_blink_counts = 0;
+      handle->current_led_blink_code_counts = 0;
       handle->last_blink_code_phase = handle->blink_code_phase;
       handle->blink_code_phase = BLINK_CODE_PHASE_INTERVAL;
       handle->interval_start_time = now;
@@ -200,27 +200,14 @@ static void led_fsm_on_entry(fsm_context_t* ctx, fsm_state_t state) {
       break;
     case LED_STATE_BREATHING:
       handle->breath_direction = 1;
-      handle->breath_value = handle->config.breath_min;
+      handle->breath_value = handle->config.led_refresh_min_duty;
       handle->last_breath_time = now;
       handle->entry_breath_wait_counts = 0;
-      if (handle->config.gpio_pwm_init_cb) {
-        handle->config.gpio_pwm_init_cb();
-      } else {
-        if (handle->config.gpio_pwm_init_cb) {
-          handle->config.gpio_pwm_init_cb();
-        } else {
-          if (handle->config.pwm_cfg.timer_instance != 0) {
-            /* 如果没有配置 PWM 初始化回调，默认配置为输出模式 */
-            hal_tim_pwm_init(&tim_pwm_ctx, &handle->config.pwm_cfg);
-            hal_tim_pwm_start(&tim_pwm_ctx,
-                              handle->config.pwm_cfg.timer_instance,
-                              handle->config.pwm_cfg.channel);
-            handle->pwm_init_flag = 1;
-          }
-        }
-        hal_tim_pwm_gpio_alternate(
-            &tim_pwm_ctx,
-            &handle->config.pwm_cfg.gpio);  // 配置GPIO复用功能
+      hal_tim_pwm_gpio_alternate(&tim_pwm_ctx, &handle->config.pwm_cfg.gpio);
+      /* 确保PWM已启动 */
+      if (handle->pwm_init_flag) {
+        hal_tim_pwm_start(&tim_pwm_ctx, handle->config.pwm_cfg.timer_instance,
+                          handle->config.pwm_cfg.channel);
       }
       break;
     default:
@@ -260,6 +247,7 @@ led_error_t LedInit(led_get_time_func get_time_cb) {
   led_count = 0;
   led_system_initialized = 1;
 
+  stm32_gpio_init_context(&gpio_ctx);
   stm32_tim_pwm_init_context(&tim_pwm_ctx);
 
   MessageCenterInit(); /* 确保消息中心已就绪 */
@@ -323,7 +311,9 @@ led_error_t LedRegisterStatic(const led_config_t* config,
   /* 允许任意状态切换 (LED 模块由外部指令驱动) */
   for (uint8_t i = 0; i < LED_STATE_MAX; i++) {
     for (uint8_t j = 0; j < LED_STATE_MAX; j++) {
-      if (i != j) fsm_add_transition(&instance->fsm, i, j, NULL);
+      if (i != j) {
+        fsm_add_transition(&instance->fsm, i, j, NULL);
+      }
     }
   }
 
@@ -332,20 +322,39 @@ led_error_t LedRegisterStatic(const led_config_t* config,
   if (!instance->cmd_fifo) return LED_ERR_NO_MEMORY;
 
   /* 如果是呼吸灯，且配置了PWM信息，则初始化PWM */
+  if (!instance->pwm_init_flag) {
+    if (instance->config.gpio_pwm_init_cb) {
+      instance->config.gpio_pwm_init_cb();
+    } else if (instance->config.pwm_cfg.timer_instance != 0) {
+      hal_tim_pwm_init(&tim_pwm_ctx, &instance->config.pwm_cfg);
+      hal_tim_pwm_start(&tim_pwm_ctx, instance->config.pwm_cfg.timer_instance,
+                        instance->config.pwm_cfg.channel);
+      instance->pwm_init_flag = 1;
+    }
+  }
 
   /* 硬件底层初始化 */
-  if (config->gpio_init_cb) {
-    config->gpio_init_cb();
+  /* 如果初始状态是呼吸模式，GPIO需要保持PWM复用模式，不配置为普通输出 */
+  if (config->init_state == LED_STATE_BREATHING) {
+    /* 呼吸模式：GPIO已在PWM初始化时配置为复用模式，无需再配置 */
+    /* 确保PWM已启动 */
+    if (instance->pwm_init_flag) {
+      hal_tim_pwm_start(&tim_pwm_ctx, instance->config.pwm_cfg.timer_instance,
+                        instance->config.pwm_cfg.channel);
+    }
   } else {
-    /* 如果没有配置 GPIO 初始化回调，默认配置为输出模式 */
-    stm32_gpio_init_context(&gpio_ctx);
-    hal_gpio_config_t gpio_cfg = {.port = config->port,
-                                  .pin = config->pin,
-                                  .mode = HAL_GPIO_MODE_OUTPUT_PP,
-                                  .pull = HAL_GPIO_PULL_NONE,
-                                  .speed = HAL_GPIO_SPEED_FREQ_LOW,
-                                  .default_state = !config->active_level};
-    hal_gpio_init(&gpio_ctx, &gpio_cfg);
+    if (instance->config.gpio_init_cb) {
+      instance->config.gpio_init_cb();
+    } else {
+      /* 如果没有配置 GPIO 初始化回调，默认配置为输出模式 */
+      hal_gpio_config_t gpio_cfg = {.port = config->port,
+                                    .pin = config->pin,
+                                    .mode = HAL_GPIO_MODE_OUTPUT_PP,
+                                    .pull = HAL_GPIO_PULL_NONE,
+                                    .speed = HAL_GPIO_SPEED_FREQ_LOW,
+                                    .default_state = !config->active_level};
+      hal_gpio_init(&gpio_ctx, &gpio_cfg);
+    }
   }
 
   /* 加入链表 (头插法) */
@@ -399,7 +408,7 @@ led_error_t LedUnregister(const char* name) {
 
 void LedSetState(led_handle_t* instance, led_state_t state) {
   if (!instance) return;
-  led_cmd_t cmd = {.target_state = state};
+  led_cmd_t cmd = {.led_set_state = state};
   kfifo_put((kfifo_t*)instance->cmd_fifo, (unsigned char*)&cmd,
             sizeof(led_cmd_t));
 }
@@ -410,9 +419,9 @@ led_error_t LedSetBlinkInterval(led_handle_t* instance, uint16_t interval_ms,
 
   /* 检查参数是否真的变化 */
   bool param_changed =
-      (instance->config.blink_interval_ms != interval_ms) ||
-      (instance->config.blink_interval_wait_ms != interval_wait_ms) ||
-      (instance->config.blink_counts != counts);
+      (instance->config.led_blink_cycle_ms != interval_ms) ||
+      (instance->config.led_blink_wait_ms != interval_wait_ms) ||
+      (instance->config.led_blink_code_counts != counts);
 
   if (!param_changed) {
     return LED_OK; /* 参数未变化，直接返回 */
@@ -426,23 +435,23 @@ led_error_t LedSetBlinkInterval(led_handle_t* instance, uint16_t interval_ms,
     if (is_led_on) {
       /* LED 亮着，标记需要等待熄灭后更新，将参数暂存到 cmd_fifo */
       instance->pending_blink_update = 1;
-      led_cmd_t cmd = {.target_state = LED_STATE_BLINK_CODE,
-                       .blink_interval_ms = interval_ms,
-                       .blink_interval_wait_ms = interval_wait_ms,
-                       .blink_counts = counts};
+      led_cmd_t cmd = {.led_set_state = LED_STATE_BLINK_CODE,
+                       .led_blink_cycle_ms = interval_ms,
+                       .led_blink_wait_ms = interval_wait_ms,
+                       .led_blink_code_counts = counts};
       return kfifo_put((kfifo_t*)instance->cmd_fifo, (unsigned char*)&cmd,
                        sizeof(led_cmd_t)) == sizeof(led_cmd_t)
                  ? LED_OK
                  : LED_ERR_INTERNAL;
     } else {
       /* LED 已熄灭，立即切换参数 */
-      instance->config.blink_interval_ms = interval_ms;
-      instance->config.blink_interval_wait_ms = interval_wait_ms;
-      instance->config.blink_counts = counts;
+      instance->config.led_blink_cycle_ms = interval_ms;
+      instance->config.led_blink_wait_ms = interval_wait_ms;
+      instance->config.led_blink_code_counts = counts;
       instance->pending_blink_update = 0;
 
       /* 重置闪烁进度，强制进入间隔阶段，等待间隔结束后再开始闪烁 */
-      instance->current_blink_counts = 0;
+      instance->current_led_blink_code_counts = 0;
       instance->blink_code_phase = BLINK_CODE_PHASE_INTERVAL;
       instance->interval_start_time = get_times();
       led_phys_write(instance, false); /* 确保保持熄灭状态 */
@@ -451,9 +460,9 @@ led_error_t LedSetBlinkInterval(led_handle_t* instance, uint16_t interval_ms,
     }
   } else {
     /* 不在闪烁模式，直接更新参数 */
-    instance->config.blink_interval_ms = interval_ms;
-    instance->config.blink_interval_wait_ms = interval_wait_ms;
-    instance->config.blink_counts = counts;
+    instance->config.led_blink_cycle_ms = interval_ms;
+    instance->config.led_blink_wait_ms = interval_wait_ms;
+    instance->config.led_blink_code_counts = counts;
     instance->pending_blink_update = 0;
     return LED_OK;
   }
@@ -482,11 +491,11 @@ static void process_led_cmds(led_handle_t* handle) {
   led_cmd_t cmd;
   while (kfifo_get(handle->cmd_fifo, (unsigned char*)&cmd, sizeof(led_cmd_t)) ==
          sizeof(led_cmd_t)) {
-    if (cmd.target_state != LED_STATE_NONE) {
-      fsm_request_transition(&handle->fsm, cmd.target_state);
+    if (cmd.led_set_state != LED_STATE_NONE) {
+      fsm_request_transition(&handle->fsm, cmd.led_set_state);
     }
 
-    if (cmd.target_state == LED_STATE_BLINK_CODE) {
+    if (cmd.led_set_state == LED_STATE_BLINK_CODE) {
       /* 如果有待处理的更新且 LED 正在闪烁，检查是否需要等待熄灭 */
       if (handle->pending_blink_update &&
           fsm_get_current_state(&handle->fsm) == LED_STATE_BLINK_CODE) {
@@ -504,15 +513,16 @@ static void process_led_cmds(led_handle_t* handle) {
       }
 
       /* 应用新参数 */
-      if (cmd.blink_interval_ms > 0)
-        handle->config.blink_interval_ms = cmd.blink_interval_ms;
-      if (cmd.blink_interval_wait_ms > 0)
-        handle->config.blink_interval_wait_ms = cmd.blink_interval_wait_ms;
-      if (cmd.blink_counts > 0) handle->config.blink_counts = cmd.blink_counts;
+      if (cmd.led_blink_cycle_ms > 0)
+        handle->config.led_blink_cycle_ms = cmd.led_blink_cycle_ms;
+      if (cmd.led_blink_wait_ms > 0)
+        handle->config.led_blink_wait_ms = cmd.led_blink_wait_ms;
+      if (cmd.led_blink_code_counts > 0)
+        handle->config.led_blink_code_counts = cmd.led_blink_code_counts;
 
       /* 如果已经在闪烁模式，则强制进入间隔阶段，等待间隔结束后再开始闪烁 */
       if (fsm_get_current_state(&handle->fsm) == LED_STATE_BLINK_CODE) {
-        handle->current_blink_counts = 0;
+        handle->current_led_blink_code_counts = 0;
         handle->blink_code_phase = BLINK_CODE_PHASE_INTERVAL;
         handle->interval_start_time = get_times();
         led_phys_write(handle, false); /* 确保保持熄灭状态 */

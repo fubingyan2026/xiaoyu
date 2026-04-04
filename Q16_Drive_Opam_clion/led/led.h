@@ -62,8 +62,8 @@ typedef uint32_t (*led_get_time_func)(void);
 
 /** @brief PWM硬件配置 */
 typedef struct {
-  uint8_t timer_instance; /**< 定时器实例 (如 17) */
-  uint8_t channel;        /**< PWM通道 (如 HAL_TIM_PWM_CHANNEL_1) */
+  hal_tim_pwm_instance_t timer_instance; /**< 定时器实例 (如 17) */
+  hal_tim_pwm_channel_t channel; /**< PWM通道 (如 HAL_TIM_PWM_CHANNEL_1) */
   hal_tim_pwm_config_t*
       raw_cfg; /**< 指向外部完整的PWM配置 (可选，用于高级控制) */
 } led_pwm_config_t;
@@ -71,22 +71,22 @@ typedef struct {
 /** @brief LED初始化配置 */
 typedef struct {
   const char* led_name; /**< LED名称 (唯一标识) */
-  uint8_t port;         /**< GPIO端口 */
-  uint8_t pin;          /**< GPIO引脚 */
+  hal_gpio_port_t port; /**< GPIO端口 */
+  hal_gpio_pin_t pin;   /**< GPIO引脚 */
   hal_gpio_pin_state_t
       active_level; /**< 有效电平 (HAL_GPIO_PIN_SET 或 HAL_GPIO_PIN_RESET) */
   led_state_t init_state; /**< 初始状态 */
 
   /* 闪烁参数 */
-  uint16_t blink_interval_ms;      /**< 闪烁半周期间隔 (ms) */
-  uint16_t blink_interval_wait_ms; /**< 一轮闪烁后的等待间隔 (ms) */
-  uint16_t blink_counts;           /**< 默认一轮闪烁次数 */
+  uint16_t led_blink_cycle_ms;    /**< 闪烁半周期间隔 (ms) */
+  uint16_t led_blink_wait_ms;     /**< 一轮闪烁后的等待间隔 (ms) */
+  uint16_t led_blink_code_counts; /**< 默认一轮闪烁次数 */
 
   /* 呼吸灯参数 */
-  uint16_t breath_interval_ms; /**< 呼吸步进更新间隔 (ms) */
-  uint16_t breath_step;        /**< 亮度步进值 */
-  uint16_t breath_max;         /**< 最大亮度 (PWM占空比) */
-  uint16_t breath_min;         /**< 最小亮度 (PWM占空比) */
+  uint16_t led_refresh_time_ms;  /**< 呼吸步进更新间隔 (ms) */
+  uint16_t led_refresh_cycle_ms; /**< 呼吸周期 (ms) */
+  uint16_t led_refresh_max_duty; /**< 最大亮度 (PWM占空比) */
+  uint16_t led_refresh_min_duty; /**< 最小亮度 (PWM占空比) */
 
   hal_tim_pwm_config_t pwm_cfg; /**< PWM配置 (仅呼吸灯模式需要) */
 
@@ -101,10 +101,10 @@ typedef struct {
 
 /** @brief LED 异步命令结构体 */
 typedef struct {
-  led_state_t target_state;        /**< 目标状态 */
-  uint16_t blink_interval_ms;      /**< 新闪烁间隔 */
-  uint16_t blink_interval_wait_ms; /**< 新等待间隔 */
-  uint16_t blink_counts;           /**< 新闪烁次数 */
+  led_state_t led_set_state;      /**< 目标状态 */
+  uint16_t led_blink_cycle_ms;    /**< 新闪烁间隔 */
+  uint16_t led_blink_wait_ms;     /**< 新等待间隔 */
+  uint16_t led_blink_code_counts; /**< 新闪烁次数 */
 } led_cmd_t;
 
 /** @brief LED 控制句柄 */
@@ -116,9 +116,9 @@ typedef struct led_handle {
   uint32_t last_breath_time;    /**< 上次呼吸更新时间 */
   uint32_t interval_start_time; /**< 间隔开始时间 */
 
-  uint16_t current_blink_counts;     /**< 当前轮次闪烁计数 */
-  uint16_t breath_value;             /**< 当前 PWM 值 */
-  uint16_t entry_breath_wait_counts; /**< 当前呼吸等待计数 */
+  uint16_t current_led_blink_code_counts; /**< 当前轮次闪烁计数 */
+  uint16_t breath_value;                  /**< 当前 PWM 值 */
+  uint16_t entry_breath_wait_counts;      /**< 当前呼吸等待计数 */
 
   uint8_t breath_direction : 1;      /**< 呼吸方向：1-渐亮，0-渐暗 */
   uint8_t blink_code_phase : 1;      /**< 当前闪烁阶段 (blink_code_phase_t) */

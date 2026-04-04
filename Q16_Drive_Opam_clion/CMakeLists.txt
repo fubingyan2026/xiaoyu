@@ -61,9 +61,6 @@ endforeach()
 # 本地can_comm目录
 aux_source_directory(${CMAKE_SOURCE_DIR}/can_comm COMMON_can_comm)
 
-# 本地ledshow目录
-aux_source_directory(${CMAKE_SOURCE_DIR}/ledshow COMMON_ledshow)
-
 # 特殊处理的模块 (有子目录的)
 aux_source_directory(${CMAKE_SOURCE_DIR}/../common/SEGGER_RTT/RTT COMMON_SEGGER_RTT)
 aux_source_directory(${CMAKE_SOURCE_DIR}/../common/easyflash/src COMMON_easyflash)
@@ -85,7 +82,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${COMMON_encoder}
         ${COMMON_keybase}
         ${COMMON_kfifo}
-        ${COMMON_ledshow}
         ${COMMON_lwmem}
         ${COMMON_lwshell}
         ${COMMON_memory_pool}
@@ -96,10 +92,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${COMMON_SEGGER_RTT}
         ${COMMON_CMBT}
 
+        # LED模块
+        led/led.c
+        # FSM模块
         ../common/fsm/fsm.c
         # 汇编文件需要单独添加
         ../common/CmBacktrace/cm_backtrace/fault_handler/gcc/cmb_fault.S
-
         # 单独的源文件
         ../common/easyflash/port/ef_port.c
 )
@@ -110,6 +108,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         hal_drivers
         Q16_FOC
         can_comm
+        led
         ../common
         ../common/CmBacktrace/cm_backtrace
         ../common/SEGGER_RTT/RTT/config

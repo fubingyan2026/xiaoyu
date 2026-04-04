@@ -22,7 +22,7 @@
 #include "foc_ctrl_q16.h"
 #include "foc_sm.h"
 #include "fsm/fsm.h"
-#include "ledshow/led.h"
+#include "led.h"
 
 /* ==================== 配置常量 ==================== */
 
@@ -469,26 +469,26 @@ static fsm_state_t handle_fsm_set_value(fsm_context_t* ctx) {
 static const led_config_t s_led_default_config = {
     .led_name = "LED0",
     .port = HAL_GPIO_PORT_B,
-    .pin = 9,
+    .pin = HAL_GPIO_PIN_9,
     .active_level = HAL_GPIO_PIN_RESET,
     .init_state = LED_STATE_BLINK_CODE,
-    .blink_interval_ms = LED_BLINK_INTERVAL_SLOW_MS,
-    .blink_interval_wait_ms = LED_BLINK_WAIT_MS,
-    .blink_counts = 0,
-    .breath_interval_ms = 5,
-    .breath_step = 50,
-    .breath_max = 10000,
-    .breath_min = 200,
+    .led_blink_cycle_ms = LED_BLINK_INTERVAL_SLOW_MS,
+    .led_blink_wait_ms = LED_BLINK_WAIT_MS,
+    .led_blink_code_counts = 0,
+    .led_refresh_time_ms = 10,
+    .led_refresh_cycle_ms = 1000,
+    .led_refresh_max_duty = 10000,
+    .led_refresh_min_duty = 100,
     .pwm_cfg = {.timer_frequency = 168000000,          // 定时器时钟频率：168MHz
-                .pwm_frequency = 1000,                 // PWM输出频率：1kHz
-                .duty_cycle = 5000,                    // 初始占空比：50%
+                .pwm_frequency = 5000,                 // PWM输出频率：1kHz
+                .duty_cycle = 10000,                   // 初始占空比：50%
                 .polarity = HAL_TIM_PWM_POLARITY_LOW,  // 极性：低电平有效
-                .timer_instance = 17,                  // 定时器实例：TIM17
-                .channel = HAL_TIM_PWM_CHANNEL_1,      // PWM通道：通道1
+                .timer_instance = HAL_TIM_PWM_INSTANCE_17,  // 定时器实例：TIM17
+                .channel = HAL_TIM_PWM_CHANNEL_1,           // PWM通道：通道1
                 .gpio =
                     {
                         .port = HAL_GPIO_PORT_B,     // GPIO端口：GPIOB
-                        .pin = 9,                    // 引脚号：PB9
+                        .pin = HAL_GPIO_PIN_9,       // 引脚号：PB9
                         .alternate = GPIO_AF1_TIM17  // 复用功能：TIM17_CH1
                     }},
 };

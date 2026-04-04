@@ -14,7 +14,7 @@
 #include "WS2812_SPI.h"
 #include "daemon/daemon.h"
 #include "key_menu.h"
-#include "ledshow/led.h"
+#include "led.h"
 
 static daemon_t* daemon_warning;
 static led_handle_t* led_instance;

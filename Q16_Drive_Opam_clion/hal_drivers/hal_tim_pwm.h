@@ -54,25 +54,25 @@ typedef enum __attribute__((packed)) {
  * @brief TIM PWM实例定义
  */
 typedef enum __attribute__((packed)) {
-  HAL_TIM_PWM_INSTANCE_1 = 1, /**< TIM1 */
-  HAL_TIM_PWM_INSTANCE_2,     /**< TIM2 */
-  HAL_TIM_PWM_INSTANCE_3,     /**< TIM3 */
-  HAL_TIM_PWM_INSTANCE_4,     /**< TIM4 */
-  HAL_TIM_PWM_INSTANCE_6,     /**< TIM6 */
-  HAL_TIM_PWM_INSTANCE_7,     /**< TIM7 */
-  HAL_TIM_PWM_INSTANCE_8,     /**< TIM8 */
-  HAL_TIM_PWM_INSTANCE_15,    /**< TIM15 */
-  HAL_TIM_PWM_INSTANCE_16,    /**< TIM16 */
-  HAL_TIM_PWM_INSTANCE_17,    /**< TIM17 */
+  HAL_TIM_PWM_INSTANCE_1 = 1,   /**< TIM1 */
+  HAL_TIM_PWM_INSTANCE_2 = 2,   /**< TIM2 */
+  HAL_TIM_PWM_INSTANCE_3 = 3,   /**< TIM3 */
+  HAL_TIM_PWM_INSTANCE_4 = 4,   /**< TIM4 */
+  HAL_TIM_PWM_INSTANCE_6 = 6,   /**< TIM6 */
+  HAL_TIM_PWM_INSTANCE_7 = 7,   /**< TIM7 */
+  HAL_TIM_PWM_INSTANCE_8 = 8,   /**< TIM8 */
+  HAL_TIM_PWM_INSTANCE_15 = 15, /**< TIM15 */
+  HAL_TIM_PWM_INSTANCE_16 = 16, /**< TIM16 */
+  HAL_TIM_PWM_INSTANCE_17 = 17, /**< TIM17 */
 } hal_tim_pwm_instance_t;
 
 /**
  * @brief GPIO引脚复用配置
  */
 typedef struct {
-  gpio_port_t port;  /**< GPIO端口 */
-  uint8_t pin;       /**< GPIO引脚 */
-  uint8_t alternate; /**< 复用功能 */
+  hal_gpio_port_t port;    /**< GPIO端口 */
+  hal_gpio_pin_t pin;      /**< GPIO引脚 */
+  hal_gpio_af_t alternate; /**< 复用功能 */
 } hal_tim_pwm_gpio_config_t;
 
 /**

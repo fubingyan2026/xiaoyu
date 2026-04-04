@@ -66,7 +66,7 @@ typedef enum __attribute__((packed)) {
   HAL_GPIO_PORT_F,     /**< GPIOF 端口 */
   HAL_GPIO_PORT_G,     /**< GPIOG 端口 */
   HAL_GPIO_PORT_LEN,   /**< 端口数量 */
-} gpio_port_t;
+} hal_gpio_port_t;
 
 /**
  * @brief GPIO 上下拉配置枚举
@@ -143,7 +143,7 @@ typedef enum __attribute__((packed)) {
  * @brief GPIO 配置结构体
  */
 typedef struct {
-  gpio_port_t port;                   /**< GPIO 端口 */
+  hal_gpio_port_t port;               /**< GPIO 端口 */
   hal_gpio_pin_t pin;                 /**< GPIO 引脚号 */
   hal_gpio_mode_t mode;               /**< GPIO 工作模式 */
   hal_gpio_pin_state_t default_state; /**< 默认引脚状态（仅输出模式有效） */

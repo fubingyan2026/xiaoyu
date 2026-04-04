@@ -27,13 +27,11 @@ static TIM_HandleTypeDef* timer_handles[] = {NULL,                        //
 static uint32_t channel_map[HAL_TIM_PWM_CHANNEL_LEN] = {
     TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3, TIM_CHANNEL_4};
 
-/* 定时器实例映射 */
-static TIM_TypeDef* timer_instance_map[] = {NULL,                      //
-                                            TIM1, TIM2, TIM3,  TIM4,   //
-                                            NULL, TIM6, TIM7,  TIM8,   //
-                                            NULL, NULL, NULL,  NULL,   //
-                                            NULL, NULL, TIM15, TIM16,  //
-                                            TIM17};
+/* 定时器实例映射 - 索引使用定时器编号 */
+static TIM_TypeDef* timer_instance_map[] = {
+    [1] = TIM1, [2] = TIM2, [3] = TIM3,   [4] = TIM4,   [6] = TIM6,
+    [7] = TIM7, [8] = TIM8, [15] = TIM15, [16] = TIM16, [17] = TIM17,
+};
 /* GPIO端口映射 */
 static GPIO_TypeDef* gpio_port_map[] = {GPIOA, GPIOB, GPIOC, GPIOD,
                                         GPIOE, GPIOF, GPIOG};
@@ -74,7 +72,7 @@ static hal_tim_pwm_error_t stm32_tim_pwm_get_polarity(
     hal_tim_pwm_channel_t channel, hal_tim_pwm_polarity_t* polarity);
 
 static void enable_timer_clock(hal_tim_pwm_instance_t timer_instance);
-static void enable_gpio_clock(uint8_t port);
+static void enable_gpio_clock(hal_gpio_port_t port);
 static TIM_HandleTypeDef* get_timer_handle(
     hal_tim_pwm_instance_t timer_instance);
 
@@ -168,27 +166,27 @@ static void enable_timer_clock(hal_tim_pwm_instance_t timer_instance) {
  * @brief  启用GPIO时钟
  * @param port GPIO端口号
  */
-static void enable_gpio_clock(uint8_t port) {
+static void enable_gpio_clock(hal_gpio_port_t port) {
   switch (port) {
-    case 0:
+    case HAL_GPIO_PORT_A:
       __HAL_RCC_GPIOA_CLK_ENABLE();
       break;
-    case 1:
+    case HAL_GPIO_PORT_B:
       __HAL_RCC_GPIOB_CLK_ENABLE();
       break;
-    case 2:
+    case HAL_GPIO_PORT_C:
       __HAL_RCC_GPIOC_CLK_ENABLE();
       break;
-    case 3:
+    case HAL_GPIO_PORT_D:
       __HAL_RCC_GPIOD_CLK_ENABLE();
       break;
-    case 4:
+    case HAL_GPIO_PORT_E:
       __HAL_RCC_GPIOE_CLK_ENABLE();
       break;
-    case 5:
+    case HAL_GPIO_PORT_F:
       __HAL_RCC_GPIOF_CLK_ENABLE();
       break;
-    case 6:
+    case HAL_GPIO_PORT_G:
       __HAL_RCC_GPIOG_CLK_ENABLE();
       break;
     default:
@@ -214,6 +212,9 @@ static hal_tim_pwm_error_t stm32_tim_pwm_gpio_alternate(
 
   /* 启用GPIO时钟 */
   enable_gpio_clock(gpio_config->port);
+
+  /* 启用SYSCFG时钟，HAL_GPIO_DeInit需要访问SYSCFG寄存器 */
+  __HAL_RCC_SYSCFG_CLK_ENABLE();
 
   /* 配置GPIO引脚 */
   GPIO_InitStruct.Pin = 1 << gpio_config->pin;
@@ -257,6 +258,7 @@ static hal_tim_pwm_error_t stm32_tim_pwm_init(
   enable_timer_clock(config->timer_instance);
 
   /* 配置定时器基础参数 */
+  htim->State = HAL_TIM_STATE_RESET;
   htim->Instance = timer_instance_map[config->timer_instance];
   htim->Init.Prescaler = 0;
   htim->Init.CounterMode = TIM_COUNTERMODE_UP;

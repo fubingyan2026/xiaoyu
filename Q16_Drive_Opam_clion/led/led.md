@@ -20,15 +20,15 @@
 
 ### 1. LED 基础配置 (`led_config_t`)
 
-| 字段                | 类型                   | 说明                                      |
-| :------------------ | :--------------------- | :---------------------------------------- |
-| `led_name`          | `const char*`          | LED 唯一名称，用于查找和消息中心话题名    |
-| `port` / `pin`      | `uint8_t`              | GPIO 端口与引脚号                         |
-| `active_level`      | `hal_gpio_pin_state_e` | 有效电平（`HAL_GPIO_PIN_SET` 或 `RESET`） |
-| `init_state`        | `led_state_t`          | 注册后的初始状态（常亮/关闭/闪烁/呼吸）   |
-| `blink_interval_ms` | `uint16_t`             | 闪烁模式下的翻转间隔 (ms)                 |
-| `blink_counts`      | `uint16_t`             | 编码闪烁模式下，每一轮闪烁的次数          |
-| `pwm`               | `led_pwm_config_t`     | 呼吸灯模式所需的定时器实例与通道          |
+| 字段                    | 类型                   | 说明                                      |
+| :---------------------- | :--------------------- | :---------------------------------------- |
+| `led_name`              | `const char*`          | LED 唯一名称，用于查找和消息中心话题名    |
+| `port` / `pin`          | `uint8_t`              | GPIO 端口与引脚号                         |
+| `active_level`          | `hal_gpio_pin_state_e` | 有效电平（`HAL_GPIO_PIN_SET` 或 `RESET`） |
+| `init_state`            | `led_state_t`          | 注册后的初始状态（常亮/关闭/闪烁/呼吸）   |
+| `led_blink_cycle_ms`    | `uint16_t`             | 闪烁模式下的翻转间隔 (ms)                 |
+| `led_blink_code_counts` | `uint16_t`             | 编码闪烁模式下，每一轮闪烁的次数          |
+| `pwm`                   | `led_pwm_config_t`     | 呼吸灯模式所需的定时器实例与通道          |
 
 ---
 
@@ -55,7 +55,7 @@ led_config_t cfg = {
     .pin = HAL_GPIO_PIN_0,
     .active_level = HAL_GPIO_PIN_RESET,
     .init_state = LED_STATE_BLINK_CODE,
-    .blink_interval_ms = 500
+    .led_blink_cycle_ms = 500
 };
 LedRegisterStatic(&cfg, &heart_led_h);
 ```
