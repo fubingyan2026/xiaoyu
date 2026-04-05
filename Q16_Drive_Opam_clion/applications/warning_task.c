@@ -12,11 +12,11 @@
 #include "warning_task.h"
 
 #include "WS2812_SPI.h"
-#include "daemon/daemon.h"
+#include "daemon.h"
 #include "key_menu.h"
 #include "led.h"
 
-static daemon_t* daemon_warning;
+static daemon_context_t* daemon_warning;
 static led_handle_t* led_instance;
 
 #define LED_NAME_TAG "LED0"
@@ -51,17 +51,17 @@ void warning_task(void) {
   uint8_t err_bits = 0;
   // 发现错误
   if (daemon_warning == NULL) {
-    daemon_warning = DaemonGetMasterPointer();
+    daemon_warning = daemon_get_master_pointer();
   }
 
   if (led_instance == NULL) {
     led_instance = led_get_instance(LED_NAME_TAG);
   }
 
-  const daemon_t* this = daemon_warning;
-  while (this->next_daemon_lists) {
-    this = this->next_daemon_lists;
-    if (!DaemonIsOnline(this)) {
+  const daemon_context_t* this = daemon_warning;
+  while (this->next) {
+    this = this->next;
+    if (!daemon_is_online(this)) {
       if (err_bits > 31) {
         err_bits = 31;
       }

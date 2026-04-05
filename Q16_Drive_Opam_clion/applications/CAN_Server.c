@@ -13,7 +13,7 @@
 
 #include "app.h"
 #include "can_comm.h"
-#include "daemon/daemon.h"
+#include "daemon.h"
 #include "debug/debug.h"
 #include "foc_ctrl_q16.h"
 #include "key_menu.h"
@@ -148,13 +148,13 @@ static void daemon_can_rx_offline_callback(void* rx) {
     return;
   }
   /* 根据在线状态记录相应信息 */
-  if (!this_ptr->daemon_can_rx_ptr->data.online) {
+  if (!daemon_is_online(this_ptr->daemon_can_rx_ptr)) {
     DEBUG_ERROR("%s: offline,frequent:%d\n", this_ptr->config.name,
-                (int)this_ptr->daemon_can_rx_ptr->data.daemon_frequent);
+                (int)this_ptr->daemon_can_rx_ptr->feed_frequency);
     g_can_stats.timeout_errors++; /* 增加超时错误计数 */
   } else {
     DEBUG_INFO("%s: online,frequent:%d\n", this_ptr->config.name,
-               (int)this_ptr->daemon_can_rx_ptr->data.daemon_frequent);
+               (int)this_ptr->daemon_can_rx_ptr->feed_frequency);
   }
 }
 
@@ -214,7 +214,7 @@ void FDCAN_Server_Task(void) {
         ((can_get_master_data_t*)CANRxBindData(can_comm_rx_master_instance))
             ->velocity[can_comm_tx_sliver_instance->config.can_tx_identify - 1];
 
-    if (!DaemonIsOnline(can_comm_rx_master_instance->daemon_can_rx_ptr)) {
+    if (!daemon_is_online(can_comm_rx_master_instance->daemon_can_rx_ptr)) {
       set_velocity = 0;
     }
   }

@@ -8,7 +8,7 @@
 #include "algorithm/filter.h"
 #include "algorithm/maths.h"
 #include "algorithm/utils_math.h"
-#include "daemon/daemon.h"
+#include "daemon.h"
 #include "debug/debug.h"
 #include "easyflash.h"
 #include "encoder/line_hall_pll.h"
@@ -28,7 +28,7 @@ const uint16_t hall_filter_fcut_Normal = 10000;
 const uint16_t hall_filter_fcut_Adjust = 20;
 
 hall_pll_handle_t hall_pll;
-static daemon_t* daemon_get_encoder;
+static daemon_context_t* daemon_get_encoder;
 #define HALL_ADJUST_PRINTF(...)  // BSP_Printf(__VA_ARGS__)
 
 static void HALL_Adjust_Init(void);
@@ -159,7 +159,7 @@ static void HALL_Adjust_Init(void) {
                   NULL);
 
   hall_pll_init(&hall_pll);
-  daemon_get_encoder = DaemonGetInstance("encoder");
+  daemon_get_encoder = daemon_get_instance("encoder");
   ASSERT(daemon_get_encoder);
 }
 
@@ -194,7 +194,7 @@ static uint16_t HALL_Adjust_Get_Angle(void) {
   hall_adjust.angle = angle;
   UTILS_NAN_ZERO(angle);
   utils_norm_angle_rad(&angle);
-  DaemonReload(daemon_get_encoder);
+  daemon_reload(daemon_get_encoder);
   return (uint16_t)((angle + M_PI) / (M_PI * 2) * 16384);
 }
 

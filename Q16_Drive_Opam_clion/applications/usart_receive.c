@@ -20,12 +20,12 @@
 #include <string.h>
 
 #include "app.h"
-#include "daemon/daemon.h"
+#include "daemon.h"
 #include "debug/debug.h"
 #include "hal_uart.h"
 #include "kfifo/kfifo.h"
 #include "lwshell/lwshell.h"
-#include "protocol/b_protocol_core.h"
+#include "protocol_parser.h"
 #include "stm32g4xx_hal.h"
 #include "usart.h"
 #include "usart_protocol.h"
@@ -172,40 +172,40 @@ uint16_t s7_get_frame_len(uint8_t* buffer, uint16_t len) {
  * @brief S7协议帧校验 - CRC16 Modbus
  * @param[in] buffer 数据缓冲区
  * @param[in] len 数据长度
- * @return uint8_t 校验结果
+ * @return 协议解析器错误码
  */
-uint8_t s7_check_cb(uint8_t* buffer, uint16_t len) {
+protocol_parser_error_t s7_check_cb(uint8_t* buffer, uint16_t len) {
   if (len < 8U) {
-    return B_ERROR_CHECKSUM;
+    return PROTOCOL_PARSER_ERROR_CHECKSUM;
   }
   /* CRC16计算范围: 从协议ID到CRC之前 */
   uint16_t calc = crc16_modbus(&buffer[2U], (uint16_t)(len - 5U));
   uint16_t recv =
       (uint16_t)buffer[len - 3U] | ((uint16_t)buffer[len - 2U] << 8);
-  return (calc == recv) ? B_SUCCESS : B_ERROR_CHECKSUM;
+  return (calc == recv) ? PROTOCOL_PARSER_OK : PROTOCOL_PARSER_ERROR_CHECKSUM;
 }
 
-b_frame_type s_s7_protocol_frame;
+protocol_parser_context_t s_s7_protocol_frame;
 
 /**
  * @brief 初始化S7协议
  * @param[in] frame 协议帧结构指针
  */
-void init_s7_protocol(b_frame_type* frame) {
+void init_s7_protocol(protocol_parser_context_t* frame) {
   static uint8_t out_buf[UART_RX_FIFO_SIZE];
-  b_frame_init_type cfg = {
-      .pname = "S7_Protocol",
-      .head = (const uint8_t*)"\x68\x68",
-      .head_len = 2U,
-      .end = (const uint8_t*)"\x16",
-      .end_len = 1U,
-      .get_frame_len_cb = s7_get_frame_len,
+  protocol_parser_config_t cfg = {
+      .name = "S7_Protocol",
+      .header = (const uint8_t*)"\x68\x68",
+      .header_len = 2U,
+      .footer = (const uint8_t*)"\x16",
+      .footer_len = 1U,
+      .input_buffer_len = UART_RX_FIFO_SIZE,
+      .output_buffer = out_buf,
+      .output_buffer_len = sizeof(out_buf),
+      .get_len_cb = s7_get_frame_len,
       .check_cb = s7_check_cb,
-      .in_buffer_len = UART_RX_FIFO_SIZE,
-      .out_frame_buffer = out_buf,
-      .out_buffer_len = sizeof(out_buf),
   };
-  (void)b_frame_init(frame, &cfg);
+  (void)protocol_parser_init(frame, &cfg);
 }
 
 /*============================================================================
@@ -234,23 +234,23 @@ void uart_it_init(void) {
   }
   fifo_usart1_tx = &s_fifo_usart1_tx;
 
-  const daemon_init_config_t daemon_config_rx = {
-      .callback = NULL,
-      .owner_pointer = NULL,
-      .owner_name = "uart1_rx",
-      .reload_time_out = 1000U,
-      .init_wait_time = 1500U,
+  const daemon_config_t daemon_config_rx = {
+      .offline_cb = NULL,
+      .owner_ptr = NULL,
+      .name = "uart1_rx",
+      .reload_timeout_ms = 1000U,
+      .init_wait_time_ms = 1500U,
   };
-  (void)DaemonRegister(&daemon_config_rx);
+  (void)daemon_register(&daemon_config_rx);
 
-  const daemon_init_config_t daemon_config_tx = {
-      .callback = NULL,
-      .owner_pointer = NULL,
-      .owner_name = "uart1_tx",
-      .reload_time_out = 1000U,
-      .init_wait_time = 1500U,
+  const daemon_config_t daemon_config_tx = {
+      .offline_cb = NULL,
+      .owner_ptr = NULL,
+      .name = "uart1_tx",
+      .reload_timeout_ms = 1000U,
+      .init_wait_time_ms = 1500U,
   };
-  (void)DaemonRegister(&daemon_config_tx);
+  (void)daemon_register(&daemon_config_tx);
 
   /* 初始化UART上下文 */
   if (stm32_uart_init_context(&uart1_ctx) != HAL_UART_OK) {
@@ -288,21 +288,21 @@ void uart_process_task(void) {
   const uint16_t rx_len =
       kfifo_get(fifo_usart1_rx, rx_data, (uint16_t)sizeof(rx_data));
   if (rx_len > 0U) {
-    (void)b_frame_put(&s_s7_protocol_frame, rx_data, rx_len);
+    (void)protocol_parser_feed(&s_s7_protocol_frame, rx_data, rx_len);
     lwshell_input(rx_data, rx_len);
   }
 
-  p = b_frame_check_get(&s_s7_protocol_frame, &flen);
+  p = protocol_parser_parse(&s_s7_protocol_frame, &flen);
   if (p != NULL) {
     usart_protocol_process_frame((uint8_t*)p, flen);
 
-    DEBUG_INFO("%s:", s_s7_protocol_frame.frame_init.pname);
+    DEBUG_INFO("%s:", s_s7_protocol_frame.config.name);
     for (uint16_t i = 0U; i < flen; i++) {
       BSP_Printf(" 0x%02x", p[i]);
     }
     BSP_Printf("\r\n");
   }
-  (void)b_frame_idie_timer(&s_s7_protocol_frame);
+  protocol_parser_tick(&s_s7_protocol_frame);
 }
 
 /**

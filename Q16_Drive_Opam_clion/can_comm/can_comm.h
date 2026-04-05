@@ -12,7 +12,7 @@
 #ifndef CAN_COMM_H
 #define CAN_COMM_H
 
-#include "daemon/daemon.h"
+#include "daemon.h"
 #include "hal_fdcan.h"
 #include "kfifo/kfifo.h"
 #include "message_center/message_center.h"
@@ -70,7 +70,7 @@ typedef struct {
 typedef struct {
   hal_fdcan_instance_t instance; /**< CAN实例标识 */
   uint32_t can_rx_identify;      /**< 接收消息ID */
-  offline_callback callback;     /**< 离线回调函数指针 */
+  daemon_offline_cb_t callback;  /**< 离线回调函数指针 */
   uint16_t offline_ms;           /**< 离线超时时间(ms) */
   uint8_t daemon_error_code;     /**< 守护进程错误码 */
   const char* name;              /**< 配置名称 */
@@ -95,13 +95,13 @@ typedef struct {
  * @details 管理CAN接收实例的所有状态和数据
  */
 typedef struct can_comm_rx {
-  can_rx_config_t config;      /**< 接收配置信息 */
-  kfifo_t* kfifo_ptr;          /**< 环形缓冲区指针 */
-  daemon_t* daemon_can_rx_ptr; /**< 守护进程指针 */
-  uint8_t last_sequence;       /**< 最后接收的序列号 */
-  uint32_t sequence_errors;    /**< 序列号错误计数 */
-  void* direct_binding_ptr;    // 新增：直接数据绑定指针
-  struct can_comm_rx* next;    /**< 下一个接收实例指针 */
+  can_rx_config_t config;              /**< 接收配置信息 */
+  kfifo_t* kfifo_ptr;                  /**< 环形缓冲区指针 */
+  daemon_context_t* daemon_can_rx_ptr; /**< 守护进程指针 */
+  uint8_t last_sequence;               /**< 最后接收的序列号 */
+  uint32_t sequence_errors;            /**< 序列号错误计数 */
+  void* direct_binding_ptr;            // 新增：直接数据绑定指针
+  struct can_comm_rx* next;            /**< 下一个接收实例指针 */
 } can_comm_rx_t;
 
 /**

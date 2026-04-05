@@ -148,15 +148,15 @@ can_comm_rx_t* CANRxRegister(const can_rx_config_t* config) {
     return NULL;
   }
   /* 初始化守护进程 */
-  const daemon_init_config_t daemon_config = {
-      .callback = config->callback,
-      .owner_pointer = new_instance,
-      .owner_name = config->name,
-      .reload_time_out =
+  const daemon_config_t daemon_config = {
+      .offline_cb = config->callback,
+      .owner_ptr = new_instance,
+      .name = config->name,
+      .reload_timeout_ms =
           config->offline_ms > 0 ? config->offline_ms : CAN_DEFAULT_OFFLINE_MS,
-      .init_wait_time = 200,
+      .init_wait_time_ms = 200,
   };
-  new_instance->daemon_can_rx_ptr = DaemonRegister(&daemon_config);
+  new_instance->daemon_can_rx_ptr = daemon_register(&daemon_config);
   if (new_instance->daemon_can_rx_ptr == NULL) {
     CAN_COMM_PRINTF("Failed to register daemon for CAN RX instance %s\n",
                     config->name);
@@ -172,7 +172,7 @@ can_comm_rx_t* CANRxRegister(const can_rx_config_t* config) {
         config->name);
     MessageCenterUnregister(config->name);
     if (new_instance->daemon_can_rx_ptr != NULL) {
-      DaemonUnregister(new_instance->daemon_can_rx_ptr->config.owner_name);
+      daemon_unregister(new_instance->daemon_can_rx_ptr->config.name);
     }
     if (new_instance->kfifo_ptr != NULL) kfifo_free(new_instance->kfifo_ptr);
     __free(new_instance);
@@ -255,7 +255,7 @@ void CANCommUnregisterRx(can_comm_rx_t* instance) {
       if (instance->kfifo_ptr != NULL) kfifo_free(instance->kfifo_ptr);
       /* 注销守护进程 */
       if (instance->daemon_can_rx_ptr != NULL)
-        DaemonUnregister(instance->daemon_can_rx_ptr->config.owner_name);
+        daemon_unregister(instance->daemon_can_rx_ptr->config.name);
       /* 注销消息中心 */
       if (instance->direct_binding_ptr != NULL)
         __free(instance->direct_binding_ptr);
@@ -383,7 +383,7 @@ void CANCommGetDataTransmit_V2(void) {
 
       current->last_sequence = p_head->sequence;
       // 喂狗
-      DaemonReload(current->daemon_can_rx_ptr);
+      daemon_reload(current->daemon_can_rx_ptr);
 
       // [优化点4] 极速分发：如果绑定了直接指针，直接 Memcpy
       if (current->direct_binding_ptr != NULL) {

@@ -52,9 +52,11 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/applications APP)
 aux_source_directory(${CMAKE_SOURCE_DIR}/bsp_drivers DRIVER)
 aux_source_directory(${CMAKE_SOURCE_DIR}/hal_drivers HAL)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Q16_FOC FOC)
+aux_source_directory(${CMAKE_SOURCE_DIR}/protocol_parser PROTOCOL_PARSER)
+aux_source_directory(${CMAKE_SOURCE_DIR}/daemon DAEMON)
 
 # common目录下的所有子目录 (手动处理fsm以排除示例文件)
-foreach(subdir algorithm controller crc daemon debug encoder keybase kfifo memory_pool message_center protocol toolkit)
+foreach(subdir algorithm controller crc debug encoder keybase kfifo memory_pool message_center  toolkit)
     aux_source_directory(${CMAKE_SOURCE_DIR}/../common/${subdir} COMMON_${subdir})
 endforeach()
 
@@ -73,11 +75,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${APP}
         ${HAL}
         ${FOC}
+        ${PROTOCOL_PARSER}
+        ${DAEMON}
         ${COMMON_algorithm}
         ${COMMON_can_comm}
         ${COMMON_controller}
         ${COMMON_crc}
-        ${COMMON_daemon}
         ${COMMON_debug}
         ${COMMON_encoder}
         ${COMMON_keybase}
@@ -109,6 +112,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         Q16_FOC
         can_comm
         led
+        protocol_parser
+        daemon
         ../common
         ../common/CmBacktrace/cm_backtrace
         ../common/SEGGER_RTT/RTT/config

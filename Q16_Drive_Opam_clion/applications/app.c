@@ -28,7 +28,7 @@
 #include "lwmem/lwmem.h"
 #include "lwshell/lwshell.h"
 #include "opamp.h"
-#include "protocol/b_protocol_core.h"
+#include "protocol_parser.h"
 #include "toolkit/toolkit.h"
 #include "usart_protocol.h"
 #include "usart_receive.h"
@@ -48,8 +48,8 @@ static uint8_t usart1_tx_buffer[1024];
 /* UART上下文 */
 extern hal_uart_context_t uart1_ctx;
 
-daemon_t* u1_rx;
-daemon_t* u1_tx;
+daemon_context_t* u1_rx;
+daemon_context_t* u1_tx;
 
 gimbal_PID_t* gimbal_pid_pitch_instance;
 pt1Filter_t filter_cog_current;
@@ -77,7 +77,7 @@ void timer_ledTask_timeout_callback(tk_timer_t* timer) {
   WS2812Flush();
   KeyBaseTask();
   uart_process_task();
-  DaemonTask();
+  daemon_task();
 }
 
 /* 定时器4超时回调函数 */
@@ -105,8 +105,8 @@ void timer_uartTask_timeout_callback(tk_timer_t* timer) {
       SEGGER_WRITE(0, tx_buffer, send_len);
     }
   }
-  DaemonReload(u1_rx);
-  DaemonReload(u1_tx);
+  daemon_reload(u1_rx);
+  daemon_reload(u1_tx);
 
   flash_task_process();
 
@@ -134,7 +134,7 @@ void AppInit(void) {
     ef_print_env();
   }
 
-  DaemonInit(millis);  // 初始化守护进程系统
+  daemon_init(millis);  // 初始化守护进程系统
 
   warning_Init();  // led任务初始化
   WS2812_SPI_Init();
@@ -154,8 +154,8 @@ void AppInit(void) {
   PID_init(&pid_type_velocity, PID_POSITION, pid_velocity_param, 0.35f, 0.10f);
   /* pubic init function */
 
-  u1_rx = DaemonGetInstance("uart1_rx");
-  u1_tx = DaemonGetInstance("uart1_tx");
+  u1_rx = daemon_get_instance("uart1_rx");
+  u1_tx = daemon_get_instance("uart1_tx");
 
   /* 初始化软件定时器功能，并配置tick获取回调函数*/
   tk_timer_func_init(millis);

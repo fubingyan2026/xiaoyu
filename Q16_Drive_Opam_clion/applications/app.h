@@ -6,7 +6,7 @@
 #include "bsp_delay.h"
 #include "controller/gimbal_pid.h"
 #include "controller/pid.h"
-#include "daemon/daemon.h"
+#include "daemon.h"
 #include "keybase/key_base.h"
 #include "kfifo/kfifo.h"
 #include "led.h"

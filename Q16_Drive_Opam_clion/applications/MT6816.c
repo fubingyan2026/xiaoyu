@@ -11,7 +11,7 @@
 
 #include "MT6816.h"
 
-#include "daemon/daemon.h"
+#include "daemon.h"
 #include "debug/debug.h"
 
 MT6816_SPI_Signal_Typedef mt6816_spi = {0};
@@ -20,7 +20,7 @@ MT6816_Typedef mt6816 = {0};
 uint16_t MT6701_data_buffer[2] = {0};
 mt6701_RAW_t mt6701_RAW;
 
-daemon_t* daemon_encoder;
+daemon_context_t* daemon_encoder;
 
 static uint16_t RINE_MT6816_SPI_Get_AngleData(void);
 
@@ -36,14 +36,14 @@ void MT6816_Init(void) {
   mt6816_spi.sample_data = 0;
   mt6816_spi.angle = 0;
 
-  const daemon_init_config_t daemon_config_encoder = {
-      .callback = NULL,
-      .owner_pointer = NULL,
-      .owner_name = "encoder",
-      .reload_time_out = 10,
-      .init_wait_time = 1500,
+  const daemon_config_t daemon_config_encoder = {
+      .offline_cb = NULL,
+      .owner_ptr = NULL,
+      .name = "encoder",
+      .reload_timeout_ms = 10,
+      .init_wait_time_ms = 1500,
   };
-  daemon_encoder = DaemonRegister(&daemon_config_encoder);
+  daemon_encoder = daemon_register(&daemon_config_encoder);
   ASSERT(daemon_encoder);
 }
 
