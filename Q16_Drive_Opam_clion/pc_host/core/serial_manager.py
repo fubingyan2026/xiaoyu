@@ -89,9 +89,13 @@ class SerialManager(QObject):
         self._connected = False
         
     def get_available_ports(self) -> list:
-        """获取可用串口列表"""
+        """获取可用串口列表 (只显示 ttyUSBx 和 ttyACMx)"""
         ports = serial.tools.list_ports.comports()
-        return [f"{p.device} - {p.description}" for p in ports]
+        filtered = []
+        for p in ports:
+            if 'ttyUSB' in p.device or 'ttyACM' in p.device:
+                filtered.append(f"{p.device} - {p.description}")
+        return filtered
     
     def connect(self, port: str, baudrate: int = 115200) -> bool:
         """连接串口"""

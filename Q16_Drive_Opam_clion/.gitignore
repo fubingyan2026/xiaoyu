@@ -2,3 +2,6 @@ build
 mx.scratch
 !.settings
 .venv
+
+# Python
+__pycache__

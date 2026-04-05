@@ -26,6 +26,10 @@ class FOCController(QObject):
     connected = pyqtSignal()
     disconnected = pyqtSignal()
     error = pyqtSignal(str)
+    ping_timeout = pyqtSignal()
+
+    PING_TIMEOUT_MS = 3000
+    MAX_TIMEOUT_COUNT = 3
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -39,9 +43,14 @@ class FOCController(QObject):
         self._response_callbacks: dict[int, Callable] = {}
         self._stream_enabled = False
 
-        # 心跳定时器
         self._ping_timer = QTimer(self)
         self._ping_timer.timeout.connect(self._send_ping)
+
+        self._ping_timeout_timer = QTimer(self)
+        self._ping_timeout_timer.timeout.connect(self._on_ping_timeout)
+
+        self._ping_pending = False
+        self._timeout_count = 0
 
     def connect(self, port: str, baudrate: int = 115200) -> bool:
         """连接设备"""
@@ -69,6 +78,9 @@ class FOCController(QObject):
         print(f"[{ts}] [RX] {msg_type_name:8s} FUNC=0x{frame.function_code:02X} ({func_name:20s}) LEN={len(frame.data):3d} DATA={frame.data.hex()}")
         msg_type = frame.msg_type
         func_code = frame.function_code
+
+        if func_code == FunctionCode.FUNC_PING and msg_type == MessageType.RESPONSE:
+            self._on_ping_response()
 
         if msg_type == MessageType.RESPONSE:
             if func_code == FunctionCode.FUNC_GET_STATUS:
@@ -98,17 +110,40 @@ class FOCController(QObject):
             callback = self._response_callbacks.pop(callback_key)
             callback(frame)
 
+    def _on_ping_response(self):
+        """收到 PING 响应"""
+        self._ping_timeout_timer.stop()
+        self._ping_pending = False
+        self._timeout_count = 0
+
     def _on_connection_changed(self, connected: bool):
         if connected:
             self.connected.emit()
+            self._timeout_count = 0
+            self._ping_pending = False
             self._ping_timer.start(1000)
         else:
             self.disconnected.emit()
             self._ping_timer.stop()
+            self._ping_timeout_timer.stop()
 
     def _send_ping(self):
         """发送心跳"""
+        if self._ping_pending:
+            return
+        self._ping_pending = True
+        self._ping_timeout_timer.start(self.PING_TIMEOUT_MS)
         self._send_frame(CommandBuilder.ping())
+
+    def _on_ping_timeout(self):
+        """PING 超时处理"""
+        self._ping_timeout_timer.stop()
+        self._ping_pending = False
+        self._timeout_count += 1
+        print(f"[{get_timestamp()}] [WARN] PING timeout ({self._timeout_count}/{self.MAX_TIMEOUT_COUNT})")
+        if self._timeout_count >= self.MAX_TIMEOUT_COUNT:
+            self.error.emit(f"设备无响应: 连续 {self.MAX_TIMEOUT_COUNT} 次 PING 超时")
+            self.ping_timeout.emit()
 
     def _send_frame(self, frame: S7Frame, callback: Optional[Callable] = None):
         """发送帧"""

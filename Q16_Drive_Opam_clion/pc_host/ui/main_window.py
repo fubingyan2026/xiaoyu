@@ -102,6 +102,7 @@ class MainWindow(QMainWindow):
         self.controller.status_updated.connect(self._on_status_updated)
         self.controller.calibration_progress.connect(self._on_calib_progress)
         self.controller.stream_data.connect(self._on_stream_data)
+        self.controller.ping_timeout.connect(self._on_ping_timeout)
 
     def _refresh_ports(self):
         ports = self.controller.serial.get_available_ports()
@@ -128,6 +129,11 @@ class MainWindow(QMainWindow):
 
     def _on_controller_error(self, error: str):
         QMessageBox.critical(self, "错误", f"通信错误: {error}")
+        self._on_disconnect()
+
+    def _on_ping_timeout(self):
+        """PING 超时警告"""
+        QMessageBox.warning(self, "警告", "设备无响应: 连续 3 次 PING 超时\n请检查设备连接状态")
         self._on_disconnect()
 
     def _request_status(self):
