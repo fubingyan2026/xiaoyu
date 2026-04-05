@@ -17,7 +17,6 @@
 #include "CAN_Server.h"
 #include "WS2812_SPI.h"
 #include "can_comm.h"
-#include "can_nm.h"
 #include "controller/pid.h"
 #include "debug/debug.h"
 #include "easyflash.h"

@@ -16,7 +16,6 @@
 #include "can_comm.h"
 
 #include "bsp_delay.h"
-#include "can_nm.h"
 #include "crc/crc.h"
 #include "debug/debug.h"
 #include "hal_fdcan.h"
@@ -393,13 +392,7 @@ void CANCommGetDataTransmit_V2(void) {
                  current->config.rx_data_len);
       }
     }
-    if (current == GetCanNMRxInstance()) {
-      /* NM消息 - 调用NM模块处理 */
-      CANNmProcessMessage((uint8_t*)CANRxBindData(current),
-                          current->config.rx_data_len);
-      current = current->next;
-      continue;
-    }
+
     current = current->next;
   }
 }
