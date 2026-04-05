@@ -51,8 +51,11 @@ class SerialWorker(QThread):
         except serial.SerialException as e:
             self.connection_error.emit(str(e))
         finally:
-            if self.serial and self.serial.is_open:
-                self.serial.close()
+            try:
+                if self.serial and self.serial.is_open:
+                    self.serial.close()
+            except OSError:
+                pass
             self.connection_closed.emit()
     
     def send(self, data: bytes) -> bool:
@@ -66,8 +69,11 @@ class SerialWorker(QThread):
     
     def stop(self):
         self.running = False
-        if self.serial and self.serial.is_open:
-            self.serial.close()
+        try:
+            if self.serial and self.serial.is_open:
+                self.serial.close()
+        except OSError:
+            pass
 
 
 class SerialManager(QObject):

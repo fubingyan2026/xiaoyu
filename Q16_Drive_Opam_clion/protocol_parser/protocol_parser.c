@@ -94,7 +94,7 @@ static protocol_parser_error_t parser_check_header(
   const uint16_t len = kfifo_len((kfifo_t*)ctx->fifo);
 
   if (len < (ctx->config.header_len + ctx->config.footer_len + 1)) {
-    return PROTOCOL_PARSER_ERROR_FRAME_INVALID;
+    return PROTOCOL_PARSER_ERROR_INCOMPLETE;
   }
 
   do {
@@ -112,7 +112,7 @@ static protocol_parser_error_t parser_check_header(
     }
   } while (1);
 
-  return PROTOCOL_PARSER_ERROR_FRAME_INVALID;
+  return PROTOCOL_PARSER_ERROR_HEADER_MISMATCH;
 }
 
 /* Exported functions --------------------------------------------------------*/
@@ -152,7 +152,7 @@ protocol_parser_error_t protocol_parser_init(
 
   // 如果已初始化，先反初始化
   if (ctx->initialized) {
-    protocol_parser_deinit(ctx);
+    (void)protocol_parser_deinit(ctx);
   }
 
   // 保存配置
@@ -169,7 +169,7 @@ protocol_parser_error_t protocol_parser_init(
   }
 
   // 清空状态
-  protocol_parser_clear(ctx);
+  (void)protocol_parser_clear(ctx);
   ctx->initialized = true;
 
   return PROTOCOL_PARSER_OK;
@@ -178,10 +178,11 @@ protocol_parser_error_t protocol_parser_init(
 /**
  * @brief 反初始化协议解析器
  * @param ctx 协议解析器上下文指针
+ * @return 操作结果错误码
  */
-void protocol_parser_deinit(protocol_parser_context_t* ctx) {
+protocol_parser_error_t protocol_parser_deinit(protocol_parser_context_t* ctx) {
   if (!ctx) {
-    return;
+    return PROTOCOL_PARSER_ERROR_NULL_PTR;
   }
 
   if (ctx->fifo != NULL) {
@@ -189,8 +190,10 @@ void protocol_parser_deinit(protocol_parser_context_t* ctx) {
     ctx->fifo = NULL;
   }
 
-  protocol_parser_clear(ctx);
+  (void)protocol_parser_clear(ctx);
   ctx->initialized = false;
+
+  return PROTOCOL_PARSER_OK;
 }
 
 /**
@@ -233,10 +236,11 @@ protocol_parser_error_t protocol_parser_feed(protocol_parser_context_t* ctx,
 /**
  * @brief 清空解析器缓冲区
  * @param ctx 协议解析器上下文指针
+ * @return 操作结果错误码
  */
-void protocol_parser_clear(protocol_parser_context_t* ctx) {
+protocol_parser_error_t protocol_parser_clear(protocol_parser_context_t* ctx) {
   if (!ctx) {
-    return;
+    return PROTOCOL_PARSER_ERROR_NULL_PTR;
   }
 
   if (ctx->fifo) {
@@ -246,6 +250,8 @@ void protocol_parser_clear(protocol_parser_context_t* ctx) {
   ctx->header_matched = false;
   ctx->idle_timer = 0;
   ctx->last_log_time = 0;
+
+  return PROTOCOL_PARSER_OK;
 }
 
 /**
@@ -254,13 +260,27 @@ void protocol_parser_clear(protocol_parser_context_t* ctx) {
  * @param data 输出数据缓冲区
  * @param len 期望获取的数据长度
  * @param timeout_ms 超时时间(毫秒)
- * @return 实际获取的数据长度
+ * @param actual_len 输出参数，返回实际获取的数据长度
+ * @return 操作结果错误码
  */
-uint32_t protocol_parser_get(protocol_parser_context_t* ctx, uint8_t* data,
-                             uint32_t len, uint32_t timeout_ms) {
+protocol_parser_error_t protocol_parser_get(protocol_parser_context_t* ctx,
+                                            uint8_t* data, uint32_t len,
+                                            uint32_t timeout_ms,
+                                            uint32_t* actual_len) {
   // 检查参数有效性
-  if (!ctx || !data || !ctx->fifo || !ctx->initialized) {
-    return 0;
+  if (!ctx || !data || !actual_len) {
+    return PROTOCOL_PARSER_ERROR_NULL_PTR;
+  }
+
+  // 初始化输出参数
+  *actual_len = 0;
+
+  if (!ctx->fifo || !ctx->initialized) {
+    return PROTOCOL_PARSER_ERROR_UNINITIALIZED;
+  }
+
+  if (len == 0) {
+    return PROTOCOL_PARSER_ERROR_INVALID_PARAM;
   }
 
   const uint32_t start_ticks = ctx->tick_count;
@@ -299,39 +319,55 @@ uint32_t protocol_parser_get(protocol_parser_context_t* ctx, uint8_t* data,
 
   } while (elapsed_ticks < timeout_ms);
 
+  // 检查超时
   if (elapsed_ticks >= timeout_ms) {
-    return 0;
+    return PROTOCOL_PARSER_ERROR_TIMEOUT;
   }
 
+  // 获取数据
   uint32_t get_len = kfifo_get((kfifo_t*)ctx->fifo, data, len);
-  return get_len;
+  if (get_len == 0) {
+    return PROTOCOL_PARSER_ERROR_NO_DATA;
+  }
+
+  *actual_len = get_len;
+  return PROTOCOL_PARSER_OK;
 }
 
 /**
  * @brief 更新空闲计时器
  * @param ctx 协议解析器上下文指针
+ * @return 操作结果错误码
  */
-void protocol_parser_tick(protocol_parser_context_t* ctx) {
+protocol_parser_error_t protocol_parser_tick(protocol_parser_context_t* ctx) {
   if (!ctx) {
-    return;
+    return PROTOCOL_PARSER_ERROR_NULL_PTR;
   }
 
   ctx->idle_timer++;
   ctx->tick_count++;
+
+  return PROTOCOL_PARSER_OK;
 }
 
 /**
  * @brief 解析并获取完整帧
  * @param ctx 协议解析器上下文指针
  * @param len 输出参数，返回帧长度
- * @return 帧数据指针，NULL表示无完整帧
+ * @param p_out_data 输出参数，返回帧数据指针
+ * @return 操作结果错误码
  */
-const uint8_t* protocol_parser_parse(protocol_parser_context_t* ctx,
-                                     uint16_t* len) {
+protocol_parser_error_t protocol_parser_parse(protocol_parser_context_t* ctx,
+                                              uint16_t* len,
+                                              uint8_t** p_out_data) {
   // 检查参数有效性
-  if (!ctx || !len || !ctx->fifo || !ctx->initialized) {
-    return NULL;
+  if (!ctx || !len || !p_out_data || !ctx->fifo || !ctx->initialized) {
+    return PROTOCOL_PARSER_ERROR_INVALID_PARAM;
   }
+
+  // 初始化输出参数
+  *p_out_data = NULL;
+  *len = 0;
 
   uint16_t i, j;
   uint16_t payload_len;
@@ -339,8 +375,11 @@ const uint8_t* protocol_parser_parse(protocol_parser_context_t* ctx,
   // 检查帧头
   if (!ctx->header_matched) {
     const protocol_parser_error_t err = parser_check_header(ctx);
+    if (err == PROTOCOL_PARSER_ERROR_INCOMPLETE) {
+      return PROTOCOL_PARSER_ERROR_INCOMPLETE;
+    }
     if (err != PROTOCOL_PARSER_OK) {
-      return NULL;
+      return err;
     }
     if (ctx->config.header_len != 0) {
       memcpy(ctx->config.output_buffer, ctx->config.header,
@@ -350,53 +389,51 @@ const uint8_t* protocol_parser_parse(protocol_parser_context_t* ctx,
   }
 
   // 获取帧长度
-  if (ctx->config.get_len_cb != NULL) {
-    uint16_t remaining_buffer =
-        (ctx->config.output_buffer_len > ctx->config.header_len)
-            ? (ctx->config.output_buffer_len - ctx->config.header_len)
-            : 0;
+  if (ctx->config.get_len_cb == NULL) {
+    return PROTOCOL_PARSER_ERROR_CALLBACK_NULL;
+  }
+  uint16_t remaining_buffer =
+      (ctx->config.output_buffer_len > ctx->config.header_len)
+          ? (ctx->config.output_buffer_len - ctx->config.header_len)
+          : 0;
 
-    uint16_t data_len = kfifo_peek(
-        (kfifo_t*)ctx->fifo, &ctx->config.output_buffer[ctx->config.header_len],
-        remaining_buffer, 0);
+  uint16_t data_len = kfifo_peek(
+      (kfifo_t*)ctx->fifo, &ctx->config.output_buffer[ctx->config.header_len],
+      remaining_buffer, 0);
 
-    if (data_len > 0 && data_len <= remaining_buffer) {
-      payload_len = ctx->config.get_len_cb(ctx->config.output_buffer,
-                                           data_len + ctx->config.header_len);
-    } else {
-      payload_len = 0;
-    }
-
-    // 减去帧头长度
-    if (payload_len >= ctx->config.header_len) {
-      payload_len = payload_len - ctx->config.header_len;
-    }
-
-    // 检查缓冲区溢出
-    if ((ctx->config.header_len + payload_len) >
-        ctx->config.output_buffer_len) {
-      ctx->header_matched = false;
-      return NULL;
-    }
-
-    // 检查数据是否完整
-    if ((data_len < payload_len) || (payload_len == 0)) {
-      uint32_t idle_threshold =
-          (uint32_t)(((uint64_t)IDLE_FRAME_FACTOR_NUMERATOR *
-                      (payload_len + 1)) /
-                     IDLE_FRAME_FACTOR_DENOMINATOR);
-
-      if (ctx->idle_timer > idle_threshold) {
-        ctx->idle_timer = 0;
-        ctx->header_matched = false;
-        if (ctx->config.header_len == 0) {
-          kfifo_skip((kfifo_t*)ctx->fifo, 1);
-        }
-      }
-      return NULL;
-    }
+  if (data_len > 0 && data_len <= remaining_buffer) {
+    payload_len = ctx->config.get_len_cb(ctx->config.output_buffer,
+                                         data_len + ctx->config.header_len);
   } else {
-    return NULL;
+    payload_len = 0;
+  }
+
+  // 减去帧头长度
+  if (payload_len >= ctx->config.header_len) {
+    payload_len = payload_len - ctx->config.header_len;
+  }
+
+  // 检查缓冲区溢出
+  if ((ctx->config.header_len + payload_len) > ctx->config.output_buffer_len) {
+    ctx->header_matched = false;
+    return PROTOCOL_PARSER_ERROR_BUFFER_OVERFLOW;
+  }
+
+  // 检查数据是否完整
+  if ((data_len < payload_len) || (payload_len == 0)) {
+    uint32_t idle_threshold =
+        (uint32_t)(((uint64_t)IDLE_FRAME_FACTOR_NUMERATOR * (payload_len + 1)) /
+                   IDLE_FRAME_FACTOR_DENOMINATOR);
+
+    if (ctx->idle_timer > idle_threshold) {
+      ctx->idle_timer = 0;
+      ctx->header_matched = false;
+      if (ctx->config.header_len == 0) {
+        kfifo_skip((kfifo_t*)ctx->fifo, 1);
+      }
+      return PROTOCOL_PARSER_ERROR_IDLE_TIMEOUT;
+    }
+    return PROTOCOL_PARSER_ERROR_INCOMPLETE;
   }
 
   uint16_t total_len = payload_len + ctx->config.header_len;
@@ -404,7 +441,7 @@ const uint8_t* protocol_parser_parse(protocol_parser_context_t* ctx,
   // 检查帧长度有效性
   if (total_len < ctx->config.footer_len) {
     ctx->header_matched = false;
-    return NULL;
+    return PROTOCOL_PARSER_ERROR_FRAME_INVALID;
   }
 
   // 检查帧尾
@@ -424,22 +461,31 @@ const uint8_t* protocol_parser_parse(protocol_parser_context_t* ctx,
   // 帧尾匹配成功
   if (j == ctx->config.footer_len) {
     *len = ctx->config.header_len + payload_len;
-    if (ctx->config.check_cb != NULL) {
-      const protocol_parser_error_t err =
-          ctx->config.check_cb(ctx->config.output_buffer, *len);
-      if (err == PROTOCOL_PARSER_OK) {
-        ctx->header_matched = false;
-        ctx->last_log_time = 0;
-        kfifo_skip((kfifo_t*)ctx->fifo, payload_len);
-        return ctx->config.output_buffer;
-      }
-      if (ctx->config.header_len == 0) {
-        kfifo_skip((kfifo_t*)ctx->fifo, 1);
-      }
+    if (ctx->config.check_cb == NULL) {
+      // 无校验回调，直接返回成功
+      ctx->header_matched = false;
+      ctx->last_log_time = 0;
+      kfifo_skip((kfifo_t*)ctx->fifo, payload_len);
+      *p_out_data = ctx->config.output_buffer;
+      return PROTOCOL_PARSER_OK;
     }
+    const protocol_parser_error_t err =
+        ctx->config.check_cb(ctx->config.output_buffer, *len);
+    if (err == PROTOCOL_PARSER_OK) {
+      ctx->header_matched = false;
+      ctx->last_log_time = 0;
+      kfifo_skip((kfifo_t*)ctx->fifo, payload_len);
+      *p_out_data = ctx->config.output_buffer;
+      return PROTOCOL_PARSER_OK;
+    }
+    if (ctx->config.header_len == 0) {
+      kfifo_skip((kfifo_t*)ctx->fifo, 1);
+    }
+    return PROTOCOL_PARSER_ERROR_CHECKSUM;
   }
 
+  // 帧尾不匹配
   ctx->header_matched = false;
   ctx->last_log_time = 0;
-  return NULL;
+  return PROTOCOL_PARSER_ERROR_FOOTER_MISMATCH;
 }

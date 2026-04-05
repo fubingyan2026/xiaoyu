@@ -17,7 +17,6 @@
 
 #include "bsp_delay.h"
 #include "crc/crc.h"
-#include "debug/debug.h"
 #include "hal_fdcan.h"
 #include "memory_pool/memory_pool.h"
 

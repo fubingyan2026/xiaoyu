@@ -23,7 +23,6 @@
 
 #include <string.h>
 
-#include "debug/debug.h"
 #include "memory_pool/memory_pool.h"
 
 /* Private constants ---------------------------------------------------------*/
@@ -116,7 +115,7 @@ daemon_context_t* daemon_get_instance(const char* name) {
  * @return 操作结果错误码
  */
 daemon_error_t daemon_register_static(const daemon_config_t* config,
-                                       daemon_context_t* instance) {
+                                      daemon_context_t* instance) {
   if (config == NULL || config->name == NULL || instance == NULL) {
     return DAEMON_ERROR_NULL_PTR;
   }
@@ -165,7 +164,8 @@ daemon_context_t* daemon_register(const daemon_config_t* config) {
     return existing;
   }
 
-  daemon_context_t* new_daemon = (daemon_context_t*)__malloc(sizeof(daemon_context_t));
+  daemon_context_t* new_daemon =
+      (daemon_context_t*)__malloc(sizeof(daemon_context_t));
   if (new_daemon == NULL) {
     return NULL;
   }
@@ -223,9 +223,7 @@ daemon_error_t daemon_unregister(const char* name) {
  * @brief 获取守护进程数量
  * @return 守护进程数量
  */
-uint16_t daemon_get_count(void) {
-  return s_daemon_count;
-}
+uint16_t daemon_get_count(void) { return s_daemon_count; }
 
 /**
  * @brief 获取守护进程主指针
@@ -310,8 +308,9 @@ void daemon_task(void) {
       }
       current->rx_counter = 0;
     } else {
-      uint32_t threshold = (diff_time > 0) ? (DAEMON_STABLE_TIMES_MS / diff_time)
-                                           : DAEMON_STABLE_TIMES_MS;
+      uint32_t threshold = (diff_time > 0)
+                               ? (DAEMON_STABLE_TIMES_MS / diff_time)
+                               : DAEMON_STABLE_TIMES_MS;
       if (threshold == 0) {
         threshold = 1;
       }

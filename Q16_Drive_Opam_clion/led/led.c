@@ -23,13 +23,12 @@
 #include <string.h>
 
 #include "algorithm/maths.h"
-#include "debug/debug.h"
 #include "kfifo/kfifo.h"
 #include "memory_pool/memory_pool.h"
 #include "message_center/message_center.h"
 
 /* Private macros ------------------------------------------------------------*/
-#define LED_PRINTF(...) DEBUG_INFO(__VA_ARGS__)
+#define LED_PRINTF(...)                // DEBUG_INFO(__VA_ARGS__)
 #define LED_CMD_FIFO_SIZE 8            /* 异步命令队列深度，必须为2的幂 */
 #define LED_BREATH_MAX_RESOLUTION 1000 /* 呼吸灯最大分辨率 */
 #define LED_GAMMA_CORRECTION 2         /* Gamma 校正值 */

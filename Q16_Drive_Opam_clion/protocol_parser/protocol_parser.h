@@ -22,15 +22,20 @@ extern "C" {
 typedef enum {
   PROTOCOL_PARSER_OK = 0,                 /**< 操作成功 */
   PROTOCOL_PARSER_ERROR_NULL_PTR,         /**< 空指针错误 */
-  PROTOCOL_PARSER_ERROR_BUFFER_OVERFLOW,  /**< 缓冲区溢出 */
-  PROTOCOL_PARSER_ERROR_TIMEOUT,          /**< 超时错误 */
-  PROTOCOL_PARSER_ERROR_CHECKSUM,         /**< 校验失败 */
-  PROTOCOL_PARSER_ERROR_INIT_FAILED,      /**< 初始化失败 */
   PROTOCOL_PARSER_ERROR_INVALID_PARAM,    /**< 无效参数 */
-  PROTOCOL_PARSER_ERROR_BUFFER_TOO_SMALL, /**< 缓冲区过小 */
-  PROTOCOL_PARSER_ERROR_FRAME_INVALID,    /**< 帧无效 */
-  PROTOCOL_PARSER_ERROR_MEMORY_ALLOC,     /**< 内存分配失败 */
   PROTOCOL_PARSER_ERROR_UNINITIALIZED,    /**< 未初始化 */
+  PROTOCOL_PARSER_ERROR_MEMORY_ALLOC,     /**< 内存分配失败 */
+  PROTOCOL_PARSER_ERROR_BUFFER_OVERFLOW,  /**< 缓冲区溢出 */
+  PROTOCOL_PARSER_ERROR_BUFFER_TOO_SMALL, /**< 缓冲区过小 */
+  PROTOCOL_PARSER_ERROR_NO_DATA,          /**< 无数据 */
+  PROTOCOL_PARSER_ERROR_TIMEOUT,          /**< 超时错误 */
+  PROTOCOL_PARSER_ERROR_CALLBACK_NULL,    /**< 回调函数为空 */
+  PROTOCOL_PARSER_ERROR_HEADER_MISMATCH,  /**< 帧头不匹配 */
+  PROTOCOL_PARSER_ERROR_FOOTER_MISMATCH,  /**< 帧尾不匹配 */
+  PROTOCOL_PARSER_ERROR_CHECKSUM,         /**< 校验失败 */
+  PROTOCOL_PARSER_ERROR_INCOMPLETE,       /**< 数据不完整 */
+  PROTOCOL_PARSER_ERROR_IDLE_TIMEOUT,     /**< 空闲超时 */
+  PROTOCOL_PARSER_ERROR_FRAME_INVALID,    /**< 帧无效 */
   PROTOCOL_PARSER_ERROR_GENERIC,          /**< 通用错误 */
 } protocol_parser_error_t;
 
@@ -106,8 +111,9 @@ protocol_parser_error_t protocol_parser_init(
 /**
  * @brief 反初始化协议解析器
  * @param ctx 协议解析器上下文指针
+ * @return 操作结果错误码
  */
-void protocol_parser_deinit(protocol_parser_context_t* ctx);
+protocol_parser_error_t protocol_parser_deinit(protocol_parser_context_t* ctx);
 
 /**
  * @brief 向解析器输入数据
@@ -123,16 +129,19 @@ protocol_parser_error_t protocol_parser_feed(protocol_parser_context_t* ctx,
  * @brief 解析并获取完整帧
  * @param ctx 协议解析器上下文指针
  * @param len 输出参数，返回帧长度
- * @return 帧数据指针，NULL表示无完整帧
+ * @param p_out_data 输出参数，返回帧数据指针
+ * @return 操作结果错误码
  */
-const uint8_t* protocol_parser_parse(protocol_parser_context_t* ctx,
-                                     uint16_t* len);
+protocol_parser_error_t protocol_parser_parse(protocol_parser_context_t* ctx,
+                                              uint16_t* len,
+                                              uint8_t** p_out_data);
 
 /**
  * @brief 清空解析器缓冲区
  * @param ctx 协议解析器上下文指针
+ * @return 操作结果错误码
  */
-void protocol_parser_clear(protocol_parser_context_t* ctx);
+protocol_parser_error_t protocol_parser_clear(protocol_parser_context_t* ctx);
 
 /**
  * @brief 阻塞式获取指定长度数据
@@ -140,17 +149,21 @@ void protocol_parser_clear(protocol_parser_context_t* ctx);
  * @param data 输出数据缓冲区
  * @param len 期望获取的数据长度
  * @param timeout_ms 超时时间(毫秒)
- * @return 实际获取的数据长度
+ * @param actual_len 输出参数，返回实际获取的数据长度
+ * @return 操作结果错误码
  */
-uint32_t protocol_parser_get(protocol_parser_context_t* ctx, uint8_t* data,
-                             uint32_t len, uint32_t timeout_ms);
+protocol_parser_error_t protocol_parser_get(protocol_parser_context_t* ctx,
+                                            uint8_t* data, uint32_t len,
+                                            uint32_t timeout_ms,
+                                            uint32_t* actual_len);
 
 /**
  * @brief 更新空闲计时器
  * @param ctx 协议解析器上下文指针
+ * @return 操作结果错误码
  * @note 需要在定时器中断或主循环中周期性调用
  */
-void protocol_parser_tick(protocol_parser_context_t* ctx);
+protocol_parser_error_t protocol_parser_tick(protocol_parser_context_t* ctx);
 
 /**
  * @brief 检查解析器是否已初始化

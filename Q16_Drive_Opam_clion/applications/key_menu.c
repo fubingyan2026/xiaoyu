@@ -98,7 +98,8 @@ static void handle_erase_flash(uint8_t value);
 static uint8_t read_key_pin_level(void);
 static key_event_e on_key_event_callback(const key_event_e event,
                                          const void* key_event);
-
+static inline void configure_led_blink(uint16_t interval_ms, uint16_t wait_ms,
+                                       uint16_t counts);
 /* ==================== 命令表 ==================== */
 
 /**
@@ -343,8 +344,8 @@ static void on_led_state_change(led_handle_t* instance, led_state_t new_state,
 
   if (is_in_state(KEY_FSM_STATE_NONE) && new_state == LED_STATE_OFF) {
     KEY_FUNC_PRINTF("[LED] GPIO Release (LED wait)\r\n");
-    // led_set_blink_interval(s_led_instance, LED_BLINK_INTERVAL_SLOW_MS,
-    // LED_BLINK_WAIT_MS, can_save_id);
+    // configure_led_blink(LED_BLINK_INTERVAL_SLOW_MS, LED_BLINK_WAIT_MS,
+    //                     can_save_id);
     led_set_state(s_led_instance, LED_STATE_BREATHING);
   }
 }

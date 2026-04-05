@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "app.h"
+#include "crc16.h"
 #include "debug/debug.h"
 #include "encoder_alignment.h"
 #include "foc_ctrl_q16.h"
@@ -28,58 +29,6 @@
 #include "hal_uart.h"
 #include "stm32g4xx_hal.h"
 #include "usart_receive.h"
-
-/*============================================================================
- * CRC16 Modbus表 - 静态存储于ROM
- *============================================================================*/
-static const uint16_t crc16_table[256U] = {
-    0x0000U, 0xC0C1U, 0xC181U, 0x0140U, 0xC301U, 0x03C0U, 0x0280U, 0xC241U,
-    0xC601U, 0x06C0U, 0x0780U, 0xC741U, 0x0500U, 0xC5C1U, 0xC481U, 0x0440U,
-    0xCC01U, 0x0CC0U, 0x0D80U, 0xCD41U, 0xF000U, 0x30C1U, 0x3180U, 0xC241U,
-    0xC601U, 0x06C0U, 0x0780U, 0xC741U, 0x0500U, 0xC5C1U, 0xC481U, 0x0440U,
-    0x8C01U, 0x4CC0U, 0x4D80U, 0x8D41U, 0x8800U, 0x48C1U, 0x4980U, 0x8941U,
-    0x7800U, 0x38C1U, 0x3980U, 0x7941U, 0x2800U, 0x18C1U, 0x1980U, 0x5941U,
-    0xB000U, 0x70C1U, 0x7180U, 0xB141U, 0xA000U, 0x60C1U, 0x6180U, 0xA141U,
-    0x9000U, 0x50C1U, 0x5180U, 0x9141U, 0x8C01U, 0x4CC0U, 0x4D80U, 0x8D41U,
-    0x8800U, 0x48C1U, 0x4980U, 0x8941U, 0x7800U, 0x38C1U, 0x3980U, 0x7941U,
-    0x2800U, 0x18C1U, 0x1980U, 0x5941U, 0xF000U, 0x70C1U, 0x7180U, 0xB141U,
-    0xA000U, 0x60C1U, 0x6180U, 0xA141U, 0x9000U, 0x50C1U, 0x5180U, 0x9141U,
-    0xCC01U, 0x0CC0U, 0x0D80U, 0xCD41U, 0xC601U, 0x06C0U, 0x0780U, 0xC741U,
-    0x0500U, 0xC5C1U, 0xC481U, 0x0440U, 0xC0C1U, 0x0001U, 0xC181U, 0x0140U,
-    0xC301U, 0x03C0U, 0x0280U, 0xC241U, 0xC601U, 0x06C0U, 0x0780U, 0xC741U,
-    0x0500U, 0xC5C1U, 0xC481U, 0x0440U, 0xCC01U, 0x0CC0U, 0x0D80U, 0xCD41U,
-    0xF000U, 0x30C1U, 0x3180U, 0xC241U, 0xC601U, 0x06C0U, 0x0780U, 0xC741U,
-    0x0500U, 0xC5C1U, 0xC481U, 0x0440U, 0x8C01U, 0x4CC0U, 0x4D80U, 0x8D41U,
-    0x8800U, 0x48C1U, 0x4980U, 0x8941U, 0x7800U, 0x38C1U, 0x3980U, 0x7941U,
-    0x2800U, 0x18C1U, 0x1980U, 0x5941U, 0xB000U, 0x70C1U, 0x7180U, 0xB141U,
-    0xA000U, 0x60C1U, 0x6180U, 0xA141U, 0x9000U, 0x50C1U, 0x5180U, 0x9141U,
-    0x8C01U, 0x4CC0U, 0x4D80U, 0x8D41U, 0x8800U, 0x48C1U, 0x4980U, 0x8941U,
-    0x7800U, 0x38C1U, 0x3980U, 0x7941U, 0x2800U, 0x18C1U, 0x1980U, 0x5941U,
-    0xF000U, 0x70C1U, 0x7180U, 0xB141U, 0xA000U, 0x60C1U, 0x6180U, 0xA141U,
-    0x9000U, 0x50C1U, 0x5180U, 0x9141U, 0xCC01U, 0x0CC0U, 0x0D80U, 0xCD41U,
-    0xC601U, 0x06C0U, 0x0780U, 0xC741U, 0x0500U, 0xC5C1U, 0xC481U, 0x0440U,
-    0xC0C1U, 0x0001U, 0xC181U, 0x0140U, 0xC301U, 0x03C0U, 0x0280U, 0xC241U,
-    0xC601U, 0x06C0U, 0x0780U, 0xC741U, 0x0500U, 0xC5C1U, 0xC481U, 0x0440U,
-    0xCC01U, 0x0CC0U, 0x0D80U, 0xCD41U, 0xF000U, 0x30C1U, 0x3180U, 0xC241U,
-    0xC601U, 0x06C0U, 0x0780U, 0xC741U, 0x0500U, 0xC5C1U, 0xC481U, 0x0440U,
-    0x8C01U, 0x4CC0U, 0x4D80U, 0x8D41U, 0x8800U, 0x48C1U, 0x4980U, 0x8941U,
-    0x7800U, 0x38C1U, 0x3980U, 0x7941U, 0x2800U, 0x18C1U, 0x1980U, 0x5941U,
-    0xB000U, 0x70C1U, 0x7180U, 0xB141U, 0xA000U, 0x60C1U, 0x6180U, 0xA141U,
-};
-
-/**
- * @brief 计算CRC16 Modbus校验
- * @param[in] data 数据指针
- * @param[in] len 数据长度
- * @return uint16_t CRC16值
- */
-static uint16_t crc16_modbus(const uint8_t* data, uint16_t len) {
-  uint16_t crc = 0xFFFFU;
-  for (uint16_t i = 0U; i < len; i++) {
-    crc = (crc >> 8U) ^ crc16_table[(crc ^ data[i]) & 0xFFU];
-  }
-  return crc;
-}
 
 /*============================================================================
  * 私有变量定义
@@ -144,8 +93,7 @@ void usart_protocol_send_response(uint8_t msg_type, uint8_t func_code,
   static uint8_t resp_buffer[280U];
   uint16_t frame_len =
       s7_build_frame(msg_type, func_code, data, len, resp_buffer);
-  (void)hal_uart_send_dma(&uart1_ctx, HAL_UART_INSTANCE_1, resp_buffer,
-                          frame_len);
+  (void)hal_uart_send(&uart1_ctx, HAL_UART_INSTANCE_1, resp_buffer, frame_len);
 }
 
 /**
@@ -565,7 +513,10 @@ static int cmd_start_stream_handler(uint8_t func_code, uint8_t* data,
     s_stream_config.stream_type = 0U;
   }
 
-  if (len >= 2U) {
+  if (len >= 3U) {
+    s_stream_config.interval_ms =
+        (uint16_t)((uint16_t)data[1U] | ((uint16_t)data[2U] << 8U));
+  } else if (len >= 2U) {
     s_stream_config.interval_ms = (uint16_t)data[1U];
   } else {
     s_stream_config.interval_ms = 10U;
@@ -594,6 +545,130 @@ static int cmd_stop_stream_handler(uint8_t func_code, uint8_t* data,
   return 0;
 }
 
+/**
+ * @brief 获取设备信息命令处理
+ * @return int 0成功,其他失败
+ */
+static int cmd_get_device_info_handler(uint8_t func_code, uint8_t* data,
+                                       uint16_t len, uint8_t* response,
+                                       uint16_t* resp_len) {
+  (void)func_code;
+  (void)data;
+  (void)len;
+
+  response[0U] = 0x01U;
+  response[1U] = 0x00U;
+  response[2U] = 0x00U;
+  response[3U] = 0x00U;
+  *resp_len = 4U;
+  return 0;
+}
+
+/**
+ * @brief 获取错误状态命令处理
+ * @return int 0成功,其他失败
+ */
+static int cmd_get_error_handler(uint8_t func_code, uint8_t* data, uint16_t len,
+                                 uint8_t* response, uint16_t* resp_len) {
+  (void)func_code;
+  (void)data;
+  (void)len;
+
+  response[0U] = 0x00U;
+  response[1U] = 0x00U;
+  *resp_len = 2U;
+  return 0;
+}
+
+/**
+ * @brief 刹车命令处理
+ * @return int 0成功,其他失败
+ */
+static int cmd_brake_handler(uint8_t func_code, uint8_t* data, uint16_t len,
+                             uint8_t* response, uint16_t* resp_len) {
+  (void)func_code;
+  (void)data;
+  (void)len;
+  (void)response;
+  *resp_len = 0U;
+
+  foc_ctrl.target_id_q = (q16_16_t)0;
+  foc_ctrl.target_iq_q = (q16_16_t)0;
+  foc_ctrl.sw = 0U;
+
+  return 0;
+}
+
+/**
+ * @brief 保存校准数据到Flash命令处理
+ * @return int 0成功,其他失败
+ */
+static int cmd_save_calib_handler(uint8_t func_code, uint8_t* data,
+                                  uint16_t len, uint8_t* response,
+                                  uint16_t* resp_len) {
+  (void)func_code;
+  (void)data;
+  (void)len;
+  (void)response;
+  *resp_len = 0U;
+
+  return 0;
+}
+
+/**
+ * @brief 保存参数到Flash命令处理
+ * @return int 0成功,其他失败
+ */
+static int cmd_save_params_handler(uint8_t func_code, uint8_t* data,
+                                   uint16_t len, uint8_t* response,
+                                   uint16_t* resp_len) {
+  (void)func_code;
+  (void)data;
+  (void)len;
+  (void)response;
+  *resp_len = 0U;
+
+  return 0;
+}
+
+/**
+ * @brief 从Flash加载参数命令处理
+ * @return int 0成功,其他失败
+ */
+static int cmd_load_params_handler(uint8_t func_code, uint8_t* data,
+                                   uint16_t len, uint8_t* response,
+                                   uint16_t* resp_len) {
+  (void)func_code;
+  (void)data;
+  (void)len;
+  (void)response;
+  *resp_len = 0U;
+
+  return 0;
+}
+
+/**
+ * @brief 设置流配置命令处理
+ * @return int 0成功,其他失败
+ */
+static int cmd_set_stream_cfg_handler(uint8_t func_code, uint8_t* data,
+                                      uint16_t len, uint8_t* response,
+                                      uint16_t* resp_len) {
+  (void)func_code;
+  (void)response;
+  *resp_len = 0U;
+
+  if (len < 3U) {
+    return (int)ERR_INVALID_PARAM;
+  }
+
+  s_stream_config.stream_type = data[0U];
+  s_stream_config.interval_ms =
+      (uint16_t)((uint16_t)data[1U] | ((uint16_t)data[2U] << 8U));
+
+  return 0;
+}
+
 /*============================================================================
  * 命令处理表
  *============================================================================*/
@@ -610,22 +685,29 @@ static const protocol_cmd_entry_t s_cmd_table[] = {
     {FUNC_PING, cmd_ping_handler},
     {FUNC_GET_VERSION, cmd_get_version_handler},
     {FUNC_RESET, cmd_reset_handler},
+    {FUNC_GET_DEVICE_INFO, cmd_get_device_info_handler},
     {FUNC_GET_STATUS, cmd_get_status_handler},
     {FUNC_GET_STATE, cmd_get_state_handler},
+    {FUNC_GET_ERROR, cmd_get_error_handler},
     {FUNC_SET_CURRENT, cmd_set_current_handler},
     {FUNC_SET_VELOCITY, cmd_set_velocity_handler},
     {FUNC_SET_POSITION, cmd_set_position_handler},
     {FUNC_STOP, cmd_stop_handler},
     {FUNC_START, cmd_start_handler},
+    {FUNC_BRAKE, cmd_brake_handler},
     {FUNC_START_CALIB, cmd_start_calib_handler},
     {FUNC_GET_CALIB_STATUS, cmd_get_calib_status_handler},
     {FUNC_GET_CALIB_DATA, cmd_get_calib_data_handler},
     {FUNC_SET_CALIB_DATA, cmd_set_calib_data_handler},
     {FUNC_CLEAR_CALIB, cmd_clear_calib_handler},
+    {FUNC_SAVE_CALIB, cmd_save_calib_handler},
     {FUNC_GET_PARAMS, cmd_get_params_handler},
     {FUNC_SET_PARAMS, cmd_set_params_handler},
+    {FUNC_SAVE_PARAMS, cmd_save_params_handler},
+    {FUNC_LOAD_PARAMS, cmd_load_params_handler},
     {FUNC_START_STREAM, cmd_start_stream_handler},
     {FUNC_STOP_STREAM, cmd_stop_stream_handler},
+    {FUNC_SET_STREAM_CFG, cmd_set_stream_cfg_handler},
 };
 
 #define CMD_TABLE_SIZE (sizeof(s_cmd_table) / sizeof(s_cmd_table[0]))
@@ -688,7 +770,11 @@ void usart_protocol_process_frame(uint8_t* data, uint16_t len) {
   }
 
   if (ret == 0) {
-    usart_protocol_send_ok(func_code);
+    if (resp_len > 0U) {
+      usart_protocol_send_response(MSG_RESPONSE, func_code, response, resp_len);
+    } else {
+      usart_protocol_send_ok(func_code);
+    }
   } else {
     usart_protocol_send_error(func_code, (uint8_t)ret, ERR_CLASS_APP);
   }
