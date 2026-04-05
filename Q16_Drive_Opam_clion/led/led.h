@@ -96,11 +96,6 @@ typedef struct {
       active_level; /**< 有效电平 (HAL_GPIO_PIN_SET 或 HAL_GPIO_PIN_RESET) */
   led_state_t init_state; /**< 初始状态 */
 
-  // /* 闪烁参数 */
-  // uint16_t led_blink_cycle_ms;    /**< 闪烁半周期间隔 (ms) */
-  // uint16_t led_blink_wait_ms;     /**< 一轮闪烁后的等待间隔 (ms) */
-  // uint16_t led_blink_code_counts; /**< 默认一轮闪烁次数 */
-
   /* 呼吸灯参数 */
   uint16_t led_refresh_time_ms;  /**< 呼吸步进更新间隔 (ms) */
   uint16_t led_refresh_cycle_ms; /**< 呼吸周期 (ms) */
@@ -108,13 +103,6 @@ typedef struct {
   uint16_t led_refresh_min_duty; /**< 最小亮度 (PWM占空比) */
 
   hal_tim_pwm_config_t pwm_cfg; /**< PWM配置 (仅呼吸灯模式需要) */
-
-  /**
-   * @brief GPIO 初始化回调
-   * @details 用于在LED初始化时调用，配置GPIO引脚为输出模式
-   */
-  void (*gpio_init_cb)(void);     /**< GPIO 初始化回调 */
-  void (*gpio_pwm_init_cb)(void); /**< PWM 初始化回调 */
 } led_config_t;
 
 /**
@@ -131,33 +119,35 @@ typedef struct {
  * @brief LED 控制句柄结构体
  */
 struct led_handle {
-  led_config_t config;          /**< 配置副本 */
-  fsm_context_t fsm;            /**< FSM 上下文 */
+  led_config_t config; /**< 配置副本 */
+  fsm_context_t fsm;   /**< FSM 上下文 */
+
   led_cmd_t current_cmd;        /**< 当前命令 */
   uint32_t last_toggle_time;    /**< 上次翻转时间 */
   uint32_t last_breath_time;    /**< 上次呼吸更新时间 */
   uint32_t interval_start_time; /**< 间隔开始时间 */
-  uint32_t breath_cycle;        /**< 呼吸周期计数器 */
 
   uint16_t current_led_blink_code_counts; /**< 当前轮次闪烁计数 */
-  uint16_t breath_value;                  /**< 当前 PWM 值 */
+  led_blink_phase_t blink_code_phase; /**< 当前闪烁阶段 (led_blink_phase_t) */
+  led_blink_phase_t blink_code_phase_last; /**< 上次闪烁阶段，用于检测变化 */
 
-  uint8_t blink_code_phase : 2;      /**< 当前闪烁阶段 (led_blink_phase_t) */
-  uint8_t last_blink_code_phase : 2; /**< 上次闪烁阶段，用于检测变化 */
-  uint8_t is_static : 1;             /**< 是否为静态分配 */
-  uint8_t initialized : 1;           /**< 是否已初始化 */
-  uint8_t pending_blink_update
-      : 1;                   /**< 是否有待处理的闪烁参数更新（等待 LED 熄灭） */
-  uint8_t pwm_init_flag : 1; /**< PWM 初始化标志位 */
+  uint32_t breath_cycle; /**< 呼吸周期计数器 */
+  uint16_t breath_value; /**< 当前 PWM 值 */
 
-  kfifo_t* cmd_fifo;       /**< 异步命令队列句柄 (kfifo_t*) */
-  struct led_handle* next; /**< 链表指针 */
+  bool is_static;            /**< 是否为静态分配 */
+  bool initialized;          /**< 是否已初始化 */
+  bool pending_blink_update; /**< 是否有待处理的闪烁参数更新（等待 LED 熄灭） */
+  bool pwm_init_flag;        /**< PWM 初始化标志位 */
+
+  kfifo_t* cmd_fifo; /**< 异步命令队列句柄 (kfifo_t*) */
 
   /* 回调函数 */
   void* state_change_cb; /**< 状态变化回调 (led_state_change_callback_t) */
   void* blink_phase_cb;  /**< 闪烁阶段变化回调 (led_blink_phase_callback_t) */
   void* gpio_edge_cb;    /**< GPIO 边沿变化回调 (led_gpio_edge_callback_t) */
   void* callback_user_data; /**< 回调用户数据 */
+
+  struct led_handle* next; /**< 链表指针 */
 };
 
 /* Exported constants --------------------------------------------------------*/

@@ -33,7 +33,7 @@ clang-format -i --style=file src/*.c
 # Check formatting
 clang-format --style=file --check src/*.c
 
-# Compile_commands.json is generated at build/compile_commands.json
+# compile_commands.json is generated at build/compile_commands.json
 ```
 
 ### Single File Compilation Test
@@ -88,11 +88,6 @@ arm-none-eabi-gcc -c -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
 - Use `modules/easyflash/` for calibration persistence
 - NEVER use STM32 HAL EEPROM functions
 
-### Hardware
-- **NEVER modify Drivers/ or CMSIS/** directories
-- STM32CubeMX regenerates these from `.ioc` file
-- Edit `.ioc` file and regenerate
-
 ---
 
 ## Project Structure
@@ -120,6 +115,14 @@ Entry Points:
 
 FOC State Machine: `Q16_FOC/foc_sm.c`
 - IDLE → ALIGN → CALIBRATE → RUN → HALL
+
+---
+
+## Critical Constraints
+
+- **Hardware**: NEVER modify Drivers/ or CMSIS/ directories
+- STM32CubeMX regenerates these from `.ioc` file
+- Edit `.ioc` file and regenerate when hardware config changes
 
 ---
 
