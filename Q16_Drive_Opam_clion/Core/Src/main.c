@@ -80,7 +80,7 @@ int main(void) {
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  HAL_Delay(500);
+  HAL_Delay(200);
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -106,9 +106,6 @@ int main(void) {
   // MX_TIM17_Init();
   /* USER CODE BEGIN 2 */
   AppInit();
-  __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
-  __HAL_FLASH_INSTRUCTION_CACHE_ENABLE();
-  __HAL_FLASH_DATA_CACHE_ENABLE();
   /* USER CODE END 2 */
 
   /* Infinite loop */

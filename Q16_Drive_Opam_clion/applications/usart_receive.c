@@ -1,16 +1,17 @@
 /**
  * @file    usart_receive.c
- * @brief   串口数据接收 - UART DMA接收与协议解析实现
+ * @brief   串口数据接收 - UART DMA接收与FIFO缓冲
  * @author  fubingyan qq:3245784484
  * @date    2024-06-24
- * @version V2.1
+ * @version V2.2
  *
- * @note    负责UART1的DMA接收、FIFO缓冲和A5协议解析
+ * @note    负责UART1的DMA接收和FIFO缓冲
  * @note    编码规范: MISRA C:2012, AUTOSAR C++14
  *
  * 修订历史:
  * | 版本  | 日期       | 作者   | 描述                  |
  * |-------|------------|--------|-----------------------|
+ * | 2.2   | 2025-04-06 | FOC团队| 移除协议解析到usart_protocol |
  * | 2.1   | 2026-03-03 | FOC团队| 按规范重构,使用静态FIFO |
  * | 1.0   | 2024-06-24 | fubingyan| 初始版本           |
  */
@@ -19,14 +20,9 @@
 
 #include <string.h>
 
-#include "app.h"
-#include "crc16.h"
 #include "daemon.h"
-#include "debug/debug.h"
 #include "hal_uart.h"
 #include "kfifo/kfifo.h"
-#include "lwshell/lwshell.h"
-#include "protocol_parser.h"
 #include "stm32g4xx_hal.h"
 #include "usart.h"
 #include "usart_protocol.h"
@@ -61,6 +57,9 @@ kfifo_t* fifo_usart1_tx = &s_fifo_usart1_tx;
 /* UART上下文 */
 hal_uart_context_t uart1_ctx;
 
+/* 协议上下文实例 */
+usart_protocol_context_t uart1_protocol_ctx;
+
 /*============================================================================
  * UART1配置 - DMA模式
  *============================================================================*/
@@ -81,85 +80,24 @@ static hal_uart_config_t s_uart1_config = {
         .circular_mode_rx = true,
     }};
 
-/*============================================================================
- * A5协议帧长度计算回调
- *============================================================================*/
+const daemon_config_t daemon_config_rx = {
+    .offline_cb = NULL,
+    .owner_ptr = NULL,
+    .name = "uart1_rx",
+    .reload_timeout_ms = 1000U,
+    .init_wait_time_ms = 1500U,
+};
 
-/**
- * @brief 计算A5协议帧长度
- * @param[in] buffer 数据缓冲区
- * @param[in] len 当前数据长度
- * @return uint16_t 完整帧长度,0表示不完整
- */
-/*============================================================================
- * S7协议帧长度计算回调
- *============================================================================*/
+const daemon_config_t daemon_config_tx = {
+    .offline_cb = NULL,
+    .owner_ptr = NULL,
+    .name = "uart1_tx",
+    .reload_timeout_ms = 1000U,
+    .init_wait_time_ms = 1500U,
+};
 
-/**
- * @brief 计算S7协议帧长度
- * @param[in] buffer 数据缓冲区
- * @param[in] len 当前数据长度
- * @return uint16_t 完整帧长度,0表示不完整
- * @note S7帧格式: head(2) + proto_id(1) + msg_type(1) + func(1) + data(n) +
- * crc(2) + tail(1) 最小帧长: 8字节 (无数据时)
- */
-uint16_t s7_get_frame_len(uint8_t* buffer, uint16_t len) {
-  if (len < 8U) {
-    return 0U;
-  }
-
-  for (uint16_t i = 7U; i < len; i++) {
-    if (buffer[i] == S7_FRAME_TAIL) {
-      return (uint16_t)(i + 1U);
-    }
-  }
-
-  return 0U;
-}
-
-/*============================================================================
- * S7协议校验回调
- *============================================================================*/
-
-/**
- * @brief S7协议帧校验 - CRC16 Modbus
- * @param[in] buffer 数据缓冲区
- * @param[in] len 数据长度
- * @return 协议解析器错误码
- */
-protocol_parser_error_t s7_check_cb(uint8_t* buffer, uint16_t len) {
-  if (len < 8U) {
-    return PROTOCOL_PARSER_ERROR_CHECKSUM;
-  }
-  /* CRC16计算范围: 从协议ID到CRC之前 */
-  uint16_t calc = crc16_modbus(&buffer[2U], (uint16_t)(len - 5U));
-  uint16_t recv =
-      (uint16_t)buffer[len - 3U] | ((uint16_t)buffer[len - 2U] << 8);
-  return (calc == recv) ? PROTOCOL_PARSER_OK : PROTOCOL_PARSER_ERROR_CHECKSUM;
-}
-
-protocol_parser_context_t s_s7_protocol_frame;
-
-/**
- * @brief 初始化S7协议
- * @param[in] frame 协议帧结构指针
- */
-void init_s7_protocol(protocol_parser_context_t* frame) {
-  static uint8_t out_buf[UART_RX_FIFO_SIZE];
-  protocol_parser_config_t cfg = {
-      .name = "S7_Protocol",
-      .header = (const uint8_t*)"\x68\x68",
-      .header_len = 2U,
-      .footer = (const uint8_t*)"\x16",
-      .footer_len = 1U,
-      .input_buffer_len = UART_RX_FIFO_SIZE,
-      .output_buffer = out_buf,
-      .output_buffer_len = sizeof(out_buf),
-      .get_len_cb = s7_get_frame_len,
-      .check_cb = s7_check_cb,
-  };
-  (void)protocol_parser_init(frame, &cfg);
-}
+daemon_context_t* uart1_rx_ctx = NULL;
+daemon_context_t* uart1_tx_ctx = NULL;
 
 /*============================================================================
  * 公共函数实现
@@ -187,23 +125,11 @@ void uart_it_init(void) {
   }
   fifo_usart1_tx = &s_fifo_usart1_tx;
 
-  const daemon_config_t daemon_config_rx = {
-      .offline_cb = NULL,
-      .owner_ptr = NULL,
-      .name = "uart1_rx",
-      .reload_timeout_ms = 1000U,
-      .init_wait_time_ms = 1500U,
-  };
-  (void)daemon_register(&daemon_config_rx);
-
-  const daemon_config_t daemon_config_tx = {
-      .offline_cb = NULL,
-      .owner_ptr = NULL,
-      .name = "uart1_tx",
-      .reload_timeout_ms = 1000U,
-      .init_wait_time_ms = 1500U,
-  };
-  (void)daemon_register(&daemon_config_tx);
+  uart1_rx_ctx = daemon_register(&daemon_config_rx);
+  uart1_tx_ctx = daemon_register(&daemon_config_tx);
+  if (uart1_rx_ctx == NULL || uart1_tx_ctx == NULL) {
+    return;
+  }
 
   /* 初始化UART上下文 */
   if (stm32_uart_init_context(&uart1_ctx) != HAL_UART_OK) {
@@ -220,7 +146,13 @@ void uart_it_init(void) {
                                        fifo_usart1_rx->size);
   }
 
-  (void)init_s7_protocol(&s_s7_protocol_frame);
+  // 初始化协议模块
+  usart_protocol_config_t protocol_cfg = {
+      .name = "s7_uart_protocol",
+      .uart_ctx = &uart1_ctx,
+      .uart_instance = HAL_UART_INSTANCE_1,
+  };
+  (void)usart_protocol_init(&uart1_protocol_ctx, &protocol_cfg);
 }
 
 /**
@@ -230,8 +162,6 @@ void uart_it_init(void) {
  */
 void uart_process_task(void) {
   static uint8_t rx_data[UART_RX_FIFO_SIZE];
-  uint16_t flen;
-  uint8_t* p_frame;
 
   if (fifo_usart1_rx == NULL) {
     return;
@@ -240,17 +170,13 @@ void uart_process_task(void) {
   const uint16_t rx_len =
       kfifo_get(fifo_usart1_rx, rx_data, (uint16_t)sizeof(rx_data));
   if (rx_len > 0U) {
-    (void)protocol_parser_feed(&s_s7_protocol_frame, rx_data, rx_len);
-    // lwshell_input(rx_data, rx_len);
+    usart_protocol_feed(&uart1_protocol_ctx, rx_data, rx_len);
   }
+  usart_protocol_stream_task(&uart1_protocol_ctx);
+  usart_protocol_parse_task(&uart1_protocol_ctx);
 
-  const protocol_parser_error_t err =
-      protocol_parser_parse(&s_s7_protocol_frame, &flen, &p_frame);
-  if (err == PROTOCOL_PARSER_OK && p_frame != NULL) {
-    usart_protocol_process_frame(p_frame, flen);
-  }
-
-  (void)protocol_parser_tick(&s_s7_protocol_frame);
+  daemon_reload(uart1_rx_ctx);
+  daemon_reload(uart1_tx_ctx);
 }
 
 /**

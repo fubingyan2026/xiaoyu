@@ -25,6 +25,7 @@
 #include "foc_ctrl_q16.h"
 #include "hal_uart.h"
 #include "key_menu.h"
+#include "kfifo/kfifo.h"
 #include "lwmem/lwmem.h"
 #include "lwshell/lwshell.h"
 #include "opamp.h"
@@ -48,9 +49,6 @@ static uint8_t usart1_tx_buffer[1024];
 /* UART上下文 */
 extern hal_uart_context_t uart1_ctx;
 
-daemon_context_t* u1_rx;
-daemon_context_t* u1_tx;
-
 gimbal_PID_t* gimbal_pid_pitch_instance;
 pt1Filter_t filter_cog_current;
 pid_type_def pid_type_velocity;
@@ -71,10 +69,10 @@ tk_timer_t* timer_driverTask = NULL;
 void timer_ledTask_timeout_callback(tk_timer_t* timer) {
   led_task_refresh();
   WS2812_SPI_Loop();
+  WS2812Flush();
 
   key_func_task();
   warning_task();
-  WS2812Flush();
   KeyBaseTask();
   uart_process_task();
   daemon_task();
@@ -88,29 +86,26 @@ void timer_uartTask_timeout_callback(tk_timer_t* timer) {
   //    RAD_TO_ANGLE), (int)(gFocMachine.alginIq * 1000));
   // BSP_Printf("Motor Speed:%d\r\n", (int)(Get_Encoder_Velocity_RPM()));
 
-  // BSP_Printf("CAN-BUS-Load-Percent:%d\n", CANCommGetBusLoad());
   hal_uart_dma_status_t dma_status;
-  if (hal_uart_get_dma_status(&uart1_ctx, HAL_UART_INSTANCE_1, &dma_status) ==
-          HAL_UART_OK &&
-      !dma_status.tx_busy) {
-    const uint16_t length = kfifo_len(fifo_usart1_tx);
-    if (length) {
-      uint8_t* tx_buffer = usart1_tx_buffer;
-      const uint16_t send_len =
-          kfifo_get(fifo_usart1_tx, tx_buffer, sizeof(usart1_tx_buffer));
-      /* 打印到串口 */
+
+  const uint16_t length = kfifo_len(fifo_usart1_tx);
+  if (length) {
+    uint8_t* tx_buffer = usart1_tx_buffer;
+    const uint16_t send_len =
+        kfifo_peek(fifo_usart1_tx, tx_buffer, sizeof(usart1_tx_buffer), 0);
+    /* 打印到串口 */
+    if (hal_uart_get_dma_status(&uart1_ctx, HAL_UART_INSTANCE_1, &dma_status) ==
+            HAL_UART_OK &&
+        !dma_status.tx_busy) {
       hal_uart_send_dma(&uart1_ctx, HAL_UART_INSTANCE_1, usart1_tx_buffer,
                         send_len);
-      /* 打印到Jlink */
-      SEGGER_WRITE(0, tx_buffer, send_len);
+      kfifo_skip(fifo_usart1_tx, send_len);
     }
+    /* 打印到Jlink */
+    SEGGER_WRITE(0, tx_buffer, send_len);
   }
-  daemon_reload(u1_rx);
-  daemon_reload(u1_tx);
 
   flash_task_process();
-
-  usart_protocol_stream_task();
 }
 
 /* 定时器4超时回调函数(1ms) */
@@ -140,7 +135,6 @@ void AppInit(void) {
   WS2812_SPI_Init();
   FDCAN1_Config();
   uart_it_init();
-  usart_protocol_init();
 
   foc_init();  // FOC初始化(包含传感器初始化)
 
@@ -153,9 +147,6 @@ void AppInit(void) {
   const float pid_velocity_param[4] = {0.005f, 0.0000025f, 0.0125f, 0.00f};
   PID_init(&pid_type_velocity, PID_POSITION, pid_velocity_param, 0.35f, 0.10f);
   /* pubic init function */
-
-  u1_rx = daemon_get_instance("uart1_rx");
-  u1_tx = daemon_get_instance("uart1_tx");
 
   /* 初始化软件定时器功能，并配置tick获取回调函数*/
   tk_timer_func_init(millis);
