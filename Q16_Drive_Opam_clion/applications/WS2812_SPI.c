@@ -14,7 +14,7 @@
 #include "bsp_delay.h"
 #include "debug/debug.h"
 #include "memory_pool/memory_pool.h"
-#include "message_center/message_center.h"
+#include "message_center.h"
 #include "spi.h"
 
 #define RGB_FLOW_COLOR_CHANGE_TIME 500
@@ -43,8 +43,8 @@ static void led_blink_error(const uint8_t num);
 
 ws2812b_t ws2812b_publish = {0}, ws2812b_subscribe = {0};
 
-Subscriber_t* sub_ws2812;
-Publisher_t* pub_ws2812;
+message_center_publisher_t* pub_ws2812 = NULL;
+message_center_subscriber_t* sub_ws2812 = NULL;
 
 /**
  * @brief Sets the state of the LED.
@@ -60,11 +60,23 @@ static void led_set(const uint8_t state) {
 }
 
 void WS2812_SPI_Init(void) {
-  // 一个发布者,以个订阅者
-  pub_ws2812 = PubRegister("ws2812", (uint8_t)sizeof(ws2812b_t));
-  ASSERT(pub_ws2812);
-  sub_ws2812 = SubRegister("ws2812", (uint8_t)sizeof(ws2812b_t));
-  ASSERT(sub_ws2812);
+  /* 配置消息中心 */
+  message_center_config_t config = {
+      .name = "ws2812",
+      .data_len = sizeof(ws2812b_t),
+      .queue_size = 4,
+      .max_topics = MESSAGE_CENTER_MAX_TOPICS,
+      .max_topic_name_len = MESSAGE_CENTER_MAX_TOPIC_NAME_LEN,
+  };
+
+  // 注册发布者
+  message_center_error_t err =
+      message_center_publisher_register(&pub_ws2812, config);
+  ASSERT(err == MESSAGE_CENTER_OK);
+
+  // 注册订阅者
+  err = message_center_subscriber_register(pub_ws2812, &sub_ws2812);
+  ASSERT(err == MESSAGE_CENTER_OK);
 }
 
 /**
@@ -90,7 +102,8 @@ void WS2812_Ctrl(const uint16_t led_index, const uint8_t r, const uint8_t g,
         b >> i & 0x01 ? WS2812_HighLevel : WS2812_LowLevel;
   }
 
-  PubPushMessage(pub_ws2812, (void*)&ws2812b_publish);  // 发布消息
+  message_center_publisher_push_message(pub_ws2812,
+                                        (void*)&ws2812b_publish);  // 发布消息
 }
 
 /**
@@ -102,7 +115,8 @@ void WS2812_Ctrl(const uint16_t led_index, const uint8_t r, const uint8_t g,
  * @retval         none
  */
 void WS2812Flush(void) {
-  if (SubGetMessage(sub_ws2812, (void*)&ws2812b_subscribe))  // 有新消息就发布
+  if (message_center_subscriber_get_message(
+          sub_ws2812, (void*)&ws2812b_subscribe))  // 有新消息就发布
   {
     if (WS2812_SPI_UNIT.State == HAL_SPI_STATE_READY) {
       if (WS2812_SPI_UNIT.hdmatx->State == HAL_DMA_STATE_READY) {

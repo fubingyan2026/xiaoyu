@@ -23,12 +23,12 @@
 #include <string.h>
 
 #include "algorithm/maths.h"
+#include "debug/debug.h"
 #include "kfifo/kfifo.h"
 #include "memory_pool/memory_pool.h"
-#include "message_center/message_center.h"
 
 /* Private macros ------------------------------------------------------------*/
-#define LED_PRINTF(...)                // DEBUG_INFO(__VA_ARGS__)
+#define LED_PRINTF(...) DEBUG_INFO(__VA_ARGS__)
 #define LED_CMD_FIFO_SIZE 8            /* 异步命令队列深度，必须为2的幂 */
 #define LED_BREATH_MAX_RESOLUTION 1000 /* 呼吸灯最大分辨率 */
 #define LED_GAMMA_CORRECTION 2         /* Gamma 校正值 */
@@ -208,9 +208,12 @@ static fsm_state_t led_fsm_breathing_handler(fsm_context_t* ctx) {
                               gamma_corrected));
 
     if (handle->pwm_init_flag) {
-      hal_tim_pwm_set_duty_cycle(
+      hal_tim_pwm_error_t err_set = hal_tim_pwm_set_duty_cycle(
           &tim_pwm_ctx, handle->config.pwm_cfg.timer_instance,
           handle->config.pwm_cfg.channel, handle->breath_value);
+      if (err_set != HAL_TIM_PWM_OK) {
+        LED_PRINTF("PWM 设置占空比失败: %d\n", err_set);
+      }
     }
   }
   return LED_STATE_BREATHING;
@@ -249,10 +252,11 @@ static void led_fsm_on_entry(fsm_context_t* ctx, fsm_state_t state) {
       handle->last_breath_time = now;
       // 确保PWM已启动
       if (handle->pwm_init_flag) {
-        // hal_tim_pwm_init(&tim_pwm_ctx, &handle->config.pwm_cfg);
-        hal_tim_pwm_start(&tim_pwm_ctx, handle->config.pwm_cfg.timer_instance,
-                          handle->config.pwm_cfg.channel);
-        hal_tim_pwm_gpio_alternate(&tim_pwm_ctx, &handle->config.pwm_cfg.gpio);
+        hal_tim_pwm_error_t err_alternate = hal_tim_pwm_gpio_alternate(
+            &tim_pwm_ctx, &handle->config.pwm_cfg.gpio);
+        if (err_alternate != HAL_TIM_PWM_OK) {
+          LED_PRINTF("PWM 配置复用失败: %d\n", err_alternate);
+        }
       }
 
       break;
@@ -378,8 +382,6 @@ led_error_t led_init(led_get_time_func_t get_time_cb) {
   stm32_gpio_init_context(&gpio_ctx);
   stm32_tim_pwm_init_context(&tim_pwm_ctx);
 
-  MessageCenterInit();  // 确保消息中心已就绪
-
   LED_PRINTF("LED system initialized\n");
   return LED_OK;
 }
@@ -478,9 +480,22 @@ led_error_t led_register_static(const led_config_t* config,
   // 如果是呼吸灯，且配置了PWM信息，则初始化PWM
 
   if (instance->config.pwm_cfg.timer_instance) {
-    hal_tim_pwm_init(&tim_pwm_ctx, &instance->config.pwm_cfg);
-    // hal_tim_pwm_start(&tim_pwm_ctx, instance->config.pwm_cfg.timer_instance,
-    //                   instance->config.pwm_cfg.channel);
+    hal_tim_pwm_error_t err_init =
+        hal_tim_pwm_init(&tim_pwm_ctx, &instance->config.pwm_cfg);
+    if (err_init != HAL_TIM_PWM_OK) {
+      LED_PRINTF("PWM 初始化失败: %d\n", err_init);
+      return LED_ERROR_INTERNAL;
+    }
+    hal_tim_pwm_error_t err_start =
+        hal_tim_pwm_start(&tim_pwm_ctx, instance->config.pwm_cfg.timer_instance,
+                          instance->config.pwm_cfg.channel);
+    LED_PRINTF("PWM 启动结果: %d (timer=%d, ch=%d)\n", err_start,
+               instance->config.pwm_cfg.timer_instance,
+               instance->config.pwm_cfg.channel);
+    if (err_start != HAL_TIM_PWM_OK) {
+      LED_PRINTF("PWM 启动失败: %d\n", err_start);
+      return LED_ERROR_INTERNAL;
+    }
 
     instance->pwm_init_flag = true;
   }

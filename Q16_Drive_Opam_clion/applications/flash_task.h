@@ -14,7 +14,7 @@
 #include "easyflash.h"
 #include "encoder_alignment.h"
 #include "hall_adjustment.h"
-#include "message_center/message_center.h"
+#include "message_center.h"
 
 /*============================================================================
  * 宏定义
@@ -61,7 +61,7 @@ extern const ef_env default_env_set[FLASH_ENV_SET_SIZE];
 /**
  * @brief Flash任务请求结构
  */
-typedef struct __attribute__((packed)) {
+typedef struct {
   flash_task_type_t type;  ///< 任务类型
   void* data;              ///< 指向要写入的数据
   size_t size;             ///< 数据大小
@@ -70,11 +70,11 @@ typedef struct __attribute__((packed)) {
 /**
  * @brief Flash任务管理器（基于message_center）
  */
-typedef struct __attribute__((packed)) {
-  Publisher_t* publisher;    ///< 消息发布者
-  Subscriber_t* subscriber;  ///< 消息订阅者
-  uint32_t pending_count;    ///< 等待执行的任务数
-  uint8_t idle_threshold;    ///< CPU空闲阈值(%)
+typedef struct {
+  message_center_publisher_t* publisher;    ///< 消息发布者
+  message_center_subscriber_t* subscriber;  ///< 消息订阅者
+  uint32_t pending_count;                   ///< 等待执行的任务数
+  uint8_t idle_threshold;                   ///< CPU空闲阈值(%)
 } flash_task_mgr_t;
 
 /*============================================================================

@@ -169,7 +169,6 @@ can_comm_rx_t* CANRxRegister(const can_rx_config_t* config) {
     CAN_COMM_PRINTF(
         "Failed to allocate direct_binding_ptr for CAN RX instance %s\n",
         config->name);
-    MessageCenterUnregister(config->name);
     if (new_instance->daemon_can_rx_ptr != NULL) {
       daemon_unregister(new_instance->daemon_can_rx_ptr->config.name);
     }

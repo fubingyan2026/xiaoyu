@@ -16,6 +16,8 @@
 #define FLASH_TASK_IDLE_THRESHOLD 50       ///< CPU空闲率阈值(50%)
 
 static flash_task_mgr_t g_flash_task_mgr = {0};
+static message_center_publisher_t* g_flash_task_publisher = NULL;
+static message_center_subscriber_t* g_flash_task_subscriber = NULL;
 
 /**
  * @brief   默认环境变量表
@@ -80,22 +82,33 @@ static void (*task_handler[])(void*, size_t) = {
  * @brief 初始化Flash任务管理器
  */
 int flash_task_init(void) {
+  /* 配置消息中心 */
+  message_center_config_t config = {
+      .name = FLASH_TASK_TOPIC_NAME,
+      .data_len = sizeof(flash_task_request_t),
+      .queue_size = 4,
+      .max_topics = MESSAGE_CENTER_MAX_TOPICS,
+      .max_topic_name_len = MESSAGE_CENTER_MAX_TOPIC_NAME_LEN,
+  };
+
   /* 注册发布者 */
-  g_flash_task_mgr.publisher =
-      PubRegister(FLASH_TASK_TOPIC_NAME, sizeof(flash_task_request_t));
-  if (g_flash_task_mgr.publisher == NULL) {
-    DEBUG_ERROR("[FlashTask] 发布者注册失败");
+  message_center_error_t err =
+      message_center_publisher_register(&g_flash_task_publisher, config);
+  if (err != MESSAGE_CENTER_OK) {
+    DEBUG_ERROR("[FlashTask] 发布者注册失败: %d", err);
     return -1;
   }
+  g_flash_task_mgr.publisher = g_flash_task_publisher;
 
   /* 注册订阅者 */
-  g_flash_task_mgr.subscriber =
-      SubRegister(FLASH_TASK_TOPIC_NAME, sizeof(flash_task_request_t));
-  if (g_flash_task_mgr.subscriber == NULL) {
-    DEBUG_ERROR("[FlashTask] 订阅者注册失败");
-    MessageCenterUnregister(FLASH_TASK_TOPIC_NAME);
+  err = message_center_subscriber_register(g_flash_task_publisher,
+                                           &g_flash_task_subscriber);
+  if (err != MESSAGE_CENTER_OK) {
+    DEBUG_ERROR("[FlashTask] 订阅者注册失败: %d", err);
+    message_center_unregister(g_flash_task_publisher);
     return -1;
   }
+  g_flash_task_mgr.subscriber = g_flash_task_subscriber;
 
   g_flash_task_mgr.idle_threshold = FLASH_TASK_IDLE_THRESHOLD;
   g_flash_task_mgr.pending_count = 0;
@@ -119,7 +132,8 @@ void flash_task_request(flash_task_type_t type, void* data, size_t size) {
   req.size = size;
 
   /* 发布消息 */
-  uint8_t subs_count = PubPushMessage(g_flash_task_mgr.publisher, &req);
+  uint8_t subs_count = message_center_publisher_push_message(
+      (message_center_publisher_t*)g_flash_task_mgr.publisher, &req);
 
   if (subs_count == 0) {
     DEBUG_WARN("[FlashTask] 发布消息失败, 类型: %d", type);
@@ -138,7 +152,8 @@ void flash_task_process(void) {
   flash_task_request_t req;
 
   /* 检查是否有新消息 */
-  if (!SubGetMessage(g_flash_task_mgr.subscriber, &req)) {
+  if (!message_center_subscriber_get_message(
+          (message_center_subscriber_t*)g_flash_task_mgr.subscriber, &req)) {
     return;
   }
 
@@ -193,9 +208,8 @@ uint32_t flash_task_get_pending_count(void) {
  * @brief 销毁Flash任务管理器（释放资源）
  */
 void flash_task_destroy(void) {
-  if (g_flash_task_mgr.publisher != NULL ||
-      g_flash_task_mgr.subscriber != NULL) {
-    MessageCenterUnregister(FLASH_TASK_TOPIC_NAME);
+  if (g_flash_task_mgr.publisher != NULL) {
+    message_center_unregister(g_flash_task_publisher);
     g_flash_task_mgr.publisher = NULL;
     g_flash_task_mgr.subscriber = NULL;
   }

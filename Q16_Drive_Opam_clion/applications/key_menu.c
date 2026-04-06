@@ -327,9 +327,7 @@ static void on_led_gpio_edge_change(led_handle_t* instance,
   s_key_fsm_ctx.time_last = s_key_fsm_ctx.time_now;
 
   if (edge == HAL_GPIO_PIN_RESET) {
-    KEY_FUNC_PRINTF("[LED] GPIO Falling Edge (LED OFF)\r\n");
   } else if (edge == HAL_GPIO_PIN_SET) {
-    KEY_FUNC_PRINTF("[LED] GPIO Rising Edge (LED ON)\r\n");
   }
 }
 

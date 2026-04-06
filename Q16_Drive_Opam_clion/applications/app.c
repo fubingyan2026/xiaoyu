@@ -157,7 +157,7 @@ void AppInit(void) {
   timer_driverTask = tk_timer_create(timer_driverTask_timeout_callback);
   ASSERT(timer_driverTask);
 
-  tk_timer_start(timer_ledTask, TIMER_MODE_LOOP, 5);
+  tk_timer_start(timer_ledTask, TIMER_MODE_LOOP, 10);
   tk_timer_start(timer_uartTask, TIMER_MODE_LOOP, 100);
   tk_timer_start(timer_driverTask, TIMER_MODE_LOOP,
                  (uint32_t)(STATE_PERIOD * 1000));

@@ -15,7 +15,6 @@
 #include "daemon.h"
 #include "hal_fdcan.h"
 #include "kfifo/kfifo.h"
-#include "message_center/message_center.h"
 #include "stdint.h"
 
 /* CAN通信配置宏定义 */
