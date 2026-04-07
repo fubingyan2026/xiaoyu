@@ -133,7 +133,6 @@ void FDCAN1_Config(void) {
 
   HAL_FDCAN_Start(&hfdcan1);
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
-  CANCommInit();
 }
 
 /**
@@ -143,18 +142,16 @@ void FDCAN1_Config(void) {
  */
 static void daemon_can_rx_offline_callback(void* rx) {
   const can_comm_rx_t* this_ptr = (can_comm_rx_t*)rx;
-  /* 检查指针有效性 */
-  if (this_ptr == NULL || this_ptr->daemon_can_rx_ptr == NULL) {
+  if (this_ptr == NULL || this_ptr->daemon == NULL) {
     return;
   }
-  /* 根据在线状态记录相应信息 */
-  if (!daemon_is_online(this_ptr->daemon_can_rx_ptr)) {
+  if (!daemon_is_online(this_ptr->daemon)) {
     DEBUG_ERROR("%s: offline,frequent:%d\n", this_ptr->config.name,
-                (int)this_ptr->daemon_can_rx_ptr->feed_frequency);
-    g_can_stats.timeout_errors++; /* 增加超时错误计数 */
+                (int)this_ptr->daemon->feed_frequency);
+    g_can_stats.timeout_errors++;
   } else {
     DEBUG_INFO("%s: online,frequent:%d\n", this_ptr->config.name,
-               (int)this_ptr->daemon_can_rx_ptr->feed_frequency);
+               (int)this_ptr->daemon->feed_frequency);
   }
 }
 
@@ -163,58 +160,58 @@ static void daemon_can_rx_offline_callback(void* rx) {
  * @note 注册所有预定义的CAN接收和发送实例
  */
 void CANCommInit(void) {
-  /* 初始化INS角度和陀螺仪接收配置 */
-  can_rx_config_t can_rx_config = {
+  can_comm_rx_config_t can_rx_config = {
       .instance = HAL_FDCAN_INSTANCE_1,
-      .can_rx_identify = 0x100,
-      .callback = daemon_can_rx_offline_callback,
+      .can_id = 0x100,
+      .offline_cb = daemon_can_rx_offline_callback,
       .name = "master_controller",
-      .rx_data_len = sizeof(can_get_master_data_t),
+      .data_len = sizeof(can_get_master_data_t),
       .offline_ms = 250,
       .priority = 1,
   };
-  can_comm_rx_master_instance = CANRxRegister(&can_rx_config);
+  can_comm_rx_master_instance = can_comm_rx_register(&can_rx_config);
   ASSERT(can_comm_rx_master_instance);
 
-  /* 初始化电机发送配置 */
-  const can_tx_config_t can_tx_config = {
+  const can_comm_tx_config_t can_tx_config = {
       .instance = HAL_FDCAN_INSTANCE_1,
-      .can_tx_identify = 0x00,
-      .tx_data_len = sizeof(can_send_sliver_data_t),
+      .can_id = 0x00,
+      .data_len = sizeof(can_send_sliver_data_t),
       .name = "gimbal_motor",
       .priority = 2,
   };
-  can_comm_tx_sliver_instance = CANTxRegister(&can_tx_config);
+  can_comm_tx_sliver_instance = can_comm_tx_register(&can_tx_config);
   ASSERT(can_comm_tx_sliver_instance);
-
-  /* 网络管理初始化（节点ID为1） */
-  // CANNmInit(1, app_sleep_callback, app_wakeup_callback,
-  // app_sleep_condition_check, app_wakeup_condition_check,
-  //           app_node_status_callback);
 }
 
 void FDCAN_Server_Task(void) {
+  if (can_comm_tx_sliver_instance == NULL ||
+      can_comm_rx_master_instance == NULL) {
+    set_velocity = 0;
+    return;
+  }
+
   if (key_menu_get_can_id() <= 0 ||
       key_menu_get_can_id() >= CAN_SLIVER_COUNTS) {
     set_velocity = 0;
     return;
   }
 
-  if (key_menu_get_can_id() !=
-      can_comm_tx_sliver_instance->config.can_tx_identify) {
-    can_comm_tx_sliver_instance->config.can_tx_identify = key_menu_get_can_id();
+  if (key_menu_get_can_id() != can_comm_tx_sliver_instance->config.can_id) {
+    can_comm_tx_sliver_instance->config.can_id = key_menu_get_can_id();
   } else {
     static uint8_t can_send_counts = 0;
     if (++can_send_counts >= 2) {
       can_send_counts = 0;
-      ((can_send_sliver_data_t*)CANTxBindData(can_comm_tx_sliver_instance))
+      ((can_send_sliver_data_t*)can_comm_tx_bind_data(
+           can_comm_tx_sliver_instance))
           ->velocity_rpm = foc_ctrl.pll_velocity_rpm;
     }
     set_velocity =
-        ((can_get_master_data_t*)CANRxBindData(can_comm_rx_master_instance))
-            ->velocity[can_comm_tx_sliver_instance->config.can_tx_identify - 1];
+        ((can_get_master_data_t*)can_comm_rx_bind_data(
+             can_comm_rx_master_instance))
+            ->velocity[can_comm_tx_sliver_instance->config.can_id - 1];
 
-    if (!daemon_is_online(can_comm_rx_master_instance->daemon_can_rx_ptr)) {
+    if (!daemon_is_online(can_comm_rx_master_instance->daemon)) {
       set_velocity = 0;
     }
   }

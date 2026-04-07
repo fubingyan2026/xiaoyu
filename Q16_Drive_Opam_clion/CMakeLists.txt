@@ -62,7 +62,7 @@ foreach(subdir algorithm controller crc debug encoder keybase kfifo memory_pool 
 endforeach()
 
 # 本地can_comm目录
-aux_source_directory(${CMAKE_SOURCE_DIR}/can_comm COMMON_can_comm)
+aux_source_directory(${CMAKE_SOURCE_DIR}/can_comm CAN_COMM)
 
 # 特殊处理的模块 (有子目录的)
 aux_source_directory(${CMAKE_SOURCE_DIR}/../common/SEGGER_RTT/RTT COMMON_SEGGER_RTT)
@@ -79,7 +79,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${PROTOCOL_PARSER}
         ${DAEMON}
         ${COMMON_algorithm}
-        ${COMMON_can_comm}
+        ${CAN_COMM}
         ${COMMON_controller}
         ${COMMON_crc}
         ${COMMON_debug}

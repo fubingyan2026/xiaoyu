@@ -130,10 +130,12 @@ void AppInit(void) {
   }
 
   daemon_init(millis);  // 初始化守护进程系统
+  can_comm_init();      // 初始化CAN通信模块
 
   warning_Init();  // led任务初始化
   WS2812_SPI_Init();
   FDCAN1_Config();
+  CANCommInit();  // 注册CAN收发实例
   uart_it_init();
 
   foc_init();  // FOC初始化(包含传感器初始化)
@@ -196,12 +198,10 @@ void AppRunning(void) {
   if (true == tk_event_recv(can_send_event, TIM_EVENT_FLAG,
                             TK_EVENT_OPTION_OR | TK_EVENT_OPTION_CLEAR, NULL)) {
     /* NM状态机处理 */
-    // can_nm_task();
-    // CANNmStateMachine();
     GimbalPidLoop();
-    CANCommGetDataTransmit_V2();  // 解析接受的数据包
-    CANCommSendDataPackage_V2();  // 将要发送的数据打包
-    CANCommSendFlush();           // can发送数据包
+    can_comm_process_rx();  // 解析接受的数据包
+    can_comm_package_tx();  // 将要发送的数据打包
+    can_comm_flush_tx();    // can发送数据包
     tk_timer_loop_handler();
   }
 }

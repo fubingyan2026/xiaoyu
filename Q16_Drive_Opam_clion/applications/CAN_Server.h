@@ -17,6 +17,8 @@ typedef struct __attribute__((packed)) {
 
 void FDCAN1_Config(void);
 
+void CANCommInit(void);
+
 void FDCAN_Server_Task(void);
 
 float FDCAN_Get_Master_Current(void);

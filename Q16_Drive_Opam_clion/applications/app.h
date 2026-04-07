@@ -11,7 +11,6 @@
 #include "kfifo/kfifo.h"
 #include "led.h"
 #include "memory_pool/memory_pool.h"
-#include "message_center/message_center.h"
 #include "toolkit/toolkit.h"
 #include "warning_task.h"
 

@@ -136,11 +136,11 @@ extern "C" {
 
 ### 类型定义
 
-| 类型     | 命名规范                       | 示例                           |
-| -------- | ------------------------------ | ------------------------------ |
-| 枚举     | 前缀 + 蛇形命名 (结尾为 _t)    | `protocol_parser_error_t`      |
-| 结构体   | 前缀 + 蛇形命名 (结尾为 _t)    | `protocol_parser_config_t`     |
-| 函数指针 | 前缀 + 蛇形命名 (结尾为 _cb_t) | `protocol_parser_check_cb_t`   |
+| 类型     | 命名规范                       | 示例                         |
+| -------- | ------------------------------ | ---------------------------- |
+| 枚举     | 前缀 + 蛇形命名 (结尾为 _t)    | `protocol_parser_error_t`    |
+| 结构体   | 前缀 + 蛇形命名 (结尾为 _t)    | `protocol_parser_config_t`   |
+| 函数指针 | 前缀 + 蛇形命名 (结尾为 _cb_t) | `protocol_parser_check_cb_t` |
 
 ### 枚举值
 
@@ -162,10 +162,10 @@ typedef enum {
 
 ### 函数命名
 
-| 函数类型     | 命名规范                  | 示例                        |
-| ------------ | ------------------------- | --------------------------- |
-| 公共函数     | 前缀 + 动词/动词短语      | `protocol_parser_init()`    |
-| 私有静态函数 | 模块名_ + 功能描述        | `parser_check_header()`     |
+| 函数类型     | 命名规范             | 示例                     |
+| ------------ | -------------------- | ------------------------ |
+| 公共函数     | 前缀 + 动词/动词短语 | `protocol_parser_init()` |
+| 私有静态函数 | 模块名_ + 功能描述   | `parser_check_header()`  |
 
 ### 变量命名
 
@@ -250,11 +250,11 @@ typedef struct {
   const uint8_t* header;                   /**< 帧头数据 */
   const uint8_t* footer;                   /**< 帧尾数据 */
   uint8_t* output_buffer;                  /**< 输出缓冲区 */
-  
+
   // 回调函数（属于配置，初始化时确定）
   module_get_len_cb_t get_len_cb;          /**< 帧长度计算回调 */
   module_check_cb_t check_cb;              /**< 帧校验回调 */
-  
+
   // 尺寸参数
   uint16_t header_len;                     /**< 帧头长度 */
   uint16_t footer_len;                     /**< 帧尾长度 */
@@ -451,6 +451,96 @@ if (result != MODULE_OK) {
 
 ---
 
+## 内存管理规范
+
+### 动态内存分配必须初始化
+
+**所有动态分配的内存必须立即初始化为零**，未初始化的内存内容是未定义的，可能导致严重问题。
+
+#### 问题示例
+
+```c
+// ❌ 错误：未初始化，可能导致死机
+context_t* ctx = (context_t*)__malloc(sizeof(context_t));
+// ctx->initialized 可能是垃圾值（如 0x5A）
+// ctx->fifo 可能是垃圾指针
+
+module_init(ctx, &config);  // 如果 ctx->initialized 是非零垃圾值，
+                            // module_init 内部可能调用 module_deinit，
+                            // 进而访问垃圾指针 ctx->fifo 导致死机
+```
+
+#### 正确做法
+
+```c
+// ✅ 正确：分配后立即清零
+context_t* ctx = (context_t*)__malloc(sizeof(context_t));
+if (ctx == NULL) {
+  return MODULE_ERROR_MEMORY_ALLOC;
+}
+__memset(ctx, 0, sizeof(context_t));  // 立即清零
+
+// 现在所有成员都是确定的初始值：
+// ctx->initialized = false (0)
+// ctx->fifo = NULL (0)
+// ctx->idle_timer = 0
+```
+
+#### 根因分析
+
+当 `__malloc` 返回的内存未初始化时：
+
+1. `ctx->initialized` 可能是非零垃圾值
+2. `module_init()` 检查到 `ctx->initialized == true`
+3. `module_init()` 调用 `module_deinit(ctx)` 尝试清理
+4. `module_deinit()` 访问垃圾指针 `ctx->fifo`
+5. **访问非法内存 → 程序死机**
+
+#### 规则总结
+
+| 规则             | 说明                                                                |
+| ---------------- | ------------------------------------------------------------------- |
+| 分配后立即初始化 | `__malloc` 后必须紧跟 `__memset(ptr, 0, size)`                      |
+| 检查返回值       | 分配后必须检查是否为 `NULL`                                         |
+| 结构体优先清零   | 所有结构体分配后都应清零，确保指针成员为 `NULL`，布尔成员为 `false` |
+
+#### 代码模板
+
+```c
+/**
+ * @brief 创建模块实例
+ * @param config 配置结构体指针
+ * @return 成功返回实例指针，失败返回NULL
+ */
+module_context_t* module_create(const module_config_t* config) {
+  // 1. 分配内存
+  module_context_t* ctx = (module_context_t*)__malloc(sizeof(module_context_t));
+  if (ctx == NULL) {
+    return NULL;
+  }
+
+  // 2. 立即初始化为零（关键！）
+  __memset(ctx, 0, sizeof(module_context_t));
+
+  // 3. 保存配置
+  ctx->config = *config;
+
+  // 4. 分配其他资源
+  ctx->fifo = kfifo_alloc(config->buffer_size, NULL);
+  if (ctx->fifo == NULL) {
+    __free(ctx);
+    return NULL;
+  }
+
+  // 5. 标记初始化完成
+  ctx->initialized = true;
+
+  return ctx;
+}
+```
+
+---
+
 ## 代码格式规范
 
 ### 缩进
@@ -560,6 +650,7 @@ const uint8_t* module_get_buffer(const module_context_t* ctx);
 - [ ] 使用固定宽度整数类型
 - [ ] 代码格式符合要求（2空格缩进）
 - [ ] 无编译错误和警告
+- [ ] **动态分配的内存已初始化为零**
 
 ---
 

@@ -2,15 +2,42 @@
 // Created by fubingyan on 25-11-27.
 //
 
+/**
+ * @file    can_comm_port.c
+ * @author  fubingyan
+ * @version V2.0.0
+ * @date    2025-04-05
+ * @brief   CAN通信硬件抽象层实现
+ * @attention
+ *
+ * Copyright (c) 2025 Company Name.
+ * All rights reserved.
+ *
+ */
+
+/* Includes ------------------------------------------------------------------*/
 #include "can_comm.h"
 #include "debug/debug.h"
 #include "fdcan.h"
 
+/* Private constants ---------------------------------------------------------*/
+
 #define CAN_SERVER_INFO DEBUG_ERROR
+
+/* Private variables ---------------------------------------------------------*/
 
 static hal_fdcan_context_t fdcan1_ctx;
 static uint8_t fdcan_initialized = 0;
 
+/* Private function prototypes -----------------------------------------------*/
+
+static void ensure_fdcan_initialized(void);
+
+/* Private functions ---------------------------------------------------------*/
+
+/**
+ * @brief 确保FDCAN已初始化
+ */
 static void ensure_fdcan_initialized(void) {
   if (!fdcan_initialized) {
     stm32_fdcan_init_context(&fdcan1_ctx);
@@ -18,6 +45,14 @@ static void ensure_fdcan_initialized(void) {
   }
 }
 
+/* Exported functions --------------------------------------------------------*/
+
+/**
+ * @brief 获取接收FIFO数据量
+ * @param instance CAN实例
+ * @param fifo_address FIFO地址
+ * @return 数据量
+ */
 uint32_t can_comm_get_receive_level(hal_fdcan_instance_t instance,
                                     uint8_t fifo_address) {
   ensure_fdcan_initialized();
@@ -26,6 +61,11 @@ uint32_t can_comm_get_receive_level(hal_fdcan_instance_t instance,
   return level;
 }
 
+/**
+ * @brief 获取发送FIFO空闲量
+ * @param instance CAN实例
+ * @return 空闲量
+ */
 uint32_t can_comm_get_send_level(hal_fdcan_instance_t instance) {
   ensure_fdcan_initialized();
   uint32_t level = 0;
@@ -33,6 +73,12 @@ uint32_t can_comm_get_send_level(hal_fdcan_instance_t instance) {
   return level;
 }
 
+/**
+ * @brief 接收CAN消息
+ * @param instance CAN实例
+ * @param message 消息结构体指针
+ * @return 成功返回true，失败返回false
+ */
 bool can_comm_receive(hal_fdcan_instance_t instance,
                       hal_fdcan_message_t* message) {
   ensure_fdcan_initialized();
@@ -40,6 +86,12 @@ bool can_comm_receive(hal_fdcan_instance_t instance,
   return (ret == HAL_FDCAN_OK);
 }
 
+/**
+ * @brief 发送CAN消息
+ * @param instance CAN实例
+ * @param message 消息结构体指针
+ * @return 成功返回true，失败返回false
+ */
 bool can_comm_send(hal_fdcan_instance_t instance,
                    const hal_fdcan_message_t* message) {
   ensure_fdcan_initialized();
@@ -50,7 +102,7 @@ bool can_comm_send(hal_fdcan_instance_t instance,
 /* ==================== interrupt function ==================== */
 
 /**
- * @brief HAL库CAN回调函数,接收电机数据,并将数据解包后存入相应数组
+ * @brief HAL库CAN回调函数，接收电机数据
  * @param hfdcan CAN句柄指针
  * @param RxFifo0ITs 接收FIFO中断标志
  * @note 在CAN接收中断中调用，处理接收到的数据
@@ -59,20 +111,20 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan,
                                const uint32_t RxFifo0ITs) {
   static hal_fdcan_message_t rx_msg;
 
-  /* 检查是否有新消息 */
   if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
-    /* 从RX FIFO0检索接收消息 */
     while (can_comm_get_receive_level(HAL_FDCAN_INSTANCE_1, 0)) {
       if (can_comm_receive(HAL_FDCAN_INSTANCE_1, &rx_msg)) {
         g_can_stats.total_rx_bytes += rx_msg.data_length;
-        g_can_stats.total_rx_frames++;  // 记得在结构体里加上这个成员
-        /* 遍历接收实例链表，匹配消息ID */
+        g_can_stats.total_rx_frames++;
+
         can_comm_rx_t* current = g_can_comm_rx_list;
         while (current != NULL) {
           if (current->config.instance == HAL_FDCAN_INSTANCE_1 &&
-              current->config.can_rx_identify == rx_msg.id) {
-            /* 将数据存入对应的环形缓冲区 */
-            kfifo_put(current->kfifo_ptr, rx_msg.data, rx_msg.data_length);
+              current->config.can_id == rx_msg.id) {
+            if (current->parser != NULL && current->initialized) {
+              protocol_parser_feed(current->parser, rx_msg.data,
+                                   rx_msg.data_length);
+            }
             break;
           }
           current = current->next;
@@ -93,20 +145,19 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef* hfdcan,
   if ((RxFifo1ITs & FDCAN_IT_RX_FIFO1_NEW_MESSAGE) != RESET) {
     static hal_fdcan_message_t rx_msg;
 
-    /* 从FIFO1读取，分担FIFO0的压力 */
     while (can_comm_get_receive_level(HAL_FDCAN_INSTANCE_1, 1)) {
       if (can_comm_receive(HAL_FDCAN_INSTANCE_1, &rx_msg)) {
-        /* 高优先级消息处理 */
         g_can_stats.total_rx_bytes += rx_msg.data_length;
-        g_can_stats.total_rx_frames++;  // 记得在结构体里加上这个成员
+        g_can_stats.total_rx_frames++;
+
         can_comm_rx_t* current = g_can_comm_rx_list;
         while (current != NULL) {
           if (current->config.instance == HAL_FDCAN_INSTANCE_1 &&
-              current->config.can_rx_identify == rx_msg.id) {
-            kfifo_put(current->kfifo_ptr, rx_msg.data, rx_msg.data_length);
-            // 新增
-            g_can_stats.total_rx_frames++;
-            g_can_stats.total_rx_bytes += rx_msg.data_length;
+              current->config.can_id == rx_msg.id) {
+            if (current->parser != NULL && current->initialized) {
+              protocol_parser_feed(current->parser, rx_msg.data,
+                                   rx_msg.data_length);
+            }
             break;
           }
           current = current->next;
@@ -116,28 +167,30 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef* hfdcan,
   }
 }
 
-void HAL_FDCAN_TxFifoEmptyCallback(FDCAN_HandleTypeDef* hfdcan) {}
+/**
+ * @brief 发送FIFO空中断回调
+ * @param hfdcan CAN句柄指针
+ */
+void HAL_FDCAN_TxFifoEmptyCallback(FDCAN_HandleTypeDef* hfdcan) {
+  (void)hfdcan;
+}
 
 /**
- * @brief  FDCAN 错误状态回调，所有错误中断都会先进这里
- * @param  hfdcan          : 外设句柄
- * @param  ErrorStatusITs  : HAL 汇总来的错误标志位集合
+ * @brief FDCAN错误状态回调
+ * @param hfdcan 外设句柄
+ * @param ErrorStatusITs HAL汇总来的错误标志位集合
  */
 void HAL_FDCAN_ErrorStatusCallback(FDCAN_HandleTypeDef* hfdcan,
                                    uint32_t ErrorStatusITs) {
-  /* 1. 读当前错误计数器 --------------------------------------------------*/
   const uint32_t ecr = hfdcan->Instance->ECR;
   const uint32_t rx_err_cnt = (ecr >> 8) & 0xFFU;
   const uint32_t tx_err_cnt = (ecr >> 0) & 0xFFU;
 
-  /* 3. 逐个解析并处理 -----------------------------------------------------*/
   if (ErrorStatusITs & FDCAN_IT_BUS_OFF) {
     CAN_SERVER_INFO("==> Bus-Off detected!\n");
-
-    /* 一键退出 Bus-Off：先进入 INIT，再清 INIT，硬件自动复位错误计数 */
-    HAL_FDCAN_Stop(hfdcan);                          // 置 INIT + CCE
-    hfdcan->Instance->CCCR &= ~FDCAN_CCCR_INIT_Msk;  // 清 INIT，退出 Bus-Off
-    HAL_FDCAN_Start(hfdcan);                         // 重新参与总线
+    HAL_FDCAN_Stop(hfdcan);
+    hfdcan->Instance->CCCR &= ~FDCAN_CCCR_INIT_Msk;
+    HAL_FDCAN_Start(hfdcan);
     CAN_SERVER_INFO("==> Bus-Off recovered\n");
   }
 
@@ -160,19 +213,19 @@ void HAL_FDCAN_ErrorStatusCallback(FDCAN_HandleTypeDef* hfdcan,
   }
 
   if (ErrorStatusITs & FDCAN_IT_TX_FIFO_EMPTY) {
-    /* 只是示例，可删 */
-    /* 用户想干的事 */
     CAN_SERVER_INFO("->FDCAN_IT_TX_FIFO_EMPTY\n");
   }
 
   if (ErrorStatusITs & FDCAN_IT_RX_FIFO0_FULL) {
+    (void)0;
   }
   if (ErrorStatusITs & FDCAN_IT_RX_FIFO1_FULL) {
+    (void)0;
   }
-  // 定期清除错误计数器
+
   static uint32_t last_clear = 0;
   if (HAL_GetTick() - last_clear > 1000) {
-    hfdcan->Instance->ECR = 0;  // 清除错误状态
+    hfdcan->Instance->ECR = 0;
     last_clear = HAL_GetTick();
   }
 }
