@@ -6,7 +6,7 @@
 #define KEY_FUNCTION_H
 
 #include "fsm/fsm.h"
-#include "keybase/key_base.h"
+#include "key_base/key_base.h"
 #include "stdbool.h"
 #include "stdint.h"
 

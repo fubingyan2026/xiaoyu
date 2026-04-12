@@ -82,10 +82,11 @@ uint32_t can_save_id = 0; /**< 保存的CAN ID (flash_task.c引用) */
 
 /* ==================== 静态变量 ==================== */
 
-static key_fsm_ctx_t s_key_fsm_ctx;         /**< 全局按键 FSM 上下文 */
-static led_handle_t* s_led_instance = NULL; /**< LED实例 */
-static key_base_t* s_key0_instance = NULL;  /**< 按键0实例 */
-static const char* s_key_event_names[KEY_EVENT_MAX] = KEY_EVENT_NAME_TABLE;
+static key_fsm_ctx_t s_key_fsm_ctx;                /**< 全局按键 FSM 上下文 */
+static led_handle_t* s_led_instance = NULL;        /**< LED实例 */
+static key_base_context_t* s_key0_instance = NULL; /**< 按键0实例 */
+static const char* s_key_event_names[KEY_BASE_EVENT_MAX] =
+    KEY_BASE_EVENT_NAME_TABLE;
 static const char* state_names[] = {"KEY_FSM_STATE_NONE", "KEY_FSM_STATE_WAIT",
                                     "KEY_FSM_STATE_CONFIRM"};
 static hal_gpio_context_t gpio_ctx;
@@ -96,8 +97,8 @@ static void handle_motor_control(uint8_t value);
 static void handle_save_can_id(uint8_t value);
 static void handle_erase_flash(uint8_t value);
 static uint8_t read_key_pin_level(void);
-static key_event_e on_key_event_callback(const key_event_e event,
-                                         const void* key_event);
+static key_base_event_t on_key_event_callback(key_base_event_t event,
+                                              const void* context);
 static inline void configure_led_blink(uint16_t interval_ms, uint16_t wait_ms,
                                        uint16_t counts);
 /* ==================== 命令表 ==================== */
@@ -240,54 +241,54 @@ static void handle_long_hold(void) {
 /**
  * @brief 按键事件回调函数
  * @param event 当前的按键事件类型
- * @param key_event 指向按键实例的指针
+ * @param context 指向按键上下文的指针
  * @return 返回处理后的按键事件类型
  */
-static key_event_e on_key_event_callback(const key_event_e event,
-                                         const void* key_event) {
-  const key_base_t* key_ptr = key_event;
+static key_base_event_t on_key_event_callback(key_base_event_t event,
+                                              const void* context) {
+  const key_base_context_t* key_ptr = context;
 
   KEY_FUNC_PRINTF("%s:%s,%d!", key_ptr->config.name,
-                  s_key_event_names[key_ptr->data.keyEvent],
-                  key_ptr->data.keyBatterCounts);
+                  s_key_event_names[key_ptr->data.key_event],
+                  key_ptr->data.batter_counts);
 
   if (key_ptr != s_key0_instance) {
-    return key_ptr->data.keyEvent;
+    return key_ptr->data.key_event;
   }
 
   switch (event) {
-    case LONG_WAIT_PRESS:
+    case KEY_BASE_EVENT_LONG_WAIT_PRESS:
       increment_value_in_set_state();
       break;
 
-    case LONG_HOLD:
+    case KEY_BASE_EVENT_LONG_HOLD:
       handle_long_hold();
       break;
 
-    case CLICK:
+    case KEY_BASE_EVENT_CLICK:
       increment_value_in_set_state();
       break;
 
-    case ONE_CLICK:
+    case KEY_BASE_EVENT_ONE_CLICK:
       set_command_in_none_state(CMD_TYPE_MOTOR_CONTROL);
       break;
 
-    case DOUBLE_CLICK:
+    case KEY_BASE_EVENT_DOUBLE_CLICK:
       set_command_in_none_state(CMD_TYPE_SAVE_CAN_ID);
       break;
 
-    case TRIPLE_CLICK:
+    case KEY_BASE_EVENT_TRIPLE_CLICK:
       break;
 
-    case DOWN:
-    case LONG_HOLD_RELEASE:
-    case REPEAT_CLICK:
-    case COMBINATION_EVENT:
+    case KEY_BASE_EVENT_DOWN:
+    case KEY_BASE_EVENT_LONG_HOLD_RELEASE:
+    case KEY_BASE_EVENT_REPEAT_CLICK:
+    case KEY_BASE_EVENT_COMBINATION:
     default:
       break;
   }
 
-  return key_ptr->data.keyEvent;
+  return key_ptr->data.key_event;
 }
 
 /* ==================== LED回调函数 ==================== */
@@ -342,9 +343,9 @@ static void on_led_state_change(led_handle_t* instance, led_state_t new_state,
 
   if (is_in_state(KEY_FSM_STATE_NONE) && new_state == LED_STATE_OFF) {
     KEY_FUNC_PRINTF("[LED] GPIO Release (LED wait)");
-    // configure_led_blink(LED_BLINK_INTERVAL_SLOW_MS, LED_BLINK_WAIT_MS,
-    //                     can_save_id);
-    led_set_state(s_led_instance, LED_STATE_BREATHING);
+    configure_led_blink(LED_BLINK_INTERVAL_SLOW_MS, LED_BLINK_WAIT_MS,
+                        can_save_id);
+    // led_set_state(s_led_instance, LED_STATE_BREATHING);
   }
 }
 
@@ -504,12 +505,13 @@ hal_gpio_config_t key0_gpio_cfg = {
 /**
  * @brief 按键默认配置
  */
-static const key_config_t s_key0_default_config = {
+static const key_base_config_t s_key0_default_config = {
     .name = "key0",
-    .ReadKeyPinLevel = read_key_pin_level,
-    .OnBasicCallback = on_key_event_callback,
-    .longPressTimeMS = KEY_LONG_PRESS_TIME_MS,
-    .multiClickTimeMS = KEY_MULTI_CLICK_TIME_MS,
+    .read_pin_cb = read_key_pin_level,
+    .event_callback = on_key_event_callback,
+    .get_time_cb = millis,
+    .long_press_time_ms = KEY_LONG_PRESS_TIME_MS,
+    .multi_click_time_ms = KEY_MULTI_CLICK_TIME_MS,
 };
 
 /* ==================== 公共接口 ==================== */
@@ -521,7 +523,7 @@ void key_func_init(void) {
   stm32_gpio_init_context(&gpio_ctx);
   hal_gpio_init(&gpio_ctx, &key0_gpio_cfg);
   /* 注册按键 */
-  KeyBaseRegister((key_config_t*)&s_key0_default_config, &s_key0_instance);
+  key_base_register(&s_key0_default_config, &s_key0_instance);
   DEBUG_ASSERT(s_key0_instance);
 
   /* 初始化 LED 子系统 */

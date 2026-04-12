@@ -73,7 +73,7 @@ void timer_ledTask_timeout_callback(tk_timer_t* timer) {
 
   key_func_task();
   warning_task();
-  KeyBaseTask();
+  key_base_task();
   uart_process_task();
   daemon_task();
 }

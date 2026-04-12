@@ -10,7 +10,7 @@
 #include "controller/gimbal_pid.h"
 #include "controller/pid.h"
 #include "daemon.h"
-#include "keybase/key_base.h"
+#include "key_base/key_base.h"
 #include "kfifo/kfifo.h"
 #include "led.h"
 #include "memory_pool/memory_pool.h"

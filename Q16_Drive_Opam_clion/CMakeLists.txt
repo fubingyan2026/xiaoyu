@@ -57,9 +57,12 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/daemon DAEMON)
 aux_source_directory(${CMAKE_SOURCE_DIR}/message_center MESSAGE_CENTER)
 
 # common目录下的所有子目录 (手动处理fsm以排除示例文件)
-foreach(subdir algorithm controller crc encoder keybase kfifo memory_pool toolkit)
+foreach(subdir algorithm controller crc encoder kfifo memory_pool toolkit)
     aux_source_directory(${CMAKE_SOURCE_DIR}/../common/${subdir} COMMON_${subdir})
 endforeach()
+
+# 本地模块目录
+aux_source_directory(${CMAKE_SOURCE_DIR}/modules/key_base KEY_BASE)
 
 # 本地can_comm目录
 aux_source_directory(${CMAKE_SOURCE_DIR}/can_comm CAN_COMM)
@@ -78,12 +81,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${FOC}
         ${PROTOCOL_PARSER}
         ${DAEMON}
+        ${KEY_BASE}
         ${COMMON_algorithm}
         ${CAN_COMM}
         ${COMMON_controller}
         ${COMMON_crc}
         ${COMMON_encoder}
-        ${COMMON_keybase}
         ${COMMON_kfifo}
         ${COMMON_lwmem}
         ${COMMON_lwshell}
@@ -117,6 +120,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         daemon
         message_center
         debug
+        modules
         ../common
         ../common/CmBacktrace/cm_backtrace
         ../common/SEGGER_RTT/RTT/config

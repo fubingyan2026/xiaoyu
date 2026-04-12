@@ -413,11 +413,6 @@ static debug_error_t debug_format_output(debug_level_t level, const char* tag,
 
   offset += snprintf(buf + offset, buf_size - offset, ") %s: ", tag);
 
-  if (s_config.enable_color) {
-    offset +=
-        snprintf(buf + offset, buf_size - offset, "%s", DEBUG_COLOR_RESET);
-  }
-
   int msg_len = vsnprintf(buf + offset, buf_size - offset, fmt, args);
   if (msg_len < 0) {
     return DEBUG_ERROR_INVALID_PARAM;
@@ -426,6 +421,10 @@ static debug_error_t debug_format_output(debug_level_t level, const char* tag,
   offset += msg_len;
   if (offset >= buf_size) {
     offset = buf_size - 1;
+  }
+
+  if (s_config.enable_color) {
+    offset += snprintf(buf + offset, buf_size - offset, "%s", DEBUG_COLOR_RESET);
   }
 
   offset += snprintf(buf + offset, buf_size - offset, "\r\n");
