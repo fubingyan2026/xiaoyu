@@ -47,6 +47,20 @@ static unsigned int min(const unsigned int a, const unsigned int b) {
   return a < b ? a : b;
 }
 
+/** 初始化kfifo（静态分配内存）
+ * @param fifo kfifo指针
+ * @param buffer 缓冲区指针
+ * @param size 缓冲区大小
+ * @param lock 自旋锁指针
+ */
+void kfifo_init_static(kfifo_t* fifo, unsigned char* buffer, unsigned int size,
+                       uint32_t* lock) {
+  fifo->buffer = buffer;
+  fifo->size = size;
+  fifo->in = fifo->out = 0;
+  fifo->lock = lock;
+}
+
 /** 初始化kfifo
  * @param buffer 缓冲区指针
  * @param size 缓冲区大小
@@ -66,10 +80,7 @@ kfifo_t* kfifo_init(unsigned char* buffer, const unsigned int size,
     return NULL;
   }
   /* 初始化kfifo成员 */
-  fifo->buffer = buffer;
-  fifo->size = size;
-  fifo->in = fifo->out = 0;
-  fifo->lock = lock;
+  kfifo_init_static(fifo, buffer, size, lock);
   return fifo;
 }
 

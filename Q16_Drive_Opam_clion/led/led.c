@@ -252,6 +252,12 @@ static void led_fsm_on_entry(fsm_context_t* ctx, fsm_state_t state) {
       handle->breath_cycle = 0;
       handle->last_breath_time = now;
       if (handle->pwm_init_flag) {
+        hal_tim_pwm_error_t err_stop = hal_tim_pwm_stop(
+            &tim_pwm_ctx, handle->config.pwm_cfg.timer_instance,
+            handle->config.pwm_cfg.channel);
+        if (err_stop != HAL_TIM_PWM_OK) {
+          LED_PRINTF("PWM 停止失败: %d", err_stop);
+        }
         hal_tim_pwm_error_t err_duty = hal_tim_pwm_set_duty_cycle(
             &tim_pwm_ctx, handle->config.pwm_cfg.timer_instance,
             handle->config.pwm_cfg.channel, handle->breath_value);
@@ -264,6 +270,14 @@ static void led_fsm_on_entry(fsm_context_t* ctx, fsm_state_t state) {
           LED_PRINTF("PWM 配置复用失败: %d", err_alternate);
         } else {
           LED_PRINTF("PWM GPIO配置复用成功");
+        }
+        hal_tim_pwm_error_t err_start = hal_tim_pwm_start(
+            &tim_pwm_ctx, handle->config.pwm_cfg.timer_instance,
+            handle->config.pwm_cfg.channel);
+        if (err_start != HAL_TIM_PWM_OK) {
+          LED_PRINTF("PWM 启动失败: %d", err_start);
+        } else {
+          LED_PRINTF("PWM 启动成功");
         }
       }
       break;

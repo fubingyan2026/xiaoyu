@@ -99,11 +99,7 @@ debug_error_t debug_init(const debug_config_t* config) {
     s_config.name = config->name;
   }
 
-  s_tx_fifo.buffer = s_config.tx_buffer;
-  s_tx_fifo.size = s_config.tx_buffer_size;
-  s_tx_fifo.in = 0;
-  s_tx_fifo.out = 0;
-  s_tx_fifo.lock = NULL;
+  kfifo_init_static(&s_tx_fifo, s_config.tx_buffer, s_config.tx_buffer_size, NULL);
   s_tx_fifo_ptr = &s_tx_fifo;
 
   s_initialized = true;

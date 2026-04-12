@@ -103,7 +103,7 @@ int main(void) {
   MX_SPI3_Init();
   MX_TIM6_Init();
   MX_ADC2_Init();
-  // MX_TIM17_Init();
+  MX_TIM17_Init();
   /* USER CODE BEGIN 2 */
   AppInit();
   /* USER CODE END 2 */
