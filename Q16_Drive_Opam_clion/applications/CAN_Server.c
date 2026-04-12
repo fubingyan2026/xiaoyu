@@ -14,13 +14,13 @@
 #include "app.h"
 #include "can_comm.h"
 #include "daemon.h"
-#include "debug/debug.h"
+#include "debug.h"
 #include "foc_ctrl_q16.h"
 #include "key_menu.h"
 #include "kfifo/kfifo.h"
 #include "perf_counter.h"
 #include "stm32g4xx_hal_fdcan.h"
-#define CAN_SERVER_INFO(...)  // DEBUG_WARN(__VA_ARGS__)
+#define CAN_SERVER_INFO(...)  // DEBUG_LOGW("can_srv", __VA_ARGS__)
 
 #define FIRMWARE_UPDATE_MAGIC_WORD \
   0xA5A5A5A5 /* 固件需要更新的特殊标记（不建议修改，一定要和 APP 一致） */
@@ -146,11 +146,11 @@ static void daemon_can_rx_offline_callback(void* rx) {
     return;
   }
   if (!daemon_is_online(this_ptr->daemon)) {
-    DEBUG_ERROR("%s: offline,frequent:%d\n", this_ptr->config.name,
+    DEBUG_LOGE("can_srv", "%s: offline,frequent:%d", this_ptr->config.name,
                 (int)this_ptr->daemon->feed_frequency);
     g_can_stats.timeout_errors++;
   } else {
-    DEBUG_INFO("%s: online,frequent:%d\n", this_ptr->config.name,
+    DEBUG_LOGI("can_srv", "%s: online,frequent:%d", this_ptr->config.name,
                (int)this_ptr->daemon->feed_frequency);
   }
 }
@@ -170,7 +170,7 @@ void CANCommInit(void) {
       .priority = 1,
   };
   can_comm_rx_master_instance = can_comm_rx_register(&can_rx_config);
-  ASSERT(can_comm_rx_master_instance);
+  DEBUG_ASSERT(can_comm_rx_master_instance);
 
   const can_comm_tx_config_t can_tx_config = {
       .instance = HAL_FDCAN_INSTANCE_1,
@@ -180,7 +180,7 @@ void CANCommInit(void) {
       .priority = 2,
   };
   can_comm_tx_sliver_instance = can_comm_tx_register(&can_tx_config);
-  ASSERT(can_comm_tx_sliver_instance);
+  DEBUG_ASSERT(can_comm_tx_sliver_instance);
 }
 
 void FDCAN_Server_Task(void) {

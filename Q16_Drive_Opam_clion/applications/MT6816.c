@@ -12,7 +12,7 @@
 #include "MT6816.h"
 
 #include "daemon.h"
-#include "debug/debug.h"
+#include "debug.h"
 
 MT6816_SPI_Signal_Typedef mt6816_spi = {0};
 MT6816_Typedef mt6816 = {0};
@@ -44,7 +44,7 @@ void MT6816_Init(void) {
       .init_wait_time_ms = 1500,
   };
   daemon_encoder = daemon_register(&daemon_config_encoder);
-  ASSERT(daemon_encoder);
+  DEBUG_ASSERT(daemon_encoder);
 }
 
 /**

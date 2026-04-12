@@ -12,7 +12,7 @@
 #include "WS2812_SPI.h"
 
 #include "bsp_delay.h"
-#include "debug/debug.h"
+#include "debug.h"
 #include "memory_pool/memory_pool.h"
 #include "message_center.h"
 #include "spi.h"
@@ -72,11 +72,11 @@ void WS2812_SPI_Init(void) {
   // 注册发布者
   message_center_error_t err =
       message_center_publisher_register(&pub_ws2812, config);
-  ASSERT(err == MESSAGE_CENTER_OK);
+  DEBUG_ASSERT(err == MESSAGE_CENTER_OK);
 
   // 注册订阅者
   err = message_center_subscriber_register(pub_ws2812, &sub_ws2812);
-  ASSERT(err == MESSAGE_CENTER_OK);
+  DEBUG_ASSERT(err == MESSAGE_CENTER_OK);
 }
 
 /**

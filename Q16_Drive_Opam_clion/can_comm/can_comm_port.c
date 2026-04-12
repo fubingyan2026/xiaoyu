@@ -17,12 +17,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "can_comm.h"
-#include "debug/debug.h"
+#include "debug.h"
 #include "fdcan.h"
 
 /* Private constants ---------------------------------------------------------*/
 
-#define CAN_SERVER_INFO DEBUG_ERROR
+#define CAN_SERVER_INFO(fmt, ...) DEBUG_LOGI("can", fmt, ##__VA_ARGS__)
 
 /* Private variables ---------------------------------------------------------*/
 

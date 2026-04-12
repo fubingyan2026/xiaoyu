@@ -8,7 +8,7 @@
  */
 #include "foc_ctrl_q16.h" // FOC控制器头文件
 #include "bsp_delay.h"
-#include "debug/debug.h"
+#include "debug.h"
 #include "foc_port.h" // FOC端口适配层头文件
 #include "foc_port.h"
 #include "foc_sensor.h" // FOC传感器抽象层

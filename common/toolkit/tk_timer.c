@@ -170,7 +170,7 @@ bool tk_timer_delete(struct tk_timer* timer)
     TK_ASSERT(timer);
     if (tk_timer_detach(timer) == true)
     {
-        free(timer);
+        __free(timer);
         return true;
     }
     return false;

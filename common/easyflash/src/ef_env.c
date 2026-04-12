@@ -536,13 +536,13 @@ static EfErrCode read_env(env_node_obj_t env)
         env->len = ENV_HDR_DATA_SIZE;
         if (env->status != ENV_ERR_HDR) {
             env->status = ENV_ERR_HDR;
-            EF_DEBUG("Error: The ENV @0x%08X length has an error.\n", env->addr.start);
+            EF_DEBUG("Error: The ENV @0x%08X length has an error.", env->addr.start);
             write_status(env->addr.start, env_hdr.status_table, ENV_STATUS_NUM, ENV_ERR_HDR);
         }
         env->crc_is_ok = false;
         return EF_READ_ERR;
     } else if (env->len > SECTOR_SIZE - SECTOR_HDR_DATA_SIZE && env->len < ENV_AREA_SIZE) {
-        //TODO ��������ģʽ������д�볤��û��д������
+        //TODO 读取ENV时，ENV长度大于扇区大小，且小于ENV区域大小，说明ENV被截断
         EF_ASSERT(0);
     }
 
@@ -1056,7 +1056,7 @@ static uint32_t alloc_env(sector_meta_data_t sector, size_t env_size)
             sector_iterator(sector, SECTOR_STORE_EMPTY, &env_size, &empty_env, alloc_env_cb, true);
         } else {
             /* no space for new ENV now will GC and retry */
-            EF_DEBUG("Trigger a GC check after alloc ENV failed.\n");
+            EF_DEBUG("Trigger a GC check after alloc ENV failed.");
             gc_request = true;
         }
     }
@@ -1082,7 +1082,7 @@ static EfErrCode del_env(const char *key, env_node_obj_t old_env, bool complete_
         if (find_env(key, &env)) {
             old_env = &env;
         } else {
-            EF_DEBUG("Not found '%s' in ENV.\n", key);
+            EF_DEBUG("Not found '%s' in ENV.", key);
             return EF_ENV_NAME_ERR;
         }
     }
@@ -1177,7 +1177,7 @@ static EfErrCode move_env(env_node_obj_t env)
 #endif /* EF_ENV_USING_CACHE */
     }
 
-    EF_DEBUG("Moved the ENV (%.*s) from 0x%08X to 0x%08X.\n", env->name_len, env->name, env->addr.start, env_addr);
+    EF_DEBUG("Moved the ENV (%.*s) from 0x%08X to 0x%08X.", env->name_len, env->name, env->addr.start, env_addr);
 
 __exit:
     del_env(NULL, env, true);
@@ -1193,7 +1193,7 @@ static uint32_t new_env(sector_meta_data_t sector, size_t env_size)
 __retry:
 
     if ((empty_env = alloc_env(sector, env_size)) == FAILED_ADDR && gc_request && !already_gc) {
-        EF_DEBUG("Warning: Alloc an ENV (size %d) failed when new ENV. Now will GC then retry.\n", env_size);
+        EF_DEBUG("Warning: Alloc an ENV (size %d) failed when new ENV. Now will GC then retry.", env_size);
         gc_collect();
         already_gc = true;
         goto __retry;
@@ -1236,12 +1236,12 @@ static bool do_gc(sector_meta_data_t sector, void *arg1, void *arg2)
             if (env.crc_is_ok && (env.status == ENV_WRITE || env.status == ENV_PRE_DELETE)) {
                 /* move the ENV to new space */
                 if (move_env(&env) != EF_NO_ERR) {
-                    EF_DEBUG("Error: Moved the ENV (%.*s) for GC failed.\n", env.name_len, env.name);
+                    EF_DEBUG("Error: Moved the ENV (%.*s) for GC failed.", env.name_len, env.name);
                 }
             }
         }
         format_sector(sector->addr, SECTOR_NOT_COMBINED);
-        EF_DEBUG("Collect a sector @0x%08X\n", sector->addr);
+        EF_DEBUG("Collect a sector @0x%08X success.", sector->addr);
     }
 
     return false;
@@ -1261,7 +1261,7 @@ static void gc_collect(void)
     sector_iterator(&sector, SECTOR_STORE_EMPTY, &empty_sec, NULL, gc_check_cb, false);
 
     /* do GC collect */
-    EF_DEBUG("The remain empty sector is %d, GC threshold is %d.\n", empty_sec, EF_GC_EMPTY_SEC_THRESHOLD);
+    EF_DEBUG("The remain empty sector is %d, GC threshold is %d.", empty_sec, EF_GC_EMPTY_SEC_THRESHOLD);
     if (empty_sec <= EF_GC_EMPTY_SEC_THRESHOLD) {
         sector_iterator(&sector, SECTOR_STORE_UNUSED, NULL, NULL, do_gc, false);
     }
@@ -1369,7 +1369,7 @@ static EfErrCode create_env_blob(sector_meta_data_t sector, const char *key, con
         }
         /* trigger GC collect when current sector is full */
         if (result == EF_NO_ERR && is_full) {
-            EF_DEBUG("Trigger a GC check after created ENV.\n");
+            EF_DEBUG("Trigger a GC check after created ENV.");
             gc_request = true;
         }
     } else {
@@ -1615,7 +1615,6 @@ __reload:
             } else if (!value_is_str) {
                 ef_print("blob @0x%08X %dbytes", env->addr.value, env->value_len);
             }
-            ef_print("\n");
         }
     }
 
@@ -1640,7 +1639,7 @@ void ef_print_env(void)
     ef_port_env_lock();
 
     env_iterator(&env, &using_size, NULL, print_env_cb);
-    ef_print("size: %lu/%lu bytes.\n", using_size + (SECTOR_NUM - EF_GC_EMPTY_SEC_THRESHOLD) * SECTOR_HDR_DATA_SIZE,
+    ef_print("size: %lu/%lu bytes.", using_size + (SECTOR_NUM - EF_GC_EMPTY_SEC_THRESHOLD) * SECTOR_HDR_DATA_SIZE,
             ENV_AREA_SIZE - SECTOR_SIZE * EF_GC_EMPTY_SEC_THRESHOLD);
 
     /* unlock the ENV cache */
@@ -1661,7 +1660,7 @@ static void env_auto_update(void)
             struct env_node_obj env;
             size_t i, value_len;
             struct sector_meta_data sector;
-            EF_DEBUG("Update the ENV from version %d to %d.\n", saved_ver_num, setting_ver_num);
+            EF_DEBUG("Update the ENV from version %d to %d.", saved_ver_num, setting_ver_num);
             for (i = 0; i < default_env_set_size; i++) {
                 /* add a new ENV when it's not found */
                 if (!find_env(default_env_set[i].key, &env)) {
@@ -1718,15 +1717,15 @@ static bool check_and_recovery_env_cb(env_node_obj_t env, void *arg1, void *arg2
         EF_INFO("Found an ENV (%.*s) which has changed value failed. Now will recovery it.\n", env->name_len, env->name);
         /* recovery the old ENV */
         if (move_env(env) == EF_NO_ERR) {
-            EF_DEBUG("Recovery the ENV successful.\n");
+            EF_DEBUG("Recovery the ENV successful.");
         } else {
-            EF_DEBUG("Warning: Moved an ENV (size %d) failed when recovery. Now will GC then retry.\n", env->len);
+            EF_DEBUG("Warning: Moved an ENV (size %d) failed when recovery. Now will GC then retry.", env->len);    
             return true;
         }
     } else if (env->status == ENV_PRE_WRITE) {
         uint8_t status_table[ENV_STATUS_TABLE_SIZE];
         /* the ENV has not write finish, change the status to error */
-        //TODO �����쳣������״̬װ��ͼ
+        //TODO: add error status to ENV header
         write_status(env->addr.start, status_table, ENV_STATUS_NUM, ENV_ERR_HDR);
         return true;
     }
@@ -1817,7 +1816,7 @@ EfErrCode ef_env_init(ef_env const *default_env, size_t default_env_size) {
     default_env_set = default_env;
     default_env_set_size = default_env_size;
 
-    EF_DEBUG("ENV start address is 0x%08X, size is %d bytes.\n", EF_START_ADDR, ENV_AREA_SIZE);
+    EF_DEBUG("ENV start address is 0x%08X, size is %d bytes.", EF_START_ADDR, ENV_AREA_SIZE);
 
     result = ef_load_env();
 

@@ -34,14 +34,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "memory_pool/memory_pool.h"
-#include "debug/debug.h"
+#include "debug.h"
 #include <toolkit/toolkit_cfg.h>
 
 #define TK_SW_VERSION    "1.0.6"
 
 /* toolkit general */
 #ifdef TOOLKIT_USING_ASSERT
-#define TK_DEBUG(...) BSP_Printf(__VA_ARGS__)
+#define TK_DEBUG(...) DEBUG_LOGI("TK_DEBUG:",__VA_ARGS__)
 #define TK_ASSERT(EXPR)                                                   \
     if (!(EXPR))                                                          \
     {                                                                     \

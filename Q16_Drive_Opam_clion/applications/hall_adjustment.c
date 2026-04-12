@@ -9,7 +9,7 @@
 #include "algorithm/maths.h"
 #include "algorithm/utils_math.h"
 #include "daemon.h"
-#include "debug/debug.h"
+#include "debug.h"
 #include "easyflash.h"
 #include "encoder/line_hall_pll.h"
 #include "flash_task.h"
@@ -160,7 +160,7 @@ static void HALL_Adjust_Init(void) {
 
   hall_pll_init(&hall_pll);
   daemon_get_encoder = daemon_get_instance("encoder");
-  ASSERT(daemon_get_encoder);
+  DEBUG_ASSERT(daemon_get_encoder);
 }
 
 static void hall_filter_init(pt1Filter_t* filter, const uint16_t f_cut,

@@ -9,7 +9,7 @@
 
 #include <string.h>
 
-#include "debug/debug.h"
+#include "debug.h"
 #include "easyflash.h"
 
 #define FLASH_TASK_TOPIC_NAME "FlashTask"  ///< 任务话题名称
@@ -36,38 +36,26 @@ const ef_env default_env_set[] = {
  */
 static void task_write_cali(void* data, size_t size) {
   ef_set_env_blob(FLASH_MAGIC_ENCODER, data, size);
-  DEBUG_INFO("[FlashTask] 编码器校准写入");
+  DEBUG_LOGI("flash", "编码器校准写入");
 }
 
-/**
- * @brief 写入霍尔参数任务处理
- */
 static void task_write_hall(void* data, size_t size) {
-  /* TODO: 实现霍尔参数写入 */
   ef_set_env_blob(FLASH_MAGIC_HALL, data, size);
-
-  DEBUG_INFO("[FlashTask] 霍尔参数写入");
+  DEBUG_LOGI("flash", "霍尔参数写入");
 }
 
-/**
- * @brief 写入CAN-ID任务处理
- */
 static void task_write_can(void* data, size_t size) {
   ef_set_env_blob(FLASH_MAGIC_CAN, data, size);
-  DEBUG_INFO("[FlashTask] CAN ID 写入为: %d", *(int*)data);
+  DEBUG_LOGI("flash", "CAN ID 写入为: %d", *(int*)data);
 }
 
-/**
- * @brief 擦除所有数据任务处理
- */
 static void task_erase_all(void* data, size_t size) {
-  g_motor_flash_cfg = (motor_flash_config_t){0};  // 或具体的默认值
+  g_motor_flash_cfg = (motor_flash_config_t){0};
   can_save_id = 0;
   hall_save_param = (hall_save_param_t){0};
 
   ef_env_set_default();
-  /* TODO: 实现擦除所有 */
-  DEBUG_INFO("[FlashTask] 擦除所有数据");
+  DEBUG_LOGI("flash", "擦除所有数据");
 }
 
 /* 任务处理函数表 */
@@ -95,7 +83,7 @@ int flash_task_init(void) {
   message_center_error_t err =
       message_center_publisher_register(&g_flash_task_publisher, config);
   if (err != MESSAGE_CENTER_OK) {
-    DEBUG_ERROR("[FlashTask] 发布者注册失败: %d", err);
+    DEBUG_LOGE("flash", "发布者注册失败: %d", err);
     return -1;
   }
   g_flash_task_mgr.publisher = g_flash_task_publisher;
@@ -104,7 +92,7 @@ int flash_task_init(void) {
   err = message_center_subscriber_register(g_flash_task_publisher,
                                            &g_flash_task_subscriber);
   if (err != MESSAGE_CENTER_OK) {
-    DEBUG_ERROR("[FlashTask] 订阅者注册失败: %d", err);
+    DEBUG_LOGE("flash", "订阅者注册失败: %d", err);
     message_center_unregister(g_flash_task_publisher);
     return -1;
   }
@@ -113,7 +101,7 @@ int flash_task_init(void) {
   g_flash_task_mgr.idle_threshold = FLASH_TASK_IDLE_THRESHOLD;
   g_flash_task_mgr.pending_count = 0;
 
-  DEBUG_INFO("[FlashTask] 初始化成功");
+  DEBUG_LOGI("flash", "初始化成功");
   return 0;
 }
 
@@ -136,12 +124,12 @@ void flash_task_request(flash_task_type_t type, void* data, size_t size) {
       (message_center_publisher_t*)g_flash_task_mgr.publisher, &req);
 
   if (subs_count == 0) {
-    DEBUG_WARN("[FlashTask] 发布消息失败, 类型: %d", type);
+    DEBUG_LOGW("flash", "发布消息失败, 类型: %d", type);
     return;
   }
 
   g_flash_task_mgr.pending_count = flash_task_get_pending_count();
-  DEBUG_DEBUG("[FlashTask] 任务已加入队列, 类型: %d, 待处理: %lu", type,
+  DEBUG_LOGD("flash", "任务已加入队列, 类型: %d, 待处理: %lu", type,
               g_flash_task_mgr.pending_count);
 }
 
@@ -167,16 +155,15 @@ void flash_task_process(void) {
   // }
 
   if (req.type < FLASH_TASK_COUNT && task_handler[req.type] != NULL) {
-    DEBUG_DEBUG("[FlashTask] 执行任务类型: %d", req.type);
+    DEBUG_LOGD("flash", "执行任务类型: %d", req.type);
 
-    /* 关中断执行Flash写入 */
     __disable_irq();
     task_handler[req.type](req.data, req.size);
     __enable_irq();
 
-    DEBUG_DEBUG("[FlashTask] 任务 %d 完成", req.type);
+    DEBUG_LOGD("flash", "任务 %d 完成", req.type);
   } else {
-    DEBUG_WARN("[FlashTask] 未知任务类型: %d", req.type);
+    DEBUG_LOGW("flash", "未知任务类型: %d", req.type);
   }
 
   g_flash_task_mgr.pending_count = flash_task_get_pending_count();
@@ -213,5 +200,5 @@ void flash_task_destroy(void) {
     g_flash_task_mgr.publisher = NULL;
     g_flash_task_mgr.subscriber = NULL;
   }
-  DEBUG_INFO("[FlashTask] 已销毁");
+  DEBUG_LOGI("flash", "已销毁");
 }

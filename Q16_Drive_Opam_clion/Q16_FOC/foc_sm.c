@@ -13,11 +13,12 @@
  */
 
 #include "foc_sm.h"
-#include "debug/debug.h"
+#include "debug.h"
 #include "encoder_alignment.h"
 #include "flash_task.h"
 #include "foc_port.h"
 #include "hall_adjustment.h"
+#include "stdlib.h"
 
 static foc_sm_context_t g_foc_sm = {0};
 
@@ -56,7 +57,7 @@ static void foc_entry_logic(foc_sm_context_t *ctx, foc_sm_state_e state)
         break;
     }
 
-    DEBUG_DEBUG("状态机进入:%s", foc_sm_state_to_string(state));
+    DEBUG_LOGD("foc_sm", "状态机进入:%s", foc_sm_state_to_string(state));
 }
 
 /**
@@ -83,7 +84,7 @@ static void fsm_exit_adapter(fsm_context_t *ctx, fsm_state_t state)
 {
     foc_sm_context_t *foc_ctx = (foc_sm_context_t *)ctx;
 
-    DEBUG_DEBUG("状态机退出:%s", foc_sm_state_to_string(state));
+    DEBUG_LOGD("foc_sm", "状态机退出:%s", foc_sm_state_to_string(state));
 
     /* 调用用户退出回调（如果设置了） */
     if (foc_ctx->on_exit != NULL)
@@ -196,7 +197,7 @@ static fsm_state_t handler_alignment(fsm_context_t *ctx)
                     (foc_ctx->cali_ctx.capture_idx <= (int16_t)g_encoder_calib.total_steps) && (flash_data != NULL))
                 {
                     flash_data->angle_map[foc_ctx->cali_ctx.capture_idx] = ctrl->raw_angle_q;
-                    DEBUG_INFO("正向校准数据缓存到flash:%d", foc_ctx->cali_ctx.capture_idx);
+                    DEBUG_LOGI("foc_sm", "正向校准数据缓存到flash:%d", foc_ctx->cali_ctx.capture_idx);
                 }
 
                 if (ctrl->electrical_angle_q >= threshold)
@@ -275,7 +276,7 @@ static fsm_state_t handler_alignment(fsm_context_t *ctx)
                     flash_data->angle_map[foc_ctx->cali_ctx.capture_idx] =
                         cycle_average(flash_data->angle_map[foc_ctx->cali_ctx.capture_idx], ctrl->raw_angle_q,
                                       g_encoder_calib.encoder_lines);
-                    DEBUG_INFO("反向平均数据缓存到flash:%d", foc_ctx->cali_ctx.capture_idx);
+                    DEBUG_LOGI("foc_sm", "反向平均数据缓存到flash:%d", foc_ctx->cali_ctx.capture_idx);
                 }
 
                 if (foc_ctx->cali_ctx.capture_idx <= -(int16_t)FOC_SM_CALI_STEPS_EXTRA)
@@ -309,7 +310,7 @@ static fsm_state_t handler_alignment(fsm_context_t *ctx)
                 }
             }
 
-            DEBUG_INFO("编码器方向:%d", g_encoder_calib.direction);
+            DEBUG_LOGI("foc_sm", "编码器方向:%d", g_encoder_calib.direction);
             encoder_detect_direction(flash_data->angle_map, &g_encoder_calib); // 检查电机方向
             g_encoder_calib.direction = flash_data->direction;                 // 设置电机方向
             /* 延迟写入Flash */
@@ -473,12 +474,12 @@ foc_sm_ret_e foc_sm_request_state(foc_sm_context_t *ctx, foc_sm_state_e state)
     fsm_ret_t ret = fsm_request_transition(&ctx->fsm, state);
     if (ret == FSM_OK)
     {
-        DEBUG_DEBUG("状态机设置:%s成功", foc_sm_state_to_string(state));
+        DEBUG_LOGD("foc_sm", "状态机设置:%s成功", foc_sm_state_to_string(state));
         return FOC_SM_RET_OK;
     }
     else
     {
-        DEBUG_ERROR("状态机设置:%s失败", foc_sm_state_to_string(state));
+        DEBUG_LOGE("foc_sm", "状态机设置:%s失败", foc_sm_state_to_string(state));
         return FOC_SM_RET_INVALID_STATE;
     }
 }

@@ -23,11 +23,16 @@
 
 #include <string.h>
 
-#include "debug/debug.h"
+#include "debug.h"
 #include "kfifo/kfifo.h"
 #include "memory_pool/memory_pool.h"
 
 /* Private constants ---------------------------------------------------------*/
+#define PROTOCOL_PARSER_PRINTF_ENABLE false
+#define PROTOCOL_PARSER_PRINT(fmt, ...) \
+  DEBUG_LOGI("protocol_parser", fmt, ##__VA_ARGS__)
+#define PROTOCOL_PARSER_HEX_PRINT(fmt, ...) \
+  DEBUG_HEXDUMP("protocol_parser", fmt, ##__VA_ARGS__)
 
 #define IDLE_TIMER_US (1000 * 5)
 #define FRAME_BAUD_RATE 115200
@@ -63,15 +68,11 @@ static inline uint8_t parser_safe_access(const uint8_t* ptr, size_t idx,
  * @param length 数据长度
  */
 static void parser_print_hex(const uint8_t* data, size_t length) {
-#if (ENABLE_DEBUG_PRINT != 0)
+#if PROTOCOL_PARSER_PRINTF_ENABLE
   if (!data || length == 0) {
     return;
   }
-
-  for (size_t i = 0; i < length; i++) {
-    BSP_Printf("%02X ", data[i]);
-  }
-  BSP_Printf("\n");
+  PROTOCOL_PARSER_HEX_PRINT(data, length);
 #else
   (void)data;
   (void)length;

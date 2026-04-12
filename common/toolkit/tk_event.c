@@ -42,7 +42,7 @@ struct tk_event *tk_event_create(void)
 bool tk_event_delete(struct tk_event *event)
 {
     TK_ASSERT(event);
-    free(event);
+    __free(event);
     return true;
 }
 #endif /* TK_EVENT_USING_CREATE */

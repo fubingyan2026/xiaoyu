@@ -16,7 +16,7 @@
 
 #include "CAN_Server.h"
 #include "bsp_delay.h"
-#include "debug/debug.h"
+#include "debug.h"
 #include "easyflash.h"
 #include "flash_task.h"
 #include "foc_ctrl_q16.h"
@@ -26,7 +26,7 @@
 
 /* ==================== 配置常量 ==================== */
 
-#define KEY_FUNC_PRINTF(...) BSP_Printf(__VA_ARGS__)
+#define KEY_FUNC_PRINTF(fmt, ...) DEBUG_LOGI("key_menu", fmt, ##__VA_ARGS__)
 
 #define KEY_MULTI_CLICK_TIME_MS 500U   /**< 连击判定窗口 */
 #define KEY_LONG_PRESS_TIME_MS 750U    /**< 长按判定时间 */
@@ -124,24 +124,24 @@ static void handle_motor_control(uint8_t value) {
   switch (value) {
     case MOTOR_SUBCMD_STOP:
       foc_ctrl.target_iq_q = FLOAT_TO_Q16_16(0.0f);
-      KEY_FUNC_PRINTF("Motor: STOP\r\n");
+      KEY_FUNC_PRINTF("Motor: STOP");
       break;
     case MOTOR_SUBCMD_CURRENT_25:
       foc_ctrl.target_iq_q = FLOAT_TO_Q16_16(0.25f);
-      KEY_FUNC_PRINTF("Motor: 25%% current\r\n");
+      KEY_FUNC_PRINTF("Motor: 25%% current");
       break;
     case MOTOR_SUBCMD_ALIGN:
       foc_sm_request_state(foc_sm_get_instance(), FOC_SM_STATE_ALIGN);
-      KEY_FUNC_PRINTF("Motor: ALIGN mode\r\n");
+      KEY_FUNC_PRINTF("Motor: ALIGN mode");
       break;
     case MOTOR_SUBCMD_HALL:
       foc_sm_request_state(foc_sm_get_instance(), FOC_SM_STATE_HALL);
-      KEY_FUNC_PRINTF("Motor: HALL mode\r\n");
+      KEY_FUNC_PRINTF("Motor: HALL mode");
       break;
     case MOTOR_SUBCMD_RESET_DEFAULT:
     default:
       ef_env_set_default();
-      KEY_FUNC_PRINTF("System: Reset to default\r\n");
+      KEY_FUNC_PRINTF("System: Reset to default");
       break;
   }
 }
@@ -153,7 +153,7 @@ static void handle_motor_control(uint8_t value) {
 static void handle_save_can_id(uint8_t value) {
   can_save_id = value;
   flash_task_request(FLASH_TASK_WRITE_CAN, &can_save_id, sizeof(can_save_id));
-  KEY_FUNC_PRINTF("CAN ID saved: %d\r\n", can_save_id);
+  KEY_FUNC_PRINTF("CAN ID saved: %d", can_save_id);
 }
 
 /**
@@ -162,7 +162,7 @@ static void handle_save_can_id(uint8_t value) {
  */
 static void handle_erase_flash(uint8_t value) {
   flash_task_request(FLASH_TASK_ERASE_ALL, NULL, 0);
-  KEY_FUNC_PRINTF("Flash erased\r\n");
+  KEY_FUNC_PRINTF("Flash erased");
 }
 
 /**
@@ -173,12 +173,12 @@ static void handle_erase_flash(uint8_t value) {
 static void dispatch_command(cmd_type_e cmd_id, uint8_t value) {
   for (uint8_t i = CMD_TYPE_MOTOR_CONTROL; i < CMD_TYPE_MAX; i++) {
     if (s_cmd_table[i].cmd_id == cmd_id) {
-      KEY_FUNC_PRINTF("Execute cmd[%s]: %d\r\n", s_cmd_table[i].name, value);
+      KEY_FUNC_PRINTF("Execute cmd[%s]: %d", s_cmd_table[i].name, value);
       if (s_cmd_table[i].handler) {
         s_cmd_table[i].handler(value);
         return;
       } else {
-        KEY_FUNC_PRINTF("Unknown command: %d\r\n", cmd_id);
+        KEY_FUNC_PRINTF("Unknown command: %d", cmd_id);
       }
     }
   }
@@ -233,7 +233,7 @@ static void handle_long_hold(void) {
   } else if (is_in_state(KEY_FSM_STATE_SET_VALUE)) {
     fsm_request_transition(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_NONE);
     s_key_fsm_ctx.cmd_id = 0;
-    KEY_FUNC_PRINTF("SET-COMMAND-CANCEL!\r\n");
+    KEY_FUNC_PRINTF("SET-COMMAND-CANCEL!");
   }
 }
 
@@ -247,7 +247,7 @@ static key_event_e on_key_event_callback(const key_event_e event,
                                          const void* key_event) {
   const key_base_t* key_ptr = key_event;
 
-  KEY_FUNC_PRINTF("%s:%s,%d!\r\n", key_ptr->config.name,
+  KEY_FUNC_PRINTF("%s:%s,%d!", key_ptr->config.name,
                   s_key_event_names[key_ptr->data.keyEvent],
                   key_ptr->data.keyBatterCounts);
 
@@ -341,7 +341,7 @@ static void on_led_state_change(led_handle_t* instance, led_state_t new_state,
   (void)user_data;
 
   if (is_in_state(KEY_FSM_STATE_NONE) && new_state == LED_STATE_OFF) {
-    KEY_FUNC_PRINTF("[LED] GPIO Release (LED wait)\r\n");
+    KEY_FUNC_PRINTF("[LED] GPIO Release (LED wait)");
     // configure_led_blink(LED_BLINK_INTERVAL_SLOW_MS, LED_BLINK_WAIT_MS,
     //                     can_save_id);
     led_set_state(s_led_instance, LED_STATE_BREATHING);
@@ -367,7 +367,7 @@ static inline void configure_led_blink(uint16_t interval_ms, uint16_t wait_ms,
  * @brief 状态机进入回调
  */
 static void on_fsm_entry(fsm_context_t* ctx, fsm_state_t state) {
-  KEY_FUNC_PRINTF("FSM Enter State: %s\r\n", fsm_get_state_name(ctx, state));
+  KEY_FUNC_PRINTF("FSM Enter State: %s", fsm_get_state_name(ctx, state));
   key_fsm_ctx_t* fsm_ctx = fsm_get_user_data(ctx);
 
   switch (state) {
@@ -396,7 +396,7 @@ static void on_fsm_entry(fsm_context_t* ctx, fsm_state_t state) {
  */
 static void on_fsm_exit(fsm_context_t* ctx, fsm_state_t state) {
   (void)ctx;
-  KEY_FUNC_PRINTF("FSM Exit State: %s\r\n", fsm_get_state_name(ctx, state));
+  KEY_FUNC_PRINTF("FSM Exit State: %s", fsm_get_state_name(ctx, state));
   key_fsm_ctx_t* fsm_ctx = fsm_get_user_data(ctx);
 
   switch (state) {
@@ -522,14 +522,14 @@ void key_func_init(void) {
   hal_gpio_init(&gpio_ctx, &key0_gpio_cfg);
   /* 注册按键 */
   KeyBaseRegister((key_config_t*)&s_key0_default_config, &s_key0_instance);
-  ASSERT(s_key0_instance);
+  DEBUG_ASSERT(s_key0_instance);
 
   /* 初始化 LED 子系统 */
   led_init(millis);
 
   /* 注册 LED */
   s_led_instance = led_register(&s_led_default_config);
-  ASSERT(s_led_instance);
+  DEBUG_ASSERT(s_led_instance);
 
   /* 注册 LED 回调 */
   led_set_state_change_callback(s_led_instance, on_led_state_change,
@@ -570,7 +570,7 @@ void key_func_init(void) {
 
   /* 从 Flash 读取 CAN ID */
   ef_get_env_blob(FLASH_MAGIC_CAN, &can_save_id, sizeof(can_save_id), NULL);
-  KEY_FUNC_PRINTF("CAN-ID is:%d\r\n", can_save_id);
+  KEY_FUNC_PRINTF("CAN-ID is:%d", can_save_id);
 }
 
 /**

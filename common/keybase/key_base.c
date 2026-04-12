@@ -10,11 +10,11 @@
  */
 #include "keybase/key_base.h"
 #include "bsp_delay.h"
-#include "debug/debug.h"
+#include "debug.h"
 #include "memory_pool/memory_pool.h"
 #include "stdbool.h"
 
-#define KEY_INFO(...) BSP_Printf(__VA_ARGS__)
+#define KEY_INFO(...) DEBUG_LOGI("keybase", __VA_ARGS__)
 
 static const uint8_t public_param_debouncingTime = 50; // ms
 static const uint32_t KEY_MIN_TIME_THRESHOLD = 10;     // ms，最小时间阈值
@@ -48,7 +48,7 @@ void KeyBaseInit(void)
     key_master = NULL;
     key_count = 0;
     key_system_initialized = 1;
-    KEY_INFO("Key system initialized\n");
+    KEY_INFO("Key system initialized");
 }
 
 /**
@@ -80,7 +80,7 @@ void KeyBaseDeinit(void)
     key_master = NULL;
     key_count = 0;
     key_system_initialized = 0;
-    KEY_INFO("Key system deinitialized\n");
+    KEY_INFO("Key system deinitialized");
 }
 
 /**
@@ -349,13 +349,13 @@ int8_t KeyBaseRegister(key_config_t *config, key_base_t **instance)
 {
     if (!config)
     {
-        KEY_INFO("KeyBaseRegister failed: config is NULL\n");
+        KEY_INFO("KeyBaseRegister failed: config is NULL");
         return KEY_ERR_INVALID_PARAM;
     }
 
     if (!config->name)
     {
-        KEY_INFO("KeyBaseRegister failed: config->name is NULL\n");
+        KEY_INFO("KeyBaseRegister failed: config->name is NULL");
         return KEY_ERR_INVALID_PARAM;
     }
 
@@ -367,7 +367,7 @@ int8_t KeyBaseRegister(key_config_t *config, key_base_t **instance)
     key_base_t *existing = GetKeyBaseInstance(config->name);
     if (existing)
     {
-        KEY_INFO("KeyBaseRegister warning: key %s already exists, return existing instance\n", config->name);
+        KEY_INFO("KeyBaseRegister warning: key %s already exists, return existing instance", config->name);
         if (instance)
             *instance = existing;
         return KEY_OK_EXISTED;
@@ -375,20 +375,20 @@ int8_t KeyBaseRegister(key_config_t *config, key_base_t **instance)
 
     if (config->ReadKeyPinLevel == NULL)
     {
-        KEY_INFO("KeyBaseRegister failed: ReadKeyPinLevel is NULL\n");
+        KEY_INFO("KeyBaseRegister failed: ReadKeyPinLevel is NULL");
         return KEY_ERR_INVALID_PARAM;
     }
 
     if (config->OnBasicCallback == NULL)
     {
-        KEY_INFO("KeyBaseRegister failed: OnBasicCallback is NULL\n");
+        KEY_INFO("KeyBaseRegister failed: OnBasicCallback is NULL");
         return KEY_ERR_INVALID_PARAM;
     }
 
     key_base_t *new_key = (key_base_t *)__malloc(sizeof(key_base_t));
     if (!new_key)
     {
-        KEY_INFO("KeyBaseRegister failed: memory allocation failed\n");
+        KEY_INFO("KeyBaseRegister failed: memory allocation failed");
         return KEY_ERR_NO_MEMORY;
     }
 
@@ -399,7 +399,7 @@ int8_t KeyBaseRegister(key_config_t *config, key_base_t **instance)
     key_master = new_key;
     key_count++;
 
-    KEY_INFO("KeyBaseRegister success: %s (total: %u)\n", new_key->config.name, key_count);
+    KEY_INFO("KeyBaseRegister success: %s (total: %u)", new_key->config.name, key_count);
 
     if (instance)
         *instance = new_key;
@@ -418,19 +418,19 @@ int8_t KeyBaseRegisterStatic(key_config_t *config, key_base_t *instance)
 {
     if (!config)
     {
-        KEY_INFO("KeyBaseRegisterStatic failed: config is NULL\n");
+        KEY_INFO("KeyBaseRegisterStatic failed: config is NULL");
         return KEY_ERR_INVALID_PARAM;
     }
 
     if (!config->name)
     {
-        KEY_INFO("KeyBaseRegisterStatic failed: config->name is NULL\n");
+        KEY_INFO("KeyBaseRegisterStatic failed: config->name is NULL");
         return KEY_ERR_INVALID_PARAM;
     }
 
     if (!instance)
     {
-        KEY_INFO("KeyBaseRegisterStatic failed: instance is NULL\n");
+        KEY_INFO("KeyBaseRegisterStatic failed: instance is NULL");
         return KEY_ERR_INVALID_PARAM;
     }
 
@@ -442,13 +442,13 @@ int8_t KeyBaseRegisterStatic(key_config_t *config, key_base_t *instance)
     key_base_t *existing = GetKeyBaseInstance(config->name);
     if (existing)
     {
-        KEY_INFO("KeyBaseRegisterStatic warning: key %s already exists\n", config->name);
+        KEY_INFO("KeyBaseRegisterStatic warning: key %s already exists", config->name);
         return KEY_ERR_ALREADY_EXIST;
     }
 
     if (config->ReadKeyPinLevel == NULL || config->OnBasicCallback == NULL)
     {
-        KEY_INFO("KeyBaseRegisterStatic failed: callback is NULL\n");
+        KEY_INFO("KeyBaseRegisterStatic failed: callback is NULL");
         return KEY_ERR_INVALID_PARAM;
     }
 
@@ -460,7 +460,7 @@ int8_t KeyBaseRegisterStatic(key_config_t *config, key_base_t *instance)
     key_master = instance;
     key_count++;
 
-    KEY_INFO("KeyBaseRegisterStatic success: %s (total: %u)\n", instance->config.name, key_count);
+    KEY_INFO("KeyBaseRegisterStatic success: %s (total: %u)", instance->config.name, key_count);
 
     return KEY_OK;
 }
@@ -474,13 +474,13 @@ key_error_e KeyBaseUnregister(const char *name)
 {
     if (!name)
     {
-        KEY_INFO("KeyBaseUnregister failed: name is NULL\n");
+        KEY_INFO("KeyBaseUnregister failed: name is NULL");
         return KEY_ERR_INVALID_PARAM;
     }
 
     if (!key_system_initialized)
     {
-        KEY_INFO("KeyBaseUnregister failed: system not initialized\n");
+        KEY_INFO("KeyBaseUnregister failed: system not initialized");
         return KEY_ERR_INVALID_PARAM;
     }
 
@@ -508,7 +508,7 @@ key_error_e KeyBaseUnregister(const char *name)
 
             if (to_unregister->is_static)
             {
-                KEY_INFO("KeyBaseUnregister: static key %s skip free\n", name);
+                KEY_INFO("KeyBaseUnregister: static key %s skip free", name);
             }
             else
             {
@@ -516,13 +516,13 @@ key_error_e KeyBaseUnregister(const char *name)
             }
 
             key_count--;
-            KEY_INFO("KeyBaseUnregister success: %s (remaining: %u)\n", name, key_count);
+            KEY_INFO("KeyBaseUnregister success: %s (remaining: %u)", name, key_count);
             return KEY_OK;
         }
         ptr = &(*ptr)->next_key_lists;
     }
 
-    KEY_INFO("KeyBaseUnregister failed: key %s not found\n", name);
+    KEY_INFO("KeyBaseUnregister failed: key %s not found", name);
     return KEY_ERR_NOT_FOUND;
 }
 
@@ -536,7 +536,7 @@ key_error_e KeyCombinationRegister(const char *control_key_name, const char *com
 {
     if (command_name == NULL || control_key_name == NULL)
     {
-        KEY_INFO("KeyCombinationRegister failed: param is NULL\n");
+        KEY_INFO("KeyCombinationRegister failed: param is NULL");
         return KEY_ERR_INVALID_PARAM;
     }
 
@@ -545,20 +545,20 @@ key_error_e KeyCombinationRegister(const char *control_key_name, const char *com
 
     if (command_key == NULL || ctrl_key == NULL)
     {
-        KEY_INFO("KeyCombinationRegister failed: key not found\n");
+        KEY_INFO("KeyCombinationRegister failed: key not found");
         return KEY_ERR_NOT_FOUND;
     }
 
     if (command_key == ctrl_key)
     {
-        KEY_INFO("KeyCombinationRegister failed: cannot combine key with itself\n");
+        KEY_INFO("KeyCombinationRegister failed: cannot combine key with itself");
         return KEY_ERR_INVALID_PARAM;
     }
 
     command_key->key_combination = ctrl_key;
     ctrl_key->key_combination = command_key;
 
-    KEY_INFO("KeyCombinationRegister success: %s + %s\n", control_key_name, command_name);
+    KEY_INFO("KeyCombinationRegister success: %s + %s", control_key_name, command_name);
     return KEY_OK;
 }
 

@@ -23,13 +23,13 @@
 #include <string.h>
 
 #include "algorithm/maths.h"
-#include "debug/debug.h"
+#include "debug.h"
 #include "kfifo/kfifo.h"
 #include "memory_pool/memory_pool.h"
 #include "stm32g4xx_hal.h"
 
 /* Private macros ------------------------------------------------------------*/
-#define LED_PRINTF(...) DEBUG_INFO(__VA_ARGS__)
+#define LED_PRINTF(...) DEBUG_LOGI("led", __VA_ARGS__)
 #define LED_CMD_FIFO_SIZE 8            /* 异步命令队列深度，必须为2的幂 */
 #define LED_BREATH_MAX_RESOLUTION 1000 /* 呼吸灯最大分辨率 */
 #define LED_GAMMA_CORRECTION 2         /* Gamma 校正值 */
@@ -213,7 +213,7 @@ static fsm_state_t led_fsm_breathing_handler(fsm_context_t* ctx) {
           &tim_pwm_ctx, handle->config.pwm_cfg.timer_instance,
           handle->config.pwm_cfg.channel, handle->breath_value);
       if (err_set != HAL_TIM_PWM_OK) {
-        LED_PRINTF("PWM 设置占空比失败: %d\n", err_set);
+        LED_PRINTF("PWM 设置占空比失败: %d", err_set);
       }
     }
   }
@@ -226,8 +226,8 @@ static fsm_state_t led_fsm_breathing_handler(fsm_context_t* ctx) {
 static void led_fsm_on_entry(fsm_context_t* ctx, fsm_state_t state) {
   led_handle_t* handle = (led_handle_t*)ctx->user_data;
   uint32_t now = led_get_time_now();
-  // LED_PRINTF("LED STATE ENTRY %s: %s\n", handle->config.led_name, fsm_get_state_name(ctx,state));
-  // 触发状态变化回调
+  // LED_PRINTF("LED STATE ENTRY %s: %s\n", handle->config.led_name,
+  // fsm_get_state_name(ctx,state)); 触发状态变化回调
   if (handle->state_change_cb) {
     ((led_state_change_callback_t)handle->state_change_cb)(
         handle, state, handle->callback_user_data);
@@ -256,14 +256,14 @@ static void led_fsm_on_entry(fsm_context_t* ctx, fsm_state_t state) {
             &tim_pwm_ctx, handle->config.pwm_cfg.timer_instance,
             handle->config.pwm_cfg.channel, handle->breath_value);
         if (err_duty != HAL_TIM_PWM_OK) {
-          LED_PRINTF("PWM 设置初始占空比失败: %d\n", err_duty);
+          LED_PRINTF("PWM 设置初始占空比失败: %d", err_duty);
         }
         hal_tim_pwm_error_t err_alternate = hal_tim_pwm_gpio_alternate(
             &tim_pwm_ctx, &handle->config.pwm_cfg.gpio);
         if (err_alternate != HAL_TIM_PWM_OK) {
-          LED_PRINTF("PWM 配置复用失败: %d\n", err_alternate);
+          LED_PRINTF("PWM 配置复用失败: %d", err_alternate);
         } else {
-          LED_PRINTF("PWM GPIO配置复用成功\n");
+          LED_PRINTF("PWM GPIO配置复用成功");
         }
       }
       break;
@@ -284,13 +284,12 @@ static void led_fsm_on_exit(fsm_context_t* ctx, fsm_state_t state) {
             (hal_gpio_pin_state_t)!handle->config.active_level;
         hal_gpio_write(&gpio_ctx, handle->config.port, handle->config.pin,
                        target_state);
-        hal_gpio_config_t gpio_cfg = {
-            .port = handle->config.port,
-            .pin = handle->config.pin,
-            .mode = HAL_GPIO_MODE_OUTPUT_PP,
-            .pull = HAL_GPIO_PULL_NONE,
-            .speed = HAL_GPIO_SPEED_FREQ_LOW,
-            .default_state = target_state};
+        hal_gpio_config_t gpio_cfg = {.port = handle->config.port,
+                                      .pin = handle->config.pin,
+                                      .mode = HAL_GPIO_MODE_OUTPUT_PP,
+                                      .pull = HAL_GPIO_PULL_NONE,
+                                      .speed = HAL_GPIO_SPEED_FREQ_LOW,
+                                      .default_state = target_state};
         hal_gpio_init(&gpio_ctx, &gpio_cfg);
       }
       break;
@@ -386,7 +385,7 @@ led_error_t led_init(led_get_time_func_t get_time_cb) {
   stm32_gpio_init_context(&gpio_ctx);
   stm32_tim_pwm_init_context(&tim_pwm_ctx);
 
-  LED_PRINTF("LED system initialized\n");
+  LED_PRINTF("LED system initialized");
   return LED_OK;
 }
 
@@ -487,17 +486,17 @@ led_error_t led_register_static(const led_config_t* config,
     hal_tim_pwm_error_t err_init =
         hal_tim_pwm_init(&tim_pwm_ctx, &instance->config.pwm_cfg);
     if (err_init != HAL_TIM_PWM_OK) {
-      LED_PRINTF("PWM 初始化失败: %d\n", err_init);
+      LED_PRINTF("PWM 初始化失败: %d", err_init);
       return LED_ERROR_INTERNAL;
     }
-    hal_tim_pwm_error_t err_start = hal_tim_pwm_start(
-        &tim_pwm_ctx, instance->config.pwm_cfg.timer_instance,
-        instance->config.pwm_cfg.channel);
+    hal_tim_pwm_error_t err_start =
+        hal_tim_pwm_start(&tim_pwm_ctx, instance->config.pwm_cfg.timer_instance,
+                          instance->config.pwm_cfg.channel);
     if (err_start != HAL_TIM_PWM_OK) {
-      LED_PRINTF("PWM 启动失败: %d\n", err_start);
+      LED_PRINTF("PWM 启动失败: %d", err_start);
       return LED_ERROR_INTERNAL;
     }
-    LED_PRINTF("PWM 启动成功 (timer=%d, ch=%d)\n",
+    LED_PRINTF("PWM 启动成功 (timer=%d, ch=%d)",
                instance->config.pwm_cfg.timer_instance,
                instance->config.pwm_cfg.channel);
     instance->pwm_init_flag = true;
@@ -521,7 +520,7 @@ led_error_t led_register_static(const led_config_t* config,
   led_master = instance;
   led_count++;
 
-  LED_PRINTF("LED static registered: %s\n", config->led_name);
+  LED_PRINTF("LED static registered: %s", config->led_name);
   return LED_OK;
 }
 

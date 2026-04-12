@@ -28,13 +28,13 @@
 
 #ifndef _CMB_CFG_H_
 #define _CMB_CFG_H_
-#include "debug/debug.h"
+#include "debug.h"
 
 #ifdef	CMB_USER_CFG
 #include "cmb_user_cfg.h"
 #else
 /* print line, must config by user */
-#define cmb_println(...)  BSP_Printf(__VA_ARGS__);BSP_Printf("\r\n")/* e.g., printf(__VA_ARGS__);printf("\r\n")  or  SEGGER_RTT_printf(0, __VA_ARGS__);SEGGER_RTT_WriteString(0, "\r\n")  */
+#define cmb_println(...)  DEBUG_LOGT("cmb", __VA_ARGS__)
 /* enable bare metal(no OS) platform */
  #define CMB_USING_BARE_METAL_PLATFORM 
 /* enable OS platform */

@@ -1,6 +1,9 @@
 #ifndef SYSTEM_MANAGE_H
 #define SYSTEM_MANAGE_H
 
+#include "debug.h"
+#define DEBUG_H
+
 #include "algorithm/maths.h"
 #include "algorithm/user_lib.h"
 #include "bsp_delay.h"

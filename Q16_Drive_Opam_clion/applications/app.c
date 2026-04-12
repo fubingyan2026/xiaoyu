@@ -18,7 +18,7 @@
 #include "WS2812_SPI.h"
 #include "can_comm.h"
 #include "controller/pid.h"
-#include "debug/debug.h"
+#include "debug.h"
 #include "easyflash.h"
 #include "encoder/line_hall_pll.h"
 #include "flash_task.h"
@@ -36,9 +36,9 @@
 #include "warning_task.h"
 /* Command to get called */
 int32_t mycmd_fn(int32_t argc, char** argv) {
-  DEBUG_DEBUG("mycmd_fn called. Number of argv: %d\r\n", (int)argc);
+  DEBUG_LOGD("app", "mycmd_fn called. Number of argv: %d", (int)argc);
   for (int32_t i = 0; i < argc; ++i) {
-    DEBUG_DEBUG("ARG[%d]: %s\r\n", (int)i, argv[i]);
+    DEBUG_LOGD("app", "ARG[%d]: %s", (int)i, argv[i]);
   }
   /* Successful execution */
   return 0;
@@ -80,29 +80,19 @@ void timer_ledTask_timeout_callback(tk_timer_t* timer) {
 
 /* 定时器4超时回调函数 */
 void timer_uartTask_timeout_callback(tk_timer_t* timer) {
-  // BSP_Printf("Received INS:%d\r\n", (int)
-  // (can_rx_ins.f_angle[1]*RAD_TO_ANGLE));
-  //    BSP_Printf("HALL_ANGLE:%d,%d\r\n", (int)(gFocMachine.pll_phase *
-  //    RAD_TO_ANGLE), (int)(gFocMachine.alginIq * 1000));
-  // BSP_Printf("Motor Speed:%d\r\n", (int)(Get_Encoder_Velocity_RPM()));
-
   hal_uart_dma_status_t dma_status;
 
-  const uint16_t length = kfifo_len(fifo_usart1_tx);
+  const uint16_t length = debug_tx_len();
   if (length) {
-    uint8_t* tx_buffer = usart1_tx_buffer;
-    const uint16_t send_len =
-        kfifo_peek(fifo_usart1_tx, tx_buffer, sizeof(usart1_tx_buffer), 0);
-    /* 打印到串口 */
-    if (hal_uart_get_dma_status(&uart1_ctx, HAL_UART_INSTANCE_1, &dma_status) ==
-            HAL_UART_OK &&
-        !dma_status.tx_busy) {
-      hal_uart_send_dma(&uart1_ctx, HAL_UART_INSTANCE_1, usart1_tx_buffer,
-                        send_len);
-      kfifo_skip(fifo_usart1_tx, send_len);
+    const uint16_t send_len = debug_tx_get(usart1_tx_buffer, sizeof(usart1_tx_buffer));
+    if (send_len > 0) {
+      if (hal_uart_get_dma_status(&uart1_ctx, HAL_UART_INSTANCE_1, &dma_status) ==
+              HAL_UART_OK &&
+          !dma_status.tx_busy) {
+        hal_uart_send_dma(&uart1_ctx, HAL_UART_INSTANCE_1, usart1_tx_buffer,
+                          send_len);
+      }
     }
-    /* 打印到Jlink */
-    SEGGER_WRITE(0, tx_buffer, send_len);
   }
 
   flash_task_process();
@@ -115,6 +105,16 @@ void timer_driverTask_timeout_callback(tk_timer_t* timer) {
 }
 
 void AppInit(void) {
+  
+  debug_config_t debug_config = {
+    .get_timestamp_cb = HAL_GetTick,
+    .format_buffer_size = DEBUG_DEFAULT_FORMAT_BUFFER_SIZE,
+    .default_level = DEBUG_LEVEL_INFO,
+    .enable_color = true,
+    .enable_timestamp = true,
+  };
+  debug_init(&debug_config);
+
   HAL_OPAMP_Start(&hopamp1);
   HAL_OPAMP_Start(&hopamp3);
 #if (ENABLE_DEBUG_PRINT)
@@ -153,11 +153,11 @@ void AppInit(void) {
   /* 初始化软件定时器功能，并配置tick获取回调函数*/
   tk_timer_func_init(millis);
   timer_ledTask = tk_timer_create(timer_ledTask_timeout_callback);
-  ASSERT(timer_ledTask);
+  DEBUG_ASSERT(timer_ledTask);
   timer_uartTask = tk_timer_create(timer_uartTask_timeout_callback);
-  ASSERT(timer_uartTask);
+  DEBUG_ASSERT(timer_uartTask);
   timer_driverTask = tk_timer_create(timer_driverTask_timeout_callback);
-  ASSERT(timer_driverTask);
+  DEBUG_ASSERT(timer_driverTask);
 
   tk_timer_start(timer_ledTask, TIMER_MODE_LOOP, 10);
   tk_timer_start(timer_uartTask, TIMER_MODE_LOOP, 100);
@@ -166,10 +166,10 @@ void AppInit(void) {
 
   /* 动态创建事件2 */
   interrupt_event = tk_event_create();
-  ASSERT(interrupt_event);
+  DEBUG_ASSERT(interrupt_event);
   /* 动态创建事件2 */
   can_send_event = tk_event_create();
-  ASSERT(can_send_event);
+  DEBUG_ASSERT(can_send_event);
 
   lwshell_init();
   /* Define shell commands */
@@ -177,10 +177,10 @@ void AppInit(void) {
                        "Adds 2 integer numbers and prints them");
 
   lwmem_get_stats(&lwmem_stats); /* 默认池 */
-  DEBUG_WARN("memory used :%d(percent)\r\n",
+  DEBUG_LOGW("app", "memory used :%d(percent)",
              (lwmem_stats.mem_size_bytes - lwmem_stats.mem_available_bytes) *
                  100 / lwmem_stats.mem_size_bytes);
-  ASSERT(lwmem_stats.mem_available_bytes);
+  DEBUG_ASSERT(lwmem_stats.mem_available_bytes);
 }
 
 void AppRunning(void) {
