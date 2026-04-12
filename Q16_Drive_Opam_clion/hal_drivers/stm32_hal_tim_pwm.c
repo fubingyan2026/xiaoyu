@@ -361,6 +361,10 @@ static hal_tim_pwm_error_t stm32_tim_pwm_start(hal_tim_pwm_context_t* ctx,
     return HAL_TIM_PWM_ERROR_HARDWARE;
   }
 
+  if (IS_TIM_BREAK_INSTANCE(htim->Instance)) {
+    __HAL_TIM_MOE_ENABLE(htim);
+  }
+
   return HAL_TIM_PWM_OK;
 }
 

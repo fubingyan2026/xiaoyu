@@ -3,94 +3,13 @@
     "cmake.configureArgs": [
         "-DCMAKE_COMMAND=cube-cmake"
     ],
-    "cmake.colorMessages": true,
-    "cmake.decorations.enabled": true,
-    "stm32cube-ide-clangd.path": "cube",
-    "stm32cube-ide-clangd.arguments": [
-        "starm-clangd",
-        "--query-driver=${env:CUBE_BUNDLE_PATH}/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc",
-        "--query-driver=${env:CUBE_BUNDLE_PATH}/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-g++"
-    ],
-    "trae.tab.enableRename": false,
-    "trae.tab.enableAutoImport": false,
     "cmake.preferredGenerators": [
         "Ninja"
     ],
-
-    // =====================
-    // C/C++ 格式化配置
-    // =====================
-
-    // C/C++ 插件语言格式化配置
-    "C_Cpp.default.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 2, ColumnLimit: 80 }",
-    "C_Cpp.clang_format_path": "",
-    "C_Cpp.formatting": "clangFormat",
-
-    // C/Cpp: Enable code formatting (启用代码格式化)
-    "C_Cpp.codeFormatting.clangFormat": {
-        "enable": true,
-        "fallbackStyle": {
-            "BasedOnStyle": "Google"
-        }
-    },
-
-    // Editor: 格式化相关配置
-    "editor.formatOnSave": true,
-    "editor.formatOnSaveMode": "file",
-    "editor.defaultFormatter": "ms-vscode.cpptools",
-
-    // Editor: 文件类型特定格式化
-    "[c]": {
-        "editor.defaultFormatter": "ms-vscode.cpptools",
-        "editor.formatOnSave": true
-    },
-    "[cpp]": {
-        "editor.defaultFormatter": "ms-vscode.cpptools",
-        "editor.formatOnSave": true
-    },
-
-    // Editor: 插入空格而非制表符
-    "editor.insertSpaces": true,
-    "editor.tabSize": 2,
-
-    // Editor: 保存时删除尾随空格
-    "files.trimTrailingWhitespace": true,
-
-    // Files: 文件关联 - 确保 C/C++ 文件使用正确的格式化器
-    "files.associations": {
-        "*.c": "c",
-        "*.h": "c",
-        "*.cpp": "cpp",
-        "*.hpp": "cpp"
-    },
-
-    // Editor: 保存时自动格式化
-    "editor.codeActionsOnSave": {
-        "source.fixAll": "explicit",
-        "source.formatDocument": "explicit"
-    },
-
-    // Clang-format: 使用项目本地配置
-    "clang-format.executable": "",
-    "clang-format.style": "file",
-    "[markdown]": {
-        "editor.defaultFormatter": "yzhang.markdown-all-in-one"
-    },
-    "ROS2.distro": "rolling",
-    "python.autoComplete.extraPaths": [
-        "/opt/ros/rolling/opt/gz_sim_vendor/lib/python",
-        "/opt/ros/rolling/opt/gz_transport_vendor/lib/python",
-        "/opt/ros/rolling/opt/sdformat_vendor/lib/python",
-        "/opt/ros/rolling/opt/gz_msgs_vendor/lib/python",
-        "/opt/ros/rolling/opt/gz_math_vendor/lib/python",
-        "/opt/ros/rolling/lib/python3.12/site-packages"
-    ],
-    "python.analysis.extraPaths": [
-        "/opt/ros/rolling/opt/gz_sim_vendor/lib/python",
-        "/opt/ros/rolling/opt/gz_transport_vendor/lib/python",
-        "/opt/ros/rolling/opt/sdformat_vendor/lib/python",
-        "/opt/ros/rolling/opt/gz_msgs_vendor/lib/python",
-        "/opt/ros/rolling/opt/gz_math_vendor/lib/python",
-        "/opt/ros/rolling/lib/python3.12/site-packages"
+    "stm32cube-ide-clangd.path": "cube",
+    "stm32cube-ide-clangd.arguments": [
+        "starm-clangd",
+        "--query-driver=${env:CUBE_BUNDLE_PATH}/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc*",
+        "--query-driver=${env:CUBE_BUNDLE_PATH}/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-g++*"
     ]
 }

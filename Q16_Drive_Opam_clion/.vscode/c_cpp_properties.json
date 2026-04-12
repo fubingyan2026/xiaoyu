@@ -3,9 +3,9 @@
         {
             "name": "STM32",
             "compileCommands": "${workspaceFolder}/build/RelWithDebInfo/compile_commands.json",
-            "intelliSenseMode": "linux-gcc-x64",
+            "intelliSenseMode": "windows-msvc-x64",
             "cStandard": "c17",
-            "cppStandard": "c++17"
+            "cppStandard": "gnu++14"
         }
     ],
     "version": 4

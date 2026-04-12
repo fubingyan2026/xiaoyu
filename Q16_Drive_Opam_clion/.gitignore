@@ -5,3 +5,5 @@ mx.scratch
 
 # Python
 __pycache__
+.vscode
+.settings
