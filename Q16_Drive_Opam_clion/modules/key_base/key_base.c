@@ -42,9 +42,11 @@ static bool s_system_initialized = false;
 /* Private function prototypes -----------------------------------------------*/
 
 static uint32_t key_base_time_diff(uint32_t new_time, uint32_t old_time);
-static void key_base_debounce_process(key_base_context_t* ctx);
+static void key_base_debounce_process(key_base_context_t* ctx,
+                                      uint32_t current_time);
 static void key_base_combination_process(key_base_context_t* ctx);
-static void key_base_state_machine_process(key_base_context_t* ctx);
+static void key_base_state_machine_process(key_base_context_t* ctx,
+                                           uint32_t current_time);
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -62,22 +64,20 @@ static uint32_t key_base_time_diff(uint32_t new_time, uint32_t old_time) {
 /**
  * @brief 消抖处理函数
  * @param ctx 按键上下文指针
+ * @param current_time 当前时间（由调用方缓存）
  */
-static void key_base_debounce_process(key_base_context_t* ctx) {
-  if (ctx->config.get_time_cb == NULL || ctx->config.read_pin_cb == NULL) {
-    return;
-  }
-
-  uint32_t current_time = ctx->config.get_time_cb();
+static void key_base_debounce_process(key_base_context_t* ctx,
+                                      uint32_t current_time) {
   ctx->data.timer = current_time;
 
   ctx->data.diff_timer = key_base_time_diff(current_time, ctx->data.last_timer);
-  if (ctx->data.diff_timer == 0) {
-    return;
-  }
 
   ctx->data.last_pin_state = ctx->data.pin_state;
   ctx->data.last_timer = current_time;
+
+  if (ctx->data.diff_timer == 0) {
+    return;
+  }
 
   const uint16_t debounce_cycle =
       (ctx->data.diff_timer >= KEY_BASE_DEBOUNCE_TIME_MS)
@@ -164,8 +164,10 @@ static void key_base_combination_process(key_base_context_t* ctx) {
 /**
  * @brief 状态机处理函数
  * @param ctx 按键上下文指针
+ * @param current_time 当前时间（由调用方缓存）
  */
-static void key_base_state_machine_process(key_base_context_t* ctx) {
+static void key_base_state_machine_process(key_base_context_t* ctx,
+                                           uint32_t current_time) {
   if (ctx->config.event_callback == NULL) {
     return;
   }
@@ -173,6 +175,8 @@ static void key_base_state_machine_process(key_base_context_t* ctx) {
   if (ctx->data.combination_active && ctx->data.combination_handled) {
     return;
   }
+
+  ctx->data.timer = current_time;
 
   const uint32_t effective_long_press_time =
       (ctx->config.long_press_time_ms < KEY_BASE_MIN_TIME_THRESHOLD_MS)
@@ -189,8 +193,8 @@ static void key_base_state_machine_process(key_base_context_t* ctx) {
   }
 
   const uint32_t click_window = (ctx->config.multi_click_time_ms > 0)
-                                     ? ctx->config.multi_click_time_ms
-                                     : effective_long_press_time;
+                                    ? ctx->config.multi_click_time_ms
+                                    : effective_long_press_time;
 
   if (ctx->data.last_pin_state != ctx->data.pin_state) {
     ctx->data.last_pin_state = ctx->data.pin_state;
@@ -325,9 +329,7 @@ void key_base_deinit(void) {
  * @brief 获取按键实例数量
  * @return 按键实例数量
  */
-uint16_t key_base_get_count(void) {
-  return s_key_count;
-}
+uint16_t key_base_get_count(void) { return s_key_count; }
 
 /**
  * @brief 注册按键实例（动态内存版本）
@@ -336,7 +338,7 @@ uint16_t key_base_get_count(void) {
  * @return 错误码
  */
 key_base_error_t key_base_register(const key_base_config_t* config,
-                                    key_base_context_t** instance) {
+                                   key_base_context_t** instance) {
   if (!config) {
     DEBUG_LOGI("key_base", "key_base_register failed: config is NULL");
     return KEY_BASE_ERROR_INVALID_PARAM;
@@ -364,20 +366,17 @@ key_base_error_t key_base_register(const key_base_config_t* config,
   }
 
   if (config->read_pin_cb == NULL) {
-    DEBUG_LOGI("key_base",
-               "key_base_register failed: read_pin_cb is NULL");
+    DEBUG_LOGI("key_base", "key_base_register failed: read_pin_cb is NULL");
     return KEY_BASE_ERROR_INVALID_PARAM;
   }
 
   if (config->event_callback == NULL) {
-    DEBUG_LOGI("key_base",
-               "key_base_register failed: event_callback is NULL");
+    DEBUG_LOGI("key_base", "key_base_register failed: event_callback is NULL");
     return KEY_BASE_ERROR_INVALID_PARAM;
   }
 
   if (config->get_time_cb == NULL) {
-    DEBUG_LOGI("key_base",
-               "key_base_register failed: get_time_cb is NULL");
+    DEBUG_LOGI("key_base", "key_base_register failed: get_time_cb is NULL");
     return KEY_BASE_ERROR_INVALID_PARAM;
   }
 
@@ -413,7 +412,7 @@ key_base_error_t key_base_register(const key_base_config_t* config,
  * @return 错误码
  */
 key_base_error_t key_base_register_static(const key_base_config_t* config,
-                                           key_base_context_t* instance) {
+                                          key_base_context_t* instance) {
   if (!config) {
     DEBUG_LOGI("key_base", "key_base_register_static failed: config is NULL");
     return KEY_BASE_ERROR_INVALID_PARAM;
@@ -511,8 +510,8 @@ key_base_error_t key_base_unregister(const char* name) {
       to_unregister->data.combination_long_handled = 0;
 
       if (to_unregister->is_static) {
-        DEBUG_LOGI("key_base",
-                   "key_base_unregister: static key %s skip free", name);
+        DEBUG_LOGI("key_base", "key_base_unregister: static key %s skip free",
+                   name);
       } else {
         __free(to_unregister);
       }
@@ -536,7 +535,7 @@ key_base_error_t key_base_unregister(const char* name) {
  * @return 错误码
  */
 key_base_error_t key_base_combination_register(const char* control_key_name,
-                                                const char* command_key_name) {
+                                               const char* command_key_name) {
   if (command_key_name == NULL || control_key_name == NULL) {
     DEBUG_LOGI("key_base",
                "key_base_combination_register failed: param is NULL");
@@ -575,38 +574,33 @@ void key_base_task(void) {
     return;
   }
 
+  uint32_t current_time = 0;
   key_base_context_t* ctx = s_key_master;
-  key_base_context_t* next = NULL;
-
   while (ctx) {
-    next = ctx->next;
-    if (ctx->config.read_pin_cb == NULL ||
-        ctx->config.event_callback == NULL ||
-        ctx->config.get_time_cb == NULL) {
-      ctx = next;
-      continue;
+    if (ctx->config.get_time_cb != NULL) {
+      current_time = ctx->config.get_time_cb();
+      break;
     }
-    key_base_debounce_process(ctx);
-    ctx = next;
+    ctx = ctx->next;
+  }
+  if (!ctx) {
+    return;
   }
 
   ctx = s_key_master;
   while (ctx) {
-    next = ctx->next;
+    key_base_context_t* next = ctx->next;
+
+    if (ctx->config.read_pin_cb != NULL && ctx->config.get_time_cb != NULL) {
+      key_base_debounce_process(ctx, current_time);
+    }
+
     key_base_combination_process(ctx);
-    ctx = next;
-  }
 
-  ctx = s_key_master;
-  while (ctx) {
-    next = ctx->next;
-    if (ctx->config.read_pin_cb == NULL ||
-        ctx->config.event_callback == NULL ||
-        ctx->config.get_time_cb == NULL) {
-      ctx = next;
-      continue;
+    if (ctx->config.event_callback != NULL && ctx->config.get_time_cb != NULL) {
+      key_base_state_machine_process(ctx, current_time);
     }
-    key_base_state_machine_process(ctx);
+
     ctx = next;
   }
 }

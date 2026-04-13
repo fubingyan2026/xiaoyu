@@ -124,8 +124,8 @@ struct key_base_context {
     uint8_t combination_handled : 1;    /**< 标记组合事件已处理 */
     uint8_t combination_long_handled : 1; /**< 标记组合长按事件已处理 */
     uint8_t batter_counts;              /**< 按键点击计数 */
-    uint8_t press_debounce_count;       /**< 按键按下消抖计数 */
-    uint8_t release_debounce_count;     /**< 按键释放消抖计数 */
+    uint16_t press_debounce_count;       /**< 按键按下消抖计数 */
+    uint16_t release_debounce_count;     /**< 按键释放消抖计数 */
 
     uint8_t key_event : 4;              /**< 当前按键事件 */
     uint8_t last_key_event : 4;         /**< 上次按键事件 */
