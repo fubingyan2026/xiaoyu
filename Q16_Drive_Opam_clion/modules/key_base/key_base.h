@@ -33,18 +33,18 @@ typedef enum {
  * @brief 按键事件枚举
  */
 typedef enum __attribute__((packed)) {
-  KEY_BASE_EVENT_DOWN = 0,               /**< 按下 */
-  KEY_BASE_EVENT_CLICK,                  /**< 点击 */
-  KEY_BASE_EVENT_ONE_CLICK,              /**< 单击 */
-  KEY_BASE_EVENT_DOUBLE_CLICK,           /**< 双击 */
-  KEY_BASE_EVENT_TRIPLE_CLICK,           /**< 三连击 */
-  KEY_BASE_EVENT_REPEAT_CLICK,           /**< 重复点击 */
-  KEY_BASE_EVENT_LONG_WAIT_PRESS,        /**< 长按等待 */
-  KEY_BASE_EVENT_LONG_HOLD,              /**< 长按保持 */
-  KEY_BASE_EVENT_LONG_HOLD_RELEASE,      /**< 长按释放 */
-  KEY_BASE_EVENT_COMBINATION,            /**< 组合事件 */
-  KEY_BASE_EVENT_COMBINATION_LONG,       /**< 组合长按事件 */
-  KEY_BASE_EVENT_MAX,                    /**< 守卫值，必须放在最后 */
+  KEY_BASE_EVENT_DOWN = 0,          /**< 按下 */
+  KEY_BASE_EVENT_CLICK,             /**< 点击 */
+  KEY_BASE_EVENT_ONE_CLICK,         /**< 单击 */
+  KEY_BASE_EVENT_DOUBLE_CLICK,      /**< 双击 */
+  KEY_BASE_EVENT_TRIPLE_CLICK,      /**< 三连击 */
+  KEY_BASE_EVENT_REPEAT_CLICK,      /**< 重复点击 */
+  KEY_BASE_EVENT_LONG_WAIT_PRESS,   /**< 长按等待 */
+  KEY_BASE_EVENT_LONG_HOLD,         /**< 长按保持 */
+  KEY_BASE_EVENT_LONG_HOLD_RELEASE, /**< 长按释放 */
+  KEY_BASE_EVENT_COMBINATION,       /**< 组合事件 */
+  KEY_BASE_EVENT_COMBINATION_LONG,  /**< 组合长按事件 */
+  KEY_BASE_EVENT_MAX,               /**< 守卫值，必须放在最后 */
 } key_base_event_t;
 
 /**
@@ -59,8 +59,8 @@ typedef enum {
  * @brief 按键连击状态机枚举
  */
 typedef enum __attribute__((packed)) {
-  KEY_BASE_BATTER_STATE_IDLE = 0,   /**< 空闲状态 */
-  KEY_BASE_BATTER_STATE_WAIT = 1,   /**< 等待按键点击 */
+  KEY_BASE_BATTER_STATE_IDLE = 0, /**< 空闲状态 */
+  KEY_BASE_BATTER_STATE_WAIT = 1, /**< 等待按键点击 */
 } key_base_batter_state_t;
 
 /**
@@ -70,7 +70,7 @@ typedef enum __attribute__((packed)) {
  * @return 处理后的按键事件类型
  */
 typedef key_base_event_t (*key_base_event_cb_t)(key_base_event_t event,
-                                                 const void* context);
+                                                const void* context);
 
 /**
  * @brief 读取按键引脚电平回调函数类型
@@ -88,12 +88,15 @@ typedef uint32_t (*key_base_get_time_cb_t)(void);
  * @brief 按键模块配置结构体
  */
 typedef struct {
-  const char* name;                     /**< 按键名称 */
-  key_base_event_cb_t event_callback;   /**< 事件回调函数 */
-  key_base_read_pin_cb_t read_pin_cb;   /**< 读取引脚电平回调 */
-  key_base_get_time_cb_t get_time_cb;   /**< 获取当前时间回调 */
-  uint32_t long_press_time_ms;          /**< 长按判定超时窗口(ms) */
-  uint32_t multi_click_time_ms;         /**< 连击判定超时窗口(ms)；为0时退化为long_press_time_ms */
+  const char* name;                   /**< 按键名称 */
+  key_base_event_cb_t event_callback; /**< 事件回调函数 */
+  key_base_read_pin_cb_t read_pin_cb; /**< 读取引脚电平回调 */
+  key_base_get_time_cb_t get_time_cb; /**< 获取当前时间回调 */
+  uint32_t long_press_time_ms;        /**< 长按判定超时窗口(ms) */
+  uint32_t
+      multi_click_time_ms; /**<
+                              连击判定超时窗口(ms)；为0时退化为long_press_time_ms
+                            */
 } key_base_config_t;
 
 /**
@@ -105,35 +108,39 @@ typedef struct key_base_context key_base_context_t;
  * @brief 按键模块上下文结构体
  */
 struct key_base_context {
-  key_base_config_t config;             /**< 配置参数 */
+  key_base_config_t config; /**< 配置参数 */
 
   struct {
-    uint32_t timer;                     /**< 当前时间戳 */
-    uint32_t last_timer;                /**< 上次时间戳 */
-    uint32_t press_time;                /**< 按键释放时间戳 */
-    uint32_t batter_reset_time;         /**< 连击重置时间戳 */
-    uint32_t press_start_time;          /**< 按键按下时的绝对时间戳 */
-    uint32_t diff_timer;                /**< 时间差值 */
-    uint32_t post_long_release_time;    /**< 长按释放时间戳，用于冷却屏蔽 */
+    key_base_batter_state_t batter_event; /**< 连击状态机状态 */
+    key_base_event_t key_event;           /**< 当前按键事件 */
+    key_base_event_t last_key_event;      /**< 上次按键事件 */
 
-    uint8_t pin_state : 1;              /**< 当前引脚状态 */
-    uint8_t last_pin_state : 1;         /**< 上次引脚状态 */
-    uint8_t long_hold_state : 1;        /**< 长按保持状态 */
-    uint8_t batter_event : 1;           /**< 连击状态机状态 */
-    uint8_t combination_active : 1;     /**< 标记当前按键是否在组合按键中 */
-    uint8_t combination_handled : 1;    /**< 标记组合事件已处理 */
-    uint8_t combination_long_handled : 1; /**< 标记组合长按事件已处理 */
-    uint8_t batter_counts;              /**< 按键点击计数 */
-    uint16_t press_debounce_count;       /**< 按键按下消抖计数 */
-    uint16_t release_debounce_count;     /**< 按键释放消抖计数 */
+    bool pin_state;                /**< 当前引脚状态 */
+    bool last_pin_state;           /**< 上次引脚状态 */
+    bool long_hold_state;          /**< 长按保持状态 */
+    bool combination_active;       /**< 标记当前按键是否在组合按键中 */
+    bool combination_handled;      /**< 标记组合事件已处理 */
+    bool combination_long_handled; /**< 标记组合长按事件已处理 */
 
-    uint8_t key_event : 4;              /**< 当前按键事件 */
-    uint8_t last_key_event : 4;         /**< 上次按键事件 */
+    uint8_t batter_counts;          /**< 按键点击计数 */
+    uint8_t press_debounce_count;   /**< 按键按下消抖计数 */
+    uint8_t release_debounce_count; /**< 按键释放消抖计数 */
+
+    uint32_t timer;                  /**< 当前时间戳 */
+    uint32_t last_timer;             /**< 上次时间戳 */
+    uint32_t press_time;             /**< 按键释放时间戳 */
+    uint32_t batter_reset_time;      /**< 连击重置时间戳 */
+    uint32_t press_start_time;       /**< 按键按下时的绝对时间戳 */
+    uint32_t diff_timer;             /**< 时间差值 */
+    uint32_t post_long_release_time; /**< 长按释放时间戳，用于冷却屏蔽 */
+    uint32_t press_debounce_start;   /**< 消抖开始时间（按下） */
+    uint32_t release_debounce_start; /**< 消抖开始时间（释放） */
+
   } data;
 
+  bool is_static;                          /**< 标记是否为静态注册 */
   key_base_context_t* combination_partner; /**< 组合按键伙伴 */
   key_base_context_t* next;                /**< 链表下一个节点 */
-  uint8_t is_static : 1;                   /**< 标记是否为静态注册 */
 };
 
 /* Exported constants --------------------------------------------------------*/
@@ -145,19 +152,19 @@ struct key_base_context {
 #define KEY_BASE_IS_ERR(err) ((err) < 0)
 
 /** @brief 按键事件名称表 */
-#define KEY_BASE_EVENT_NAME_TABLE                                \
-  {                                                              \
-    [KEY_BASE_EVENT_DOWN] = "DOWN",                              \
-    [KEY_BASE_EVENT_CLICK] = "CLICK",                            \
-    [KEY_BASE_EVENT_ONE_CLICK] = "ONE_CLICK",                    \
-    [KEY_BASE_EVENT_DOUBLE_CLICK] = "DOUBLE_CLICK",              \
-    [KEY_BASE_EVENT_TRIPLE_CLICK] = "TRIPLE_CLICK",              \
-    [KEY_BASE_EVENT_REPEAT_CLICK] = "REPEAT_CLICK",              \
-    [KEY_BASE_EVENT_LONG_WAIT_PRESS] = "LONG_WAIT_PRESS",        \
-    [KEY_BASE_EVENT_LONG_HOLD] = "LONG_HOLD",                    \
-    [KEY_BASE_EVENT_LONG_HOLD_RELEASE] = "LONG_HOLD_RELEASE",    \
-    [KEY_BASE_EVENT_COMBINATION] = "COMBINATION",                \
-    [KEY_BASE_EVENT_COMBINATION_LONG] = "COMBINATION_LONG",      \
+#define KEY_BASE_EVENT_NAME_TABLE                               \
+  {                                                             \
+      [KEY_BASE_EVENT_DOWN] = "DOWN",                           \
+      [KEY_BASE_EVENT_CLICK] = "CLICK",                         \
+      [KEY_BASE_EVENT_ONE_CLICK] = "ONE_CLICK",                 \
+      [KEY_BASE_EVENT_DOUBLE_CLICK] = "DOUBLE_CLICK",           \
+      [KEY_BASE_EVENT_TRIPLE_CLICK] = "TRIPLE_CLICK",           \
+      [KEY_BASE_EVENT_REPEAT_CLICK] = "REPEAT_CLICK",           \
+      [KEY_BASE_EVENT_LONG_WAIT_PRESS] = "LONG_WAIT_PRESS",     \
+      [KEY_BASE_EVENT_LONG_HOLD] = "LONG_HOLD",                 \
+      [KEY_BASE_EVENT_LONG_HOLD_RELEASE] = "LONG_HOLD_RELEASE", \
+      [KEY_BASE_EVENT_COMBINATION] = "COMBINATION",             \
+      [KEY_BASE_EVENT_COMBINATION_LONG] = "COMBINATION_LONG",   \
   }
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -180,7 +187,7 @@ void key_base_deinit(void);
  * @note 使用动态内存分配，适用于支持内存管理的场景
  */
 key_base_error_t key_base_register(const key_base_config_t* config,
-                                    key_base_context_t** instance);
+                                   key_base_context_t** instance);
 
 /**
  * @brief 注册按键实例（静态内存版本）
@@ -190,7 +197,7 @@ key_base_error_t key_base_register(const key_base_config_t* config,
  * @note 使用预分配的静态内存，适用于不支持动态内存的场景
  */
 key_base_error_t key_base_register_static(const key_base_config_t* config,
-                                           key_base_context_t* instance);
+                                          key_base_context_t* instance);
 
 /**
  * @brief 删除按键实例
@@ -206,7 +213,7 @@ key_base_error_t key_base_unregister(const char* name);
  * @return 错误码
  */
 key_base_error_t key_base_combination_register(const char* control_key_name,
-                                                const char* command_key_name);
+                                               const char* command_key_name);
 
 /**
  * @brief 获取按键实例

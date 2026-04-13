@@ -79,32 +79,35 @@ static void key_base_debounce_process(key_base_context_t* ctx,
     return;
   }
 
-  const uint16_t debounce_cycle =
-      (ctx->data.diff_timer >= KEY_BASE_DEBOUNCE_TIME_MS)
-          ? 1
-          : (KEY_BASE_DEBOUNCE_TIME_MS / ctx->data.diff_timer);
+  uint8_t current_pin = ctx->config.read_pin_cb();
 
-  if (ctx->config.read_pin_cb()) {
+  if (current_pin) {
     if (ctx->data.pin_state != KEY_BASE_PIN_STATE_PRESS) {
-      if (ctx->data.press_debounce_count++ >= debounce_cycle) {
+      if (ctx->data.press_debounce_count == 0) {
+        ctx->data.press_debounce_start = current_time;
+      }
+      ctx->data.press_debounce_count++;
+      if (ctx->data.diff_timer >= KEY_BASE_DEBOUNCE_TIME_MS ||
+          ctx->data.press_debounce_count >= 3) {
         ctx->data.press_debounce_count = 0;
         ctx->data.pin_state = KEY_BASE_PIN_STATE_PRESS;
         ctx->data.press_start_time = current_time;
       }
     }
-    if (ctx->data.release_debounce_count) {
-      ctx->data.release_debounce_count = 0;
-    }
+    ctx->data.release_debounce_count = 0;
   } else {
     if (ctx->data.pin_state == KEY_BASE_PIN_STATE_PRESS) {
-      if (ctx->data.release_debounce_count++ >= debounce_cycle) {
+      if (ctx->data.release_debounce_count == 0) {
+        ctx->data.release_debounce_start = current_time;
+      }
+      ctx->data.release_debounce_count++;
+      if (ctx->data.diff_timer >= KEY_BASE_DEBOUNCE_TIME_MS ||
+          ctx->data.release_debounce_count >= 3) {
         ctx->data.release_debounce_count = 0;
         ctx->data.pin_state = KEY_BASE_PIN_STATE_RELEASE;
       }
     }
-    if (ctx->data.press_debounce_count) {
-      ctx->data.press_debounce_count = 0;
-    }
+    ctx->data.press_debounce_count = 0;
   }
 }
 
@@ -492,7 +495,7 @@ key_base_error_t key_base_unregister(const char* name) {
 
   key_base_context_t** ptr = &s_key_master;
   while (*ptr) {
-    if (__strcmp((*ptr)->config.name, name) == 0) {
+    if (strcmp((*ptr)->config.name, name) == 0) {
       key_base_context_t* to_unregister = *ptr;
       key_base_context_t* partner = to_unregister->combination_partner;
       *ptr = (*ptr)->next;
