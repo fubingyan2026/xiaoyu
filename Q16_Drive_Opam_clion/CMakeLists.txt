@@ -52,7 +52,7 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/applications APP)
 aux_source_directory(${CMAKE_SOURCE_DIR}/bsp_drivers DRIVER)
 aux_source_directory(${CMAKE_SOURCE_DIR}/hal_drivers HAL)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Q16_FOC FOC)
-aux_source_directory(${CMAKE_SOURCE_DIR}/protocol_parser PROTOCOL_PARSER)
+aux_source_directory(${CMAKE_SOURCE_DIR}/protocol PROTOCOL)
 aux_source_directory(${CMAKE_SOURCE_DIR}/daemon DAEMON)
 aux_source_directory(${CMAKE_SOURCE_DIR}/message_center MESSAGE_CENTER)
 
@@ -79,7 +79,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${APP}
         ${HAL}
         ${FOC}
-        ${PROTOCOL_PARSER}
+        ${PROTOCOL}
         ${DAEMON}
         ${KEY_BASE}
         ${COMMON_algorithm}
@@ -116,7 +116,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         Q16_FOC
         can_comm
         led
-        protocol_parser
+        protocol
         daemon
         message_center
         debug
