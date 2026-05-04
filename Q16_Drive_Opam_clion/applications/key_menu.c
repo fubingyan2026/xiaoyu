@@ -16,13 +16,10 @@
 
 #include "CAN_Server.h"
 #include "bsp_delay.h"
-#include "debug.h"
 #include "easyflash.h"
 #include "flash_task.h"
 #include "foc_ctrl_q16.h"
 #include "foc_sm.h"
-#include "fsm.h"
-#include "led.h"
 
 /* ==================== 配置常量 ==================== */
 

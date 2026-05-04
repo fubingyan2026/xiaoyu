@@ -12,7 +12,7 @@
 #include "stdint.h"
 #include "bsp_delay.h"
 #include "controller/gimbal_pid.h"
-#include "memory_pool.h"
+#include "public.h"
 
 /* 全局链表头指针 */
 gimbal_PID_t* g_gimbal_pid_list = NULL;

@@ -5,13 +5,7 @@
 #include "hall_adjustment.h"
 
 #include "adc.h"
-#include "filter.h"
-#include "maths.h"
-#include "utils_math.h"
-#include "daemon.h"
-#include "debug.h"
 #include "easyflash.h"
-#include "line_hall_pll.h"
 #include "flash_task.h"
 #include "foc_config_q16.h"
 

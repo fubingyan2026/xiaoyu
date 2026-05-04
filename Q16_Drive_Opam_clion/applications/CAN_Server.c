@@ -12,12 +12,9 @@
 #include "CAN_Server.h"
 
 #include "app.h"
-#include "can_comm.h"
-#include "daemon.h"
-#include "debug.h"
+
 #include "foc_ctrl_q16.h"
 #include "key_menu.h"
-#include "kfifo.h"
 #include "perf_counter.h"
 #include "stm32g4xx_hal_fdcan.h"
 #define CAN_SERVER_INFO(...)  // DEBUG_LOGW("can_srv", __VA_ARGS__)

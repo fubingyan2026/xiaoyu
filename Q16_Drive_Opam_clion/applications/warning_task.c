@@ -12,9 +12,7 @@
 #include "warning_task.h"
 
 #include "WS2812_SPI.h"
-#include "daemon.h"
 #include "key_menu.h"
-#include "led.h"
 
 static daemon_context_t* daemon_warning;
 static led_handle_t* led_instance;

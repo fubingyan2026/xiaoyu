@@ -11,10 +11,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "public.h"
+
 #include "easyflash.h"
 #include "encoder_alignment.h"
 #include "hall_adjustment.h"
-#include "message_center.h"
 
 /*============================================================================
  * 宏定义

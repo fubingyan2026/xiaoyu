@@ -18,9 +18,9 @@
 /*============================ INCLUDES ======================================*/
 #undef __PERF_COUNT_PLATFORM_SPECIFIC_HEADER__
 
-#include <memory_pool.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "string.h"
 
 #include "cmsis_compiler.h"
 #include "main.h"
@@ -530,7 +530,7 @@ void init_task_cycle_counter(void) {
     return;
   }
 
-  __memset(ptRootAgent, 0, sizeof(struct __task_cycle_info_t));
+  memset(ptRootAgent, 0, sizeof(struct __task_cycle_info_t));
 
   ptRootAgent->tList.ptInfo = &(ptRootAgent->tInfo);
   ptRootAgent->tInfo.lStart = get_system_ticks();
@@ -560,7 +560,7 @@ task_cycle_info_t* init_task_cycle_info(task_cycle_info_t* ptInfo) {
       break;
     }
 
-    __memset(ptInfo, 0, sizeof(task_cycle_info_t));
+    memset(ptInfo, 0, sizeof(task_cycle_info_t));
 
     ptInfo->bEnabled = true;
   } while (0);

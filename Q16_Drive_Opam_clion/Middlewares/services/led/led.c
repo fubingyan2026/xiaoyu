@@ -22,10 +22,7 @@
 
 #include <string.h>
 
-#include "maths.h"
-#include "debug.h"
-#include "kfifo.h"
-#include "memory_pool.h"
+#include "public.h"
 #include "stm32g4xx_hal.h"
 
 /* Private macros ------------------------------------------------------------*/

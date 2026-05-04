@@ -17,7 +17,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "can_comm.h"
-#include "debug.h"
+#include "public.h"
 #include "fdcan.h"
 
 /* Private constants ---------------------------------------------------------*/

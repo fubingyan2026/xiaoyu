@@ -9,7 +9,6 @@
 
 #include <string.h>
 
-#include "debug.h"
 #include "easyflash.h"
 
 #define FLASH_TASK_TOPIC_NAME "FlashTask"  ///< 任务话题名称

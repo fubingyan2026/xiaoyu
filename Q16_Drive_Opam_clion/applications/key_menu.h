@@ -5,8 +5,8 @@
 #ifndef KEY_FUNCTION_H
 #define KEY_FUNCTION_H
 
-#include "fsm.h"
-#include "key_base.h"
+#include "public.h"
+
 #include "stdbool.h"
 #include "stdint.h"
 

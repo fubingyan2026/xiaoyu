@@ -115,6 +115,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         applications
         hal_drivers
         Q16_FOC
+        Middlewares
         Middlewares/algorithm
         Middlewares/algorithm/controller
         Middlewares/algorithm/filter

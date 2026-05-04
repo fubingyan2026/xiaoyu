@@ -29,8 +29,6 @@
 #include "foc_ctrl_q16.h"
 #include "foc_sm.h"
 #include "hal_uart.h"
-#include "kfifo.h"
-#include "protocol_parser.h"
 #include "stm32g4xx_hal.h"
 
 /* Private constants ---------------------------------------------------------*/

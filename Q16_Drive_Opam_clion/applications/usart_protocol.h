@@ -14,7 +14,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#include "protocol_parser.h"
+#include "public.h"
 
 /* Exported types ------------------------------------------------------------*/
 

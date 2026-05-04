@@ -20,9 +20,8 @@
 
 #include <string.h>
 
+#include "public.h"
 #include "bsp_delay.h"
-#include "crc.h"
-#include "memory_pool.h"
 
 /* Private constants ---------------------------------------------------------*/
 

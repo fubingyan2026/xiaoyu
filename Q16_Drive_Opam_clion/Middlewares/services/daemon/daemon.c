@@ -23,7 +23,7 @@
 
 #include <string.h>
 
-#include "memory_pool.h"
+#include "public.h"
 
 /* Private constants ---------------------------------------------------------*/
 

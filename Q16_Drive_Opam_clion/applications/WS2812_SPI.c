@@ -11,10 +11,9 @@
 
 #include "WS2812_SPI.h"
 
+#include "public.h"
+
 #include "bsp_delay.h"
-#include "debug.h"
-#include "memory_pool.h"
-#include "message_center.h"
 #include "spi.h"
 
 #define RGB_FLOW_COLOR_CHANGE_TIME 500

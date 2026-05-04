@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "kfifo.h"
+#include "public.h"
 
 /* Private constants ---------------------------------------------------------*/
 

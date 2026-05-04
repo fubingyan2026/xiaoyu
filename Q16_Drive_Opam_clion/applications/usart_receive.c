@@ -20,9 +20,7 @@
 
 #include <string.h>
 
-#include "daemon.h"
 #include "hal_uart.h"
-#include "kfifo.h"
 #include "stm32g4xx_hal.h"
 #include "usart.h"
 #include "usart_protocol.h"

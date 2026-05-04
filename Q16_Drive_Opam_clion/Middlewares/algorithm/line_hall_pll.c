@@ -10,8 +10,7 @@
  */
 
 #include "line_hall_pll.h"
-#include "maths.h"
-#include "utils_math.h"
+#include "public.h"
 #include "foc_config_q16.h"
 
 /* 用户可调参数 ---------------------------------------------------------- */

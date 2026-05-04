@@ -11,8 +11,7 @@
 
 #include "MT6816.h"
 
-#include "daemon.h"
-#include "debug.h"
+#include "public.h"
 
 MT6816_SPI_Signal_Typedef mt6816_spi = {0};
 MT6816_Typedef mt6816 = {0};

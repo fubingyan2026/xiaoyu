@@ -23,9 +23,7 @@
 
 #include <string.h>
 
-#include "debug.h"
-#include "kfifo.h"
-#include "memory_pool.h"
+#include "public.h"
 
 /* Private constants ---------------------------------------------------------*/
 #define PROTOCOL_PARSER_PRINTF_ENABLE false

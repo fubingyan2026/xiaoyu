@@ -24,8 +24,7 @@
 #include <limits.h>
 #include <string.h>
 
-#include "debug.h"
-#include "memory_pool.h"
+#include "public.h"
 
 /* Private constants ---------------------------------------------------------*/
 
