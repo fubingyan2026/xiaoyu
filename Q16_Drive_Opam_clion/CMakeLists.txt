@@ -52,61 +52,62 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/applications APP)
 aux_source_directory(${CMAKE_SOURCE_DIR}/bsp_drivers DRIVER)
 aux_source_directory(${CMAKE_SOURCE_DIR}/hal_drivers HAL)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Q16_FOC FOC)
-aux_source_directory(${CMAKE_SOURCE_DIR}/protocol PROTOCOL)
-aux_source_directory(${CMAKE_SOURCE_DIR}/daemon DAEMON)
-aux_source_directory(${CMAKE_SOURCE_DIR}/message_center MESSAGE_CENTER)
 
-# common目录下的所有子目录 (手动处理fsm以排除示例文件)
-foreach(subdir algorithm controller crc encoder kfifo memory_pool toolkit)
-    aux_source_directory(${CMAKE_SOURCE_DIR}/../common/${subdir} COMMON_${subdir})
-endforeach()
+# Middlewares 目录
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm MID_algorithm)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm/controller MID_controller)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm/filter MID_filter)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm/math MID_math)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/hmi MID_hmi)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/logic MID_logic)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/message_center MID_message_center)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/protocol MID_protocol)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/services/can_comm MID_can_comm)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/services/daemon MID_daemon)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/services/debug MID_debug)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/services/led MID_led)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/utils MID_utils)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/utils/toolkit MID_utils_toolkit)
 
-# 本地模块目录
-aux_source_directory(${CMAKE_SOURCE_DIR}/modules/key_base KEY_BASE)
+# Third_Party 模块
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/SEGGER_RTT/RTT MID_SEGGER_RTT)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/easyflash/src MID_easyflash)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/CmBacktrace/cm_backtrace MID_CMBT)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/lwmem/src/lwmem MID_lwmem)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/lwshell/src MID_lwshell)
 
-# 本地can_comm目录
-aux_source_directory(${CMAKE_SOURCE_DIR}/can_comm CAN_COMM)
-
-# 特殊处理的模块 (有子目录的)
-aux_source_directory(${CMAKE_SOURCE_DIR}/../common/SEGGER_RTT/RTT COMMON_SEGGER_RTT)
-aux_source_directory(${CMAKE_SOURCE_DIR}/../common/easyflash/src COMMON_easyflash)
-aux_source_directory(${CMAKE_SOURCE_DIR}/../common/CmBacktrace/cm_backtrace COMMON_CMBT)
-aux_source_directory(${CMAKE_SOURCE_DIR}/../common/lwmem/src/lwmem COMMON_lwmem)
-aux_source_directory(${CMAKE_SOURCE_DIR}/../common/lwshell/src COMMON_lwshell)
+# common 目录 (仅保留 toolkit)
+aux_source_directory(${CMAKE_SOURCE_DIR}/../common/toolkit COMMON_toolkit)
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${APP}
         ${HAL}
         ${FOC}
-        ${PROTOCOL}
-        ${DAEMON}
-        ${KEY_BASE}
-        ${COMMON_algorithm}
-        ${CAN_COMM}
-        ${COMMON_controller}
-        ${COMMON_crc}
-        ${COMMON_encoder}
-        ${COMMON_kfifo}
-        ${COMMON_lwmem}
-        ${COMMON_lwshell}
-        ${COMMON_memory_pool}
-        ${MESSAGE_CENTER}
-        ${COMMON_protocol}
-        ${COMMON_toolkit}
-        ${COMMON_easyflash}
-        ${COMMON_SEGGER_RTT}
-        ${COMMON_CMBT}
+        ${MID_algorithm}
+        ${MID_controller}
+        ${MID_filter}
+        ${MID_math}
+        ${MID_hmi}
+        ${MID_logic}
+        ${MID_message_center}
+        ${MID_protocol}
+        ${MID_can_comm}
+        ${MID_daemon}
+        ${MID_debug}
+        ${MID_led}
+        ${MID_utils}
+        ${MID_SEGGER_RTT}
+        ${MID_easyflash}
+        ${MID_CMBT}
+        ${MID_lwmem}
+        ${MID_lwshell}
+        ${MID_utils_toolkit}
 
-        debug/debug.c
-        # LED模块
-        led/led.c
-        # FSM模块
-        ../common/fsm/fsm.c
         # 汇编文件需要单独添加
-        ../common/CmBacktrace/cm_backtrace/fault_handler/gcc/cmb_fault.S
+        Middlewares/Third_Party/CmBacktrace/cm_backtrace/fault_handler/gcc/cmb_fault.S
         # 单独的源文件
-        ../common/easyflash/port/ef_port.c
+        Middlewares/Third_Party/easyflash/port/ef_port.c
 )
 
 # Add include paths
@@ -114,20 +115,27 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         applications
         hal_drivers
         Q16_FOC
-        can_comm
-        led
-        protocol
-        daemon
-        message_center
-        debug
-        modules
-        ../common
-        ../common/CmBacktrace/cm_backtrace
-        ../common/SEGGER_RTT/RTT/config
-        ../common/SEGGER_RTT/RTT
-        ../common/lwmem/include
-        ../common/lwshell/inc
-        ../common/easyflash/inc
+        Middlewares/algorithm
+        Middlewares/algorithm/controller
+        Middlewares/algorithm/filter
+        Middlewares/algorithm/math
+        Middlewares/hmi
+        Middlewares/logic
+        Middlewares/message_center
+        Middlewares/protocol
+        Middlewares/services/can_comm
+        Middlewares/services/daemon
+        Middlewares/services/debug
+        Middlewares/services/led
+        Middlewares/utils
+        Middlewares/utils/toolkit
+
+        Middlewares/Third_Party/CmBacktrace/cm_backtrace
+        Middlewares/Third_Party/SEGGER_RTT/RTT/config
+        Middlewares/Third_Party/SEGGER_RTT/RTT
+        Middlewares/Third_Party/lwmem/include
+        Middlewares/Third_Party/lwshell/inc
+        Middlewares/Third_Party/easyflash/inc
 )
 
 # Add project symbols (macros)

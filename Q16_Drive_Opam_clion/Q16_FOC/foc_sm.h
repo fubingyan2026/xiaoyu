@@ -10,7 +10,7 @@
 
 #include "foc_config_q16.h"
 #include "foc_ctrl_q16.h"
-#include "fsm/fsm.h"
+#include "fsm.h"
 #include "q16_16_math.h"
 #include <stdbool.h>
 #include <stdint.h>

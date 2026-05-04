@@ -9,11 +9,11 @@
  */
 
 #include "foc_sensor.h"
-#include "algorithm/filter.h"
-#include "algorithm/maths.h"
-#include "algorithm/utils_math.h"
+#include "filter.h"
+#include "maths.h"
+#include "utils_math.h"
 #include "MT6816.h"
-#include "encoder/line_hall_pll.h"
+#include "line_hall_pll.h"
 #include "foc_config_q16.h"
 #include "hall_adjustment.h"
 #include "perf_counter.h"

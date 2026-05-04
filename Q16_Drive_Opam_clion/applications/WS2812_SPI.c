@@ -13,7 +13,7 @@
 
 #include "bsp_delay.h"
 #include "debug.h"
-#include "memory_pool/memory_pool.h"
+#include "memory_pool.h"
 #include "message_center.h"
 #include "spi.h"
 

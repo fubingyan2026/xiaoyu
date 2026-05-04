@@ -14,7 +14,7 @@
 #include "foc_sensor.h" // FOC传感器抽象层
 #include "foc_sm.h"     // FOC状态机头文件
 #include "main.h"
-#include "memory_pool/memory_pool.h"
+#include "memory_pool.h"
 
 /* ==================== 前向声明 ==================== */
 

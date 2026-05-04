@@ -18,7 +18,7 @@
 /*============================ INCLUDES ======================================*/
 #undef __PERF_COUNT_PLATFORM_SPECIFIC_HEADER__
 
-#include <memory_pool/memory_pool.h>
+#include <memory_pool.h>
 #include <stdbool.h>
 #include <stdint.h>
 

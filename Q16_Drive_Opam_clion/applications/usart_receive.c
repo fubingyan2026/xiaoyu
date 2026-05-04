@@ -22,7 +22,7 @@
 
 #include "daemon.h"
 #include "hal_uart.h"
-#include "kfifo/kfifo.h"
+#include "kfifo.h"
 #include "stm32g4xx_hal.h"
 #include "usart.h"
 #include "usart_protocol.h"
@@ -42,10 +42,7 @@ static uint8_t s_uart1_tx_buffer[UART_TX_FIFO_SIZE];
 static uint32_t s_uart1_tx_lock = 0U;
 
 static kfifo_t s_fifo_usart1_rx;
-static kfifo_t* s_fifo_usart1_rx_ptr = NULL;
-
 static kfifo_t s_fifo_usart1_tx;
-static kfifo_t* s_fifo_usart1_tx_ptr = NULL;
 
 /**
  * @brief FIFO缓冲区指针 - 供外部访问
@@ -109,20 +106,12 @@ daemon_context_t* uart1_tx_ctx = NULL;
  * @note 使用静态FIFO缓冲区,避免动态内存分配
  */
 void uart_it_init(void) {
-  s_fifo_usart1_rx_ptr =
-      kfifo_init(s_uart1_rx_buffer, UART_RX_FIFO_SIZE, 0, &s_uart1_rx_lock);
-
-  if (s_fifo_usart1_rx_ptr != NULL) {
-    (void)memcpy(&s_fifo_usart1_rx, s_fifo_usart1_rx_ptr, sizeof(kfifo_t));
-  }
+  kfifo_init(&s_fifo_usart1_rx, s_uart1_rx_buffer, UART_RX_FIFO_SIZE,
+             &s_uart1_rx_lock);
   fifo_usart1_rx = &s_fifo_usart1_rx;
 
-  s_fifo_usart1_tx_ptr =
-      kfifo_init(s_uart1_tx_buffer, UART_TX_FIFO_SIZE, 0, &s_uart1_tx_lock);
-
-  if (s_fifo_usart1_tx_ptr != NULL) {
-    (void)memcpy(&s_fifo_usart1_tx, s_fifo_usart1_tx_ptr, sizeof(kfifo_t));
-  }
+  kfifo_init(&s_fifo_usart1_tx, s_uart1_tx_buffer, UART_TX_FIFO_SIZE,
+             &s_uart1_tx_lock);
   fifo_usart1_tx = &s_fifo_usart1_tx;
 
   uart1_rx_ctx = daemon_register(&daemon_config_rx);

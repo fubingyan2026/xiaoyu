@@ -18,7 +18,7 @@
 #ifndef USART_RECEIVE_H
 #define USART_RECEIVE_H
 
-#include "kfifo/kfifo.h"
+#include "kfifo.h"
 
 /*============================================================================
  * 外部变量声明

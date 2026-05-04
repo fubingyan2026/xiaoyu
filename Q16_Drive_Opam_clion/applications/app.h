@@ -4,17 +4,17 @@
 #include "debug.h"
 #define DEBUG_H
 
-#include "algorithm/maths.h"
-#include "algorithm/user_lib.h"
+#include "maths.h"
+#include "user_lib.h"
 #include "bsp_delay.h"
 #include "controller/gimbal_pid.h"
 #include "controller/pid.h"
 #include "daemon.h"
-#include "key_base/key_base.h"
-#include "kfifo/kfifo.h"
+#include "key_base.h"
+#include "kfifo.h"
 #include "led.h"
-#include "memory_pool/memory_pool.h"
-#include "toolkit/toolkit.h"
+#include "memory_pool.h"
+#include "toolkit.h"
 #include "warning_task.h"
 
 extern tk_event_t* interrupt_event;

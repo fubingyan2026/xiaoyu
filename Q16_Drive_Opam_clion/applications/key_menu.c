@@ -21,7 +21,7 @@
 #include "flash_task.h"
 #include "foc_ctrl_q16.h"
 #include "foc_sm.h"
-#include "fsm/fsm.h"
+#include "fsm.h"
 #include "led.h"
 
 /* ==================== 配置常量 ==================== */
