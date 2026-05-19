@@ -69,7 +69,7 @@ typedef struct {
     float target_elec_angle;                /**< 目标电角度（校准旋转阶段用） */
     uint16_t filter_init_count;             /**< 滤波器稳定计数器 */
     uint16_t align_count;                   /**< 对齐保持计数器 */
-    daemon_context_t *daemon_encoder;       /**< 编码器守护进程 */
+    daemon_context_t daemon_encoder;       /**< 编码器守护进程 */
 } hall_adjust_ctx_t;
 
 /* Private variables ---------------------------------------------------------*/
@@ -124,8 +124,16 @@ void hall_adjust_init(void)
     pll_init(&pll_ctx, &pll_config);
 
     // 获取编码器守护进程
-    g_ctx.daemon_encoder = daemon_get_instance("encoder");
-    DEBUG_ASSERT(g_ctx.daemon_encoder);
+    const daemon_config_t encoder_cfg = {
+      .name = "line_hall",
+      .init_wait_time_ms = 1000,
+      .reload_timeout_ms = 10,
+      .offline_cb=NULL,
+    };
+
+    daemon_error_t err =
+        daemon_register_static(&encoder_cfg, &g_ctx.daemon_encoder);
+    DEBUG_ASSERT(err == DAEMON_OK);
 
     // 初始化 FSM
     static fsm_handler_t handlers[HALL_ADJUST_STATE_COUNT];
@@ -199,10 +207,9 @@ uint16_t hall_adjust_get_angle(void)
     utils_norm_angle_rad(&g_ctx.angle);
 
     // 喂狗
-    if (g_ctx.daemon_encoder != NULL) {
-        daemon_reload(g_ctx.daemon_encoder);
-    }
-
+   
+    daemon_reload(&g_ctx.daemon_encoder);
+    
     // 转换为 14 位角度 (0-16383)
     return (uint16_t)((g_ctx.angle + M_PI) / (M_2PI)*16384.0f);
 }

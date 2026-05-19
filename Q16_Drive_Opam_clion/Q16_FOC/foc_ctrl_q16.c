@@ -211,7 +211,8 @@ static void foc_pll_run(q16_16_t phase_q, q16_16_t dt_q, q16_16_t *phase_var_q, 
  */
 extern void foc_init(void)
 {
-    foc_sensor_init(foc_sensor_get_default_type()); // 传感器初始化
+    foc_sensor_config_t sensor_cfg = { .type = SENSOR_TYPE_LINEAR_HALL };
+    foc_sensor_init(&sensor_cfg); // 传感器初始化
     encoder_alignment_init();                       // 加载电机闪存数据
 
     foc_ctrl.foc_ctrl_cycle_s = FOC_PWM_PERIOD_Q;
