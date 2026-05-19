@@ -63,7 +63,7 @@ static void foc_entry_logic(foc_sm_context_t *ctx, foc_sm_state_e state)
 /**
  * @brief 框架回调适配器：进入回调
  */
-static void fsm_entry_adapter(fsm_context_t *ctx, fsm_state_t state)
+static void fsm_entry_adapter(fsm_t *ctx, fsm_state_t state)
 {
     foc_sm_context_t *foc_ctx = (foc_sm_context_t *)ctx;
 
@@ -80,7 +80,7 @@ static void fsm_entry_adapter(fsm_context_t *ctx, fsm_state_t state)
 /**
  * @brief 框架回调适配器：退出回调
  */
-static void fsm_exit_adapter(fsm_context_t *ctx, fsm_state_t state)
+static void fsm_exit_adapter(fsm_t *ctx, fsm_state_t state)
 {
     foc_sm_context_t *foc_ctx = (foc_sm_context_t *)ctx;
 
@@ -118,7 +118,7 @@ static int32_t cycle_average(int32_t a, int32_t b, int32_t cyc)
 /**
  * @brief 空闲状态处理函数
  */
-static fsm_state_t handler_idle(fsm_context_t *ctx)
+static fsm_state_t handler_idle(fsm_t *ctx)
 {
     foc_sm_context_t *foc_ctx = (foc_sm_context_t *)ctx;
 
@@ -133,7 +133,7 @@ static fsm_state_t handler_idle(fsm_context_t *ctx)
 /**
  * @brief 对齐状态处理函数
  */
-static fsm_state_t handler_align(fsm_context_t *ctx)
+static fsm_state_t handler_align(fsm_t *ctx)
 {
     foc_sm_context_t *foc_ctx = (foc_sm_context_t *)ctx;
 
@@ -158,7 +158,7 @@ static fsm_state_t handler_align(fsm_context_t *ctx)
 /**
  * @brief 校准对齐状态处理函数
  */
-static fsm_state_t handler_alignment(fsm_context_t *ctx)
+static fsm_state_t handler_alignment(fsm_t *ctx)
 {
     foc_sm_context_t *foc_ctx = (foc_sm_context_t *)ctx;
     foc_ctrl_t *ctrl = foc_ctx->ctrl;
@@ -331,7 +331,7 @@ static fsm_state_t handler_alignment(fsm_context_t *ctx)
 /**
  * @brief 运行状态处理函数
  */
-static fsm_state_t handler_run(fsm_context_t *ctx)
+static fsm_state_t handler_run(fsm_t *ctx)
 {
     foc_sm_context_t *foc_ctx = (foc_sm_context_t *)ctx;
 
@@ -344,7 +344,7 @@ static fsm_state_t handler_run(fsm_context_t *ctx)
 /**
  * @brief 霍尔传感器状态处理函数
  */
-static fsm_state_t handler_hall(fsm_context_t *ctx)
+static fsm_state_t handler_hall(fsm_t *ctx)
 {
     foc_sm_context_t *foc_ctx = (foc_sm_context_t *)ctx;
     hall_adjust_t *hall = &hall_adjust;
@@ -364,7 +364,7 @@ static fsm_state_t handler_hall(fsm_context_t *ctx)
 /**
  * @brief 停止状态处理函数
  */
-static fsm_state_t handler_stop(fsm_context_t *ctx)
+static fsm_state_t handler_stop(fsm_t *ctx)
 {
     (void)ctx;
     return FOC_SM_STATE_STOP;
@@ -387,49 +387,35 @@ foc_sm_ret_e foc_sm_init(foc_sm_context_t *ctx, foc_ctrl_t *ctrl)
     ctx->on_entry = NULL;
     ctx->on_exit = NULL;
 
-    /* 使用通用FSM框架初始化 */
-    fsm_ret_t ret = fsm_init(&ctx->fsm, FOC_SM_STATE_IDLE, ctx);
+    /* 构建FSM配置 */
+    static fsm_handler_t handlers[FOC_SM_STATE_COUNT];
+    static fsm_guard_t transitions[FOC_SM_STATE_COUNT * FOC_SM_STATE_COUNT];
+    memset(handlers, 0, sizeof(handlers));
+    memset(transitions, 0, sizeof(transitions));
+
+    handlers[FOC_SM_STATE_IDLE] = handler_idle;
+    handlers[FOC_SM_STATE_ALIGN] = handler_align;
+    handlers[FOC_SM_STATE_ALIGNMENT] = handler_alignment;
+    handlers[FOC_SM_STATE_RUN] = handler_run;
+    handlers[FOC_SM_STATE_HALL] = handler_hall;
+    handlers[FOC_SM_STATE_STOP] = handler_stop;
+
+    fsm_config_t config = {
+        .handlers = handlers,
+        .transitions = transitions,
+        .state_count = FOC_SM_STATE_COUNT,
+        .entry_cb = fsm_entry_adapter,
+        .exit_cb = fsm_exit_adapter,
+        .state_names = foc_state_names,
+        .user_data = ctx,
+    };
+    fsm_fill(&config, fsm_always_true);
+
+    fsm_err_t ret = fsm_init(&ctx->fsm, FOC_SM_STATE_IDLE, &config);
     if (ret != FSM_OK)
     {
         return FOC_SM_RET_ERROR;
     }
-
-    /* 设置适配器作为框架回调 */
-    fsm_set_callbacks(&ctx->fsm, fsm_entry_adapter, fsm_exit_adapter);
-
-    /* 设置调试状态名称 */
-    fsm_set_state_names(&ctx->fsm, foc_state_names, FOC_SM_STATE_COUNT);
-
-    /* 注册状态处理器 */
-    fsm_register_handler(&ctx->fsm, FOC_SM_STATE_IDLE, handler_idle);
-    fsm_register_handler(&ctx->fsm, FOC_SM_STATE_ALIGN, handler_align);
-    fsm_register_handler(&ctx->fsm, FOC_SM_STATE_ALIGNMENT, handler_alignment);
-    fsm_register_handler(&ctx->fsm, FOC_SM_STATE_RUN, handler_run);
-    fsm_register_handler(&ctx->fsm, FOC_SM_STATE_HALL, handler_hall);
-    fsm_register_handler(&ctx->fsm, FOC_SM_STATE_STOP, handler_stop);
-
-    /* 定义状态转换规则（邻接矩阵） */
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_IDLE, FOC_SM_STATE_ALIGN, NULL);
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_IDLE, FOC_SM_STATE_RUN, NULL);
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_IDLE, FOC_SM_STATE_STOP, NULL);
-
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_ALIGN, FOC_SM_STATE_ALIGNMENT, NULL);
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_ALIGN, FOC_SM_STATE_HALL, NULL);
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_ALIGN, FOC_SM_STATE_STOP, NULL);
-
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_ALIGNMENT, FOC_SM_STATE_RUN, NULL);
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_ALIGNMENT, FOC_SM_STATE_STOP, NULL);
-
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_RUN, FOC_SM_STATE_HALL, NULL);
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_RUN, FOC_SM_STATE_IDLE, NULL);
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_RUN, FOC_SM_STATE_STOP, NULL);
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_RUN, FOC_SM_STATE_ALIGNMENT, NULL);
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_RUN, FOC_SM_STATE_ALIGN, NULL);
-
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_HALL, FOC_SM_STATE_ALIGN, NULL);
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_HALL, FOC_SM_STATE_STOP, NULL);
-
-    fsm_add_transition(&ctx->fsm, FOC_SM_STATE_STOP, FOC_SM_STATE_IDLE, NULL);
 
     /* 初始化FOC特定字段 */
     ctx->cali_ctx.capture_idx = 0;
@@ -451,12 +437,12 @@ foc_sm_ret_e foc_sm_step(foc_sm_context_t *ctx)
     }
 
     /* 使用通用FSM框架步进 */
-    fsm_ret_t ret = fsm_step(&ctx->fsm);
+    fsm_err_t ret = fsm_step(&ctx->fsm);
     if (ret != FSM_OK)
     {
         return FOC_SM_RET_ERROR;
     }
-    
+
     return FOC_SM_RET_OK;
 }
 
@@ -471,7 +457,7 @@ foc_sm_ret_e foc_sm_request_state(foc_sm_context_t *ctx, foc_sm_state_e state)
     }
 
     /* 使用通用FSM框架请求转换 */
-    fsm_ret_t ret = fsm_request_transition(&ctx->fsm, state);
+    fsm_err_t ret = fsm_goto(&ctx->fsm, state);
     if (ret == FSM_OK)
     {
         DEBUG_LOGD("foc_sm", "状态机设置:%s成功", foc_sm_state_to_string(state));

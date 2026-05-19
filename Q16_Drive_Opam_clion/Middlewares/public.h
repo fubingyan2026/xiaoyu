@@ -20,8 +20,8 @@ extern "C" {
 /* ===== key_base ===== */
 #include "key_base/key_base.h"
 
-/* ===== Logic ===== */
-#include "logic/fsm.h"
+/* ===== fsm ===== */
+#include "fsm/fsm.h"
 
 /* ===== Message Center ===== */
 #include "message_center/message_center.h"

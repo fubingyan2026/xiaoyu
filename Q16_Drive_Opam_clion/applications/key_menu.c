@@ -84,8 +84,6 @@ static led_handle_t* s_led_instance = NULL;        /**< LED实例 */
 static key_base_context_t* s_key0_instance = NULL; /**< 按键0实例 */
 static const char* s_key_event_names[KEY_BASE_EVENT_MAX] =
     KEY_BASE_EVENT_NAME_TABLE;
-static const char* state_names[] = {"KEY_FSM_STATE_NONE", "KEY_FSM_STATE_WAIT",
-                                    "KEY_FSM_STATE_CONFIRM"};
 static hal_gpio_context_t gpio_ctx;
 
 /* ==================== 前向声明 ==================== */
@@ -201,7 +199,7 @@ static uint8_t read_key_pin_level(void) {
  * @brief 检查当前是否在指定状态
  */
 static inline bool is_in_state(key_fsm_state_e state) {
-  return fsm_get_current_state(&s_key_fsm_ctx.fsm) == state;
+  return fsm_current_state(&s_key_fsm_ctx.fsm) == state;
 }
 
 /**
@@ -229,7 +227,7 @@ static void handle_long_hold(void) {
   if (is_in_state(KEY_FSM_STATE_NONE)) {
     set_command_in_none_state(CMD_TYPE_ERASE_FLASH);
   } else if (is_in_state(KEY_FSM_STATE_SET_VALUE)) {
-    fsm_request_transition(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_NONE);
+    fsm_goto(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_NONE);
     s_key_fsm_ctx.cmd_id = 0;
     KEY_FUNC_PRINTF("SET-COMMAND-CANCEL!");
   }
@@ -305,11 +303,11 @@ static void on_led_blink_phase_change(led_handle_t* instance,
     return;
   }
 
-  key_fsm_state_e current_state = fsm_get_current_state(&s_key_fsm_ctx.fsm);
+  key_fsm_state_e current_state = fsm_current_state(&s_key_fsm_ctx.fsm);
 
   if (current_state == KEY_FSM_STATE_SHOW_COMMAND &&
       s_key_fsm_ctx.set_cmd_flag) {
-    fsm_request_transition(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_SET_VALUE);
+    fsm_goto(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_SET_VALUE);
   }
 }
 
@@ -340,9 +338,9 @@ static void on_led_state_change(led_handle_t* instance, led_state_t new_state,
 
   if (is_in_state(KEY_FSM_STATE_NONE) && new_state == LED_STATE_OFF) {
     KEY_FUNC_PRINTF("[LED] GPIO Release (LED wait)");
-    // configure_led_blink(LED_BLINK_INTERVAL_SLOW_MS, LED_BLINK_WAIT_MS,
-    //                     can_save_id);
-    led_set_state(s_led_instance, LED_STATE_BREATHING);
+    configure_led_blink(LED_BLINK_INTERVAL_SLOW_MS, LED_BLINK_WAIT_MS,
+                        can_save_id);
+    // led_set_state(s_led_instance, LED_STATE_BREATHING);
   }
 }
 
@@ -364,9 +362,9 @@ static inline void configure_led_blink(uint16_t interval_ms, uint16_t wait_ms,
 /**
  * @brief 状态机进入回调
  */
-static void on_fsm_entry(fsm_context_t* ctx, fsm_state_t state) {
-  KEY_FUNC_PRINTF("FSM Enter State: %s", fsm_get_state_name(ctx, state));
-  key_fsm_ctx_t* fsm_ctx = fsm_get_user_data(ctx);
+static void on_fsm_entry(fsm_t* ctx, fsm_state_t state) {
+  KEY_FUNC_PRINTF("FSM Enter State: %s", fsm_name(ctx, state));
+  key_fsm_ctx_t* fsm_ctx = fsm_user_data(ctx);
 
   switch (state) {
     case KEY_FSM_STATE_NONE:
@@ -392,10 +390,10 @@ static void on_fsm_entry(fsm_context_t* ctx, fsm_state_t state) {
 /**
  * @brief 状态机退出回调
  */
-static void on_fsm_exit(fsm_context_t* ctx, fsm_state_t state) {
+static void on_fsm_exit(fsm_t* ctx, fsm_state_t state) {
   (void)ctx;
-  KEY_FUNC_PRINTF("FSM Exit State: %s", fsm_get_state_name(ctx, state));
-  key_fsm_ctx_t* fsm_ctx = fsm_get_user_data(ctx);
+  KEY_FUNC_PRINTF("FSM Exit State: %s", fsm_name(ctx, state));
+  key_fsm_ctx_t* fsm_ctx = fsm_user_data(ctx);
 
   switch (state) {
     case KEY_FSM_STATE_NONE:
@@ -414,7 +412,7 @@ static void on_fsm_exit(fsm_context_t* ctx, fsm_state_t state) {
 /**
  * @brief NONE 状态处理器 - 空闲状态
  */
-static fsm_state_t handle_fsm_none(fsm_context_t* ctx) {
+static fsm_state_t handle_fsm_none(fsm_t* ctx) {
   (void)ctx;
 
   if (s_key_fsm_ctx.cmd_id > 0) {
@@ -427,7 +425,7 @@ static fsm_state_t handle_fsm_none(fsm_context_t* ctx) {
 /**
  * @brief SHOW_COMMAND 状态处理器 - 命令显示状态
  */
-static fsm_state_t handle_fsm_show_command(fsm_context_t* ctx) {
+static fsm_state_t handle_fsm_show_command(fsm_t* ctx) {
   (void)ctx;
   return KEY_FSM_STATE_SHOW_COMMAND;
 }
@@ -435,7 +433,7 @@ static fsm_state_t handle_fsm_show_command(fsm_context_t* ctx) {
 /**
  * @brief SET_VALUE 状态处理器 - 数值设置状态
  */
-static fsm_state_t handle_fsm_set_value(fsm_context_t* ctx) {
+static fsm_state_t handle_fsm_set_value(fsm_t* ctx) {
   (void)ctx;
   key_fsm_ctx_t* fsm_ctx = &s_key_fsm_ctx;
 
@@ -538,38 +536,34 @@ void key_func_init(void) {
   /* 初始化按键 FSM */
   __memset(&s_key_fsm_ctx, 0, sizeof(key_fsm_ctx_t));
   s_key_fsm_ctx.cmd_entry_timeout_ms = KEY_ENTRY_CMD_TIMEOUT_MS;
-  fsm_init(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_NONE, &s_key_fsm_ctx);
 
-  fsm_set_state_names(&s_key_fsm_ctx.fsm, state_names,
-                      sizeof(state_names) / sizeof(state_names[0]));
-  /* 注册状态处理器 */
-  fsm_register_handler(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_NONE, handle_fsm_none);
-  fsm_register_handler(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_SHOW_COMMAND,
-                       handle_fsm_show_command);
-  fsm_register_handler(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_SET_VALUE,
-                       handle_fsm_set_value);
+  static const char* key_state_names[] = {"NONE", "COMMAND", "SET_VALUE"};
+  static fsm_handler_t handlers[KEY_FSM_STATE_MAX];
+  static fsm_guard_t transitions[KEY_FSM_STATE_MAX * KEY_FSM_STATE_MAX];
+  memset(handlers, 0, sizeof(handlers));
+  memset(transitions, 0, sizeof(transitions));
 
-  /* 设置状态回调 */
-  fsm_set_callbacks(&s_key_fsm_ctx.fsm, on_fsm_entry, on_fsm_exit);
+  handlers[KEY_FSM_STATE_NONE] = handle_fsm_none;
+  handlers[KEY_FSM_STATE_SHOW_COMMAND] = handle_fsm_show_command;
+  handlers[KEY_FSM_STATE_SET_VALUE] = handle_fsm_set_value;
 
-  /* 添加状态转换规则 */
-  fsm_add_transition(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_NONE,
-                     KEY_FSM_STATE_SHOW_COMMAND, NULL);
-  fsm_add_transition(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_SHOW_COMMAND,
-                     KEY_FSM_STATE_NONE, NULL);
-  fsm_add_transition(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_SHOW_COMMAND,
-                     KEY_FSM_STATE_SET_VALUE, NULL);
-  fsm_add_transition(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_SET_VALUE,
-                     KEY_FSM_STATE_NONE, NULL);
-
-#if FSM_ENABLE_DEBUG
-  static const char* state_names[] = {"NONE", "COMMAND", "SET_VALUE"};
-  fsm_set_state_names(&s_key_fsm_ctx.fsm, state_names, 3);
-#endif
+  fsm_config_t fsm_cfg = {
+      .handlers = handlers,
+      .transitions = transitions,
+      .state_count = KEY_FSM_STATE_MAX,
+      .entry_cb = on_fsm_entry,
+      .exit_cb = on_fsm_exit,
+      .state_names = key_state_names,
+      .user_data = &s_key_fsm_ctx,
+  };
+  fsm_fill(&fsm_cfg, fsm_always_true);
+  fsm_init(&s_key_fsm_ctx.fsm, KEY_FSM_STATE_NONE, &fsm_cfg);
 
   /* 从 Flash 读取 CAN ID */
   ef_get_env_blob(FLASH_MAGIC_CAN, &can_save_id, sizeof(can_save_id), NULL);
   KEY_FUNC_PRINTF("CAN-ID is:%d", can_save_id);
+  configure_led_blink(LED_BLINK_INTERVAL_SLOW_MS, LED_BLINK_WAIT_MS,
+      can_save_id);
 }
 
 /**
@@ -588,7 +582,7 @@ void key_func_task(void) {
  * @brief 获取当前按键功能状态
  */
 key_fsm_state_e key_func_get_state(void) {
-  return (key_fsm_state_e)fsm_get_current_state(&s_key_fsm_ctx.fsm);
+  return (key_fsm_state_e)fsm_current_state(&s_key_fsm_ctx.fsm);
 }
 
 /**

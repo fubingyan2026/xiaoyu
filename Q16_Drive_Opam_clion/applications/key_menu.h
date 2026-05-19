@@ -28,7 +28,7 @@ typedef enum {
  * @brief 按键 FSM 上下文结构
  */
 typedef struct {
-  fsm_context_t fsm;             /**< FSM 上下文 */
+  fsm_t fsm;             /**< FSM 上下文 */
   uint32_t time_now;             /**< 当前系统时间 */
   uint32_t time_last;            /**< 上次按键触发的时间 */
   uint32_t time_sys_last;        /**< 上次任务运行的时间 */

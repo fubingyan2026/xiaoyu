@@ -120,7 +120,7 @@ typedef struct {
  */
 struct led_handle {
   led_config_t config; /**< 配置副本 */
-  fsm_context_t fsm;   /**< FSM 上下文 */
+  fsm_t fsm;   /**< FSM 上下文 */
 
   led_cmd_t current_cmd;        /**< 当前命令 */
   uint32_t last_toggle_time;    /**< 上次翻转时间 */

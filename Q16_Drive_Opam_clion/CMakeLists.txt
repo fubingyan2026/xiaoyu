@@ -60,7 +60,7 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm/controller MID_co
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm/filter MID_filter)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm/math MID_math)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/key_base MID_key_base)
-aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/logic MID_logic)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/fsm MID_fsm)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/message_center MID_message_center)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/protocol MID_protocol)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/services/can_comm MID_can_comm)
@@ -91,7 +91,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${MID_filter}
         ${MID_math}
         ${MID_key_base}
-        ${MID_logic}
+        ${MID_fsm}
         ${MID_message_center}
         ${MID_protocol}
         ${MID_can_comm}
@@ -124,7 +124,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         Middlewares/algorithm/filter
         Middlewares/algorithm/math
         Middlewares/key_base
-        Middlewares/logic
+        Middlewares/fsm
         Middlewares/message_center
         Middlewares/protocol
         Middlewares/services/can_comm

@@ -44,13 +44,13 @@ static inline uint32_t led_time_diff(uint32_t new_time, uint32_t old_time);
 static inline uint32_t led_get_time_now(void);
 static void led_phys_write(led_handle_t* handle, bool on);
 static bool led_phys_read(led_handle_t* handle);
-static fsm_state_t led_fsm_none_handler(fsm_context_t* ctx);
-static fsm_state_t led_fsm_off_handler(fsm_context_t* ctx);
-static fsm_state_t led_fsm_on_handler(fsm_context_t* ctx);
-static fsm_state_t led_fsm_blink_handler(fsm_context_t* ctx);
-static fsm_state_t led_fsm_breathing_handler(fsm_context_t* ctx);
-static void led_fsm_on_entry(fsm_context_t* ctx, fsm_state_t state);
-static void led_fsm_on_exit(fsm_context_t* ctx, fsm_state_t state);
+static fsm_state_t led_fsm_none_handler(fsm_t* ctx);
+static fsm_state_t led_fsm_off_handler(fsm_t* ctx);
+static fsm_state_t led_fsm_on_handler(fsm_t* ctx);
+static fsm_state_t led_fsm_blink_handler(fsm_t* ctx);
+static fsm_state_t led_fsm_breathing_handler(fsm_t* ctx);
+static void led_fsm_on_entry(fsm_t* ctx, fsm_state_t state);
+static void led_fsm_on_exit(fsm_t* ctx, fsm_state_t state);
 static void led_process_cmds(led_handle_t* handle);
 static void led_check_blink_phase_change(led_handle_t* handle);
 
@@ -107,7 +107,7 @@ static bool led_phys_read(led_handle_t* handle) {
 /**
  * @brief  FSM NONE 状态处理器
  */
-static fsm_state_t led_fsm_none_handler(fsm_context_t* ctx) {
+static fsm_state_t led_fsm_none_handler(fsm_t* ctx) {
   (void)ctx;
   return LED_STATE_NONE;
 }
@@ -115,8 +115,8 @@ static fsm_state_t led_fsm_none_handler(fsm_context_t* ctx) {
 /**
  * @brief  FSM OFF 状态处理器
  */
-static fsm_state_t led_fsm_off_handler(fsm_context_t* ctx) {
-  led_handle_t* handle = (led_handle_t*)ctx->user_data;
+static fsm_state_t led_fsm_off_handler(fsm_t* ctx) {
+  led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
   led_phys_write(handle, false);
   return LED_STATE_OFF;
 }
@@ -124,8 +124,8 @@ static fsm_state_t led_fsm_off_handler(fsm_context_t* ctx) {
 /**
  * @brief  FSM ON 状态处理器
  */
-static fsm_state_t led_fsm_on_handler(fsm_context_t* ctx) {
-  led_handle_t* handle = (led_handle_t*)ctx->user_data;
+static fsm_state_t led_fsm_on_handler(fsm_t* ctx) {
+  led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
   led_phys_write(handle, true);
   return LED_STATE_ON;
 }
@@ -133,8 +133,8 @@ static fsm_state_t led_fsm_on_handler(fsm_context_t* ctx) {
 /**
  * @brief  FSM BLINK 状态处理器
  */
-static fsm_state_t led_fsm_blink_handler(fsm_context_t* ctx) {
-  led_handle_t* handle = (led_handle_t*)ctx->user_data;
+static fsm_state_t led_fsm_blink_handler(fsm_t* ctx) {
+  led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
   uint32_t now = led_get_time_now();
 
   if (handle->blink_code_phase == LED_BLINK_PHASE_BLINKING) {
@@ -175,8 +175,8 @@ static fsm_state_t led_fsm_blink_handler(fsm_context_t* ctx) {
 /**
  * @brief  FSM BREATHING 状态处理器
  */
-static fsm_state_t led_fsm_breathing_handler(fsm_context_t* ctx) {
-  led_handle_t* handle = (led_handle_t*)ctx->user_data;
+static fsm_state_t led_fsm_breathing_handler(fsm_t* ctx) {
+  led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
   uint32_t now = led_get_time_now();
 
   if (led_time_diff(now, handle->last_breath_time) >=
@@ -220,8 +220,8 @@ static fsm_state_t led_fsm_breathing_handler(fsm_context_t* ctx) {
 /**
  * @brief  FSM 进入状态回调
  */
-static void led_fsm_on_entry(fsm_context_t* ctx, fsm_state_t state) {
-  led_handle_t* handle = (led_handle_t*)ctx->user_data;
+static void led_fsm_on_entry(fsm_t* ctx, fsm_state_t state) {
+  led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
   uint32_t now = led_get_time_now();
   // LED_PRINTF("LED STATE ENTRY %s: %s\n", handle->config.led_name,
   // fsm_get_state_name(ctx,state)); 触发状态变化回调
@@ -286,8 +286,8 @@ static void led_fsm_on_entry(fsm_context_t* ctx, fsm_state_t state) {
 /**
  * @brief  FSM 退出状态回调
  */
-static void led_fsm_on_exit(fsm_context_t* ctx, fsm_state_t state) {
-  led_handle_t* handle = (led_handle_t*)ctx->user_data;
+static void led_fsm_on_exit(fsm_t* ctx, fsm_state_t state) {
+  led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
   switch (state) {
     case LED_STATE_BREATHING:
       if (handle->pwm_init_flag) {
@@ -317,13 +317,13 @@ static void led_process_cmds(led_handle_t* handle) {
   while (kfifo_get(handle->cmd_fifo, (unsigned char*)&cmd, sizeof(led_cmd_t)) ==
          sizeof(led_cmd_t)) {
     if (cmd.led_set_state != LED_STATE_NONE) {
-      fsm_request_transition(&handle->fsm, cmd.led_set_state);
+      fsm_goto(&handle->fsm, cmd.led_set_state);
     }
 
     if (cmd.led_set_state == LED_STATE_BLINK_CODE) {
       // 如果有待处理的更新且 LED 正在闪烁，检查是否需要等待熄灭
       if (handle->pending_blink_update &&
-          fsm_get_current_state(&handle->fsm) == LED_STATE_BLINK_CODE) {
+          fsm_current_state(&handle->fsm) == LED_STATE_BLINK_CODE) {
         // 读取当前 LED 状态（true 表示亮，false 表示灭）
         bool is_led_on = led_phys_read(handle);
 
@@ -346,7 +346,7 @@ static void led_process_cmds(led_handle_t* handle) {
         handle->current_cmd.led_blink_code_counts = cmd.led_blink_code_counts;
 
       // 如果已经在闪烁模式，则强制进入间隔阶段，等待间隔结束后再开始闪烁
-      if (fsm_get_current_state(&handle->fsm) == LED_STATE_BLINK_CODE) {
+      if (fsm_current_state(&handle->fsm) == LED_STATE_BLINK_CODE) {
         handle->current_led_blink_code_counts = 0;
         handle->blink_code_phase = LED_BLINK_PHASE_INTERVAL;
         handle->interval_start_time = led_get_time_now();
@@ -463,29 +463,31 @@ led_error_t led_register_static(const led_config_t* config,
   memset(instance, 0, sizeof(led_handle_t));
   memcpy(&instance->config, config, sizeof(led_config_t));
 
-  // 初始化 FSM (大厂规范)
+  // 初始化 FSM
   static const char* led_state_names[] = {"NONE", "OFF", "ON", "BLINK",
                                           "BREATHING"};
-  fsm_init(&instance->fsm, config->init_state, instance);
-  fsm_register_handler(&instance->fsm, LED_STATE_NONE, led_fsm_none_handler);
-  fsm_register_handler(&instance->fsm, LED_STATE_OFF, led_fsm_off_handler);
-  fsm_register_handler(&instance->fsm, LED_STATE_ON, led_fsm_on_handler);
-  fsm_register_handler(&instance->fsm, LED_STATE_BLINK_CODE,
-                       led_fsm_blink_handler);
-  fsm_register_handler(&instance->fsm, LED_STATE_BREATHING,
-                       led_fsm_breathing_handler);
-  fsm_set_callbacks(&instance->fsm, led_fsm_on_entry, led_fsm_on_exit);
-  fsm_set_state_names(&instance->fsm, led_state_names,
-                      sizeof(led_state_names) / sizeof(led_state_names[0]));
+  static fsm_handler_t handlers[LED_STATE_MAX];
+  static fsm_guard_t transitions[LED_STATE_MAX * LED_STATE_MAX];
+  memset(handlers, 0, sizeof(handlers));
+  memset(transitions, 0, sizeof(transitions));
 
-  // 允许任意状态切换 (LED 模块由外部指令驱动)
-  for (uint8_t i = 0; i < LED_STATE_MAX; i++) {
-    for (uint8_t j = 0; j < LED_STATE_MAX; j++) {
-      if (i != j) {
-        fsm_add_transition(&instance->fsm, i, j, NULL);
-      }
-    }
-  }
+  handlers[LED_STATE_NONE] = led_fsm_none_handler;
+  handlers[LED_STATE_OFF] = led_fsm_off_handler;
+  handlers[LED_STATE_ON] = led_fsm_on_handler;
+  handlers[LED_STATE_BLINK_CODE] = led_fsm_blink_handler;
+  handlers[LED_STATE_BREATHING] = led_fsm_breathing_handler;
+
+  fsm_config_t fsm_cfg = {
+      .handlers = handlers,
+      .transitions = transitions,
+      .state_count = LED_STATE_MAX,
+      .entry_cb = led_fsm_on_entry,
+      .exit_cb = led_fsm_on_exit,
+      .state_names = led_state_names,
+      .user_data = instance,
+  };
+  fsm_fill(&fsm_cfg, fsm_always_true);
+  fsm_init(&instance->fsm, config->init_state, &fsm_cfg);
 
   // 初始化命令队列
   instance->cmd_fifo = kfifo_alloc(LED_CMD_FIFO_SIZE * sizeof(led_cmd_t), NULL);
@@ -631,7 +633,7 @@ led_error_t led_set_blink_interval(led_handle_t* instance,
   }
 
   // 如果 LED 正在编码闪烁模式
-  if (fsm_get_current_state(&instance->fsm) == LED_STATE_BLINK_CODE) {
+  if (fsm_current_state(&instance->fsm) == LED_STATE_BLINK_CODE) {
     // 读取当前 LED 状态（true 表示亮，false 表示灭）
     bool is_led_on = led_phys_read(instance);
 

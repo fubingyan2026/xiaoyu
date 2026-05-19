@@ -91,7 +91,7 @@ typedef struct __attribute__((packed))
  */
 struct foc_sm_context_s
 {
-    fsm_context_t fsm;              ///< 通用FSM上下文（必须作为第一个成员）
+    fsm_t fsm;                      ///< 通用FSM上下文（必须作为第一个成员）
     foc_sm_cali_context_t cali_ctx; ///< 校准上下文
     foc_ctrl_t *ctrl;               ///< FOC控制数据指针
     motor_flash_config_t *flash_data; ///< 电机Flash数据指针
