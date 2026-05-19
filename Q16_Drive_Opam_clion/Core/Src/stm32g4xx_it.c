@@ -265,7 +265,7 @@ void TIM1_CC_IRQHandler(void)
   /* USER CODE BEGIN TIM1_CC_IRQn 1 */
 
   adc_dma_start_convert();
-  hall_adjust.hall_adc_DMA_Start();
+  hall_adjust_adc_dma_start();
 
   /* USER CODE END TIM1_CC_IRQn 1 */
 }

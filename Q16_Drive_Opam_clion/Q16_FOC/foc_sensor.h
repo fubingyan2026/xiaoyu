@@ -21,7 +21,6 @@ typedef enum
     SENSOR_TYPE_MT6701,      /* MT6701磁编码器(SPI) */
     SENSOR_TYPE_MT6816,      /* MT6816磁编码器(SPI) */
     SENSOR_TYPE_LINEAR_HALL, /* 线性霍尔传感器(PLL) */
-    SENSOR_TYPE_HALL,        /* 传统霍尔传感器(3-bit) */
     SENSOR_TYPE_MAX
 } foc_sensor_type_e;
 

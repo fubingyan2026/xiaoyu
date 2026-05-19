@@ -55,17 +55,6 @@ static void sensor_linear_hall_update(void);
 static void sensor_linear_hall_get_info(foc_sensor_info_t *info);
 static void sensor_linear_hall_set_offset(float offset);
 
-/* 传统霍尔传感器操作函数声明 */
-static int sensor_hall_init(void);
-static int sensor_hall_calibrate(void);
-static bool sensor_hall_is_calibrated(void);
-static uint16_t sensor_hall_get_raw_angle(void);
-static float sensor_hall_get_angle_rad(void);
-static float sensor_hall_get_velocity_rads(void);
-static void sensor_hall_update(void);
-static void sensor_hall_get_info(foc_sensor_info_t *info);
-static void sensor_hall_set_offset(float offset);
-
 /* 空传感器操作函数声明 */
 static int sensor_none_init(void);
 static int sensor_none_calibrate(void);
@@ -116,19 +105,6 @@ static const foc_sensor_ops_t sensor_ops_linear_hall = {
     .set_offset = sensor_linear_hall_set_offset,
 };
 
-/* 传统霍尔传感器操作表 */
-static const foc_sensor_ops_t sensor_ops_hall = {
-    .init = sensor_hall_init,
-    .calibrate = sensor_hall_calibrate,
-    .is_calibrated = sensor_hall_is_calibrated,
-    .get_raw_angle = sensor_hall_get_raw_angle,
-    .get_angle_rad = sensor_hall_get_angle_rad,
-    .get_velocity_rads = sensor_hall_get_velocity_rads,
-    .update = sensor_hall_update,
-    .get_info = sensor_hall_get_info,
-    .set_offset = sensor_hall_set_offset,
-};
-
 /* 空传感器操作表 */
 static const foc_sensor_ops_t sensor_ops_none = {
     .init = sensor_none_init,
@@ -146,7 +122,6 @@ static const foc_sensor_ops_t sensor_ops_none = {
 static const foc_sensor_ops_t *sensor_ops_table[SENSOR_TYPE_MAX] = {
     [SENSOR_TYPE_NONE] = &sensor_ops_none,     [SENSOR_TYPE_MT6701] = &sensor_ops_mt6701,
     [SENSOR_TYPE_MT6816] = &sensor_ops_mt6816, [SENSOR_TYPE_LINEAR_HALL] = &sensor_ops_linear_hall,
-    [SENSOR_TYPE_HALL] = &sensor_ops_hall,
 };
 
 /* ==================== 空传感器实现 ==================== */
@@ -342,22 +317,21 @@ static void sensor_mt6816_set_offset(float offset)
 /* ==================== 线性霍尔传感器实现 ==================== */
 static int sensor_linear_hall_init(void)
 {
-    pll_init(&pll_ctx, &pll_config);
-    hall_adjust.hall_adjust_init();
+    hall_adjust_init();
     g_sensor.info.type = SENSOR_TYPE_LINEAR_HALL;
     g_sensor.info.resolution = 65535;
     g_sensor.info.pulses_per_rev = 65535.0f;
     g_sensor.info.poles = MOTOR_POLES;
-    g_sensor.info.is_calibrated = (hall_adjust.hall_adjust_state == ADJUST_DONE);
+    g_sensor.info.is_calibrated = (hall_adjust_is_calibrated());
     g_sensor.info.offset = g_mechanical_offset;
     return 0;
 }
 
 static int sensor_linear_hall_calibrate(void)
 {
-    if (hall_adjust.hall_adjust_state == ADJUST_NONE)
+    if (hall_adjust_get_state() == HALL_ADJUST_STATE_NONE)
     {
-        hall_adjust.hall_adjust_state = ADJUST_FILTER;
+        hall_adjust_start_calibration();
         return 0;
     }
     return -1;
@@ -365,7 +339,7 @@ static int sensor_linear_hall_calibrate(void)
 
 static bool sensor_linear_hall_is_calibrated(void)
 {
-    return (hall_adjust.hall_adjust_state == ADJUST_DONE);
+    return (hall_adjust_is_calibrated());
 }
 
 static uint16_t sensor_linear_hall_get_raw_angle(void)
@@ -402,9 +376,9 @@ static float sensor_linear_hall_get_velocity_rads(void)
 
 static void sensor_linear_hall_update(void)
 {
-    if (hall_adjust.hall_adjust_state != ADJUST_DONE)
+    if (!hall_adjust_is_calibrated())
     {
-        hall_adjust.hall_adjust_task();
+        hall_adjust_task();
     }
 }
 
@@ -416,91 +390,12 @@ static void sensor_linear_hall_get_info(foc_sensor_info_t *info)
         info->resolution = 65535;
         info->pulses_per_rev = 65535.0f;
         info->poles = MOTOR_POLES;
-        info->is_calibrated = (hall_adjust.hall_adjust_state == ADJUST_DONE);
+        info->is_calibrated = (hall_adjust_is_calibrated());
         info->offset = g_mechanical_offset;
     }
 }
 
 static void sensor_linear_hall_set_offset(float offset)
-{
-    g_mechanical_offset = offset;
-    g_sensor.info.offset = offset;
-}
-
-/* ==================== 传统霍尔传感器实现 ==================== */
-static int sensor_hall_init(void)
-{
-    hall_adjust.hall_adjust_init();
-    g_sensor.info.type = SENSOR_TYPE_HALL;
-    g_sensor.info.resolution = 360;
-    g_sensor.info.pulses_per_rev = 360.0f;
-    g_sensor.info.poles = MOTOR_POLES;
-    g_sensor.info.is_calibrated = (hall_adjust.hall_adjust_state == ADJUST_DONE);
-    g_sensor.info.offset = g_mechanical_offset;
-    return 0;
-}
-
-static int sensor_hall_calibrate(void)
-{
-    if (hall_adjust.hall_adjust_state == ADJUST_NONE)
-    {
-        hall_adjust.hall_adjust_state = ADJUST_FILTER;
-        return 0;
-    }
-    return -1;
-}
-
-static bool sensor_hall_is_calibrated(void)
-{
-    return (hall_adjust.hall_adjust_state == ADJUST_DONE);
-}
-
-static uint16_t sensor_hall_get_raw_angle(void)
-{
-    return hall_adjust.hall_adjust_get_angle();
-}
-
-static float sensor_hall_get_angle_rad(void)
-{
-    uint16_t raw = sensor_hall_get_raw_angle();
-    float angle = ((float)raw / 360.0f) * M_2PI;
-    angle += g_mechanical_offset;
-    while (angle > M_2PI)
-        angle -= M_2PI;
-    while (angle < 0.0f)
-        angle += M_2PI;
-    float electrical_angle = angle * MOTOR_POLES;
-    while (electrical_angle > M_2PI)
-        electrical_angle -= M_2PI;
-    while (electrical_angle < 0.0f)
-        electrical_angle += M_2PI;
-    return electrical_angle;
-}
-
-static float sensor_hall_get_velocity_rads(void)
-{
-    return 0.0f;
-}
-
-static void sensor_hall_update(void)
-{
-    hall_adjust.hall_adjust_task();
-}
-
-static void sensor_hall_get_info(foc_sensor_info_t *info)
-{
-    if (info)
-    {
-        info->type = SENSOR_TYPE_HALL;
-        info->resolution = 360;
-        info->pulses_per_rev = 360.0f;
-        info->poles = MOTOR_POLES;
-        info->is_calibrated = (hall_adjust.hall_adjust_state == ADJUST_DONE);
-        info->offset = g_mechanical_offset;
-    }
-}
-
-static void sensor_hall_set_offset(float offset)
 {
     g_mechanical_offset = offset;
     g_sensor.info.offset = offset;

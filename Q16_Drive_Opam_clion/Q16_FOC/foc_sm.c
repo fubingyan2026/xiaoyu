@@ -347,13 +347,12 @@ static fsm_state_t handler_run(fsm_t *ctx)
 static fsm_state_t handler_hall(fsm_t *ctx)
 {
     foc_sm_context_t *foc_ctx = (foc_sm_context_t *)ctx;
-    hall_adjust_t *hall = &hall_adjust;
+    hall_adjust_task();
+    foc_ctx->ctrl->target_iq_q = FLOAT_TO_Q16_16(hall_adjust_get_target_current());
+    foc_ctx->ctrl->electrical_angle_q =
+        FLOAT_TO_Q16_16(hall_adjust_get_target_elec_angle());
 
-    hall->hall_adjust_task();
-    foc_ctx->ctrl->target_iq_q = FLOAT_TO_Q16_16(hall->motorTargetCurrent);
-    foc_ctx->ctrl->electrical_angle_q = FLOAT_TO_Q16_16(hall->motorTargetElectricalAngle);
-
-    if (hall->hall_adjust_state == ADJUST_DONE)
+    if (hall_adjust_is_calibrated())
     {
         return FOC_SM_STATE_ALIGN;
     }
