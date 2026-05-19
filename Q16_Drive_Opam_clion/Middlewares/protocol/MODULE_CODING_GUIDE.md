@@ -543,34 +543,40 @@ module_context_t* module_create(const module_config_t* config) {
 
 ## 代码格式规范
 
+本模块遵循 **WebKit 代码风格**。
+
 ### 缩进
 
-- 使用 **2 空格缩进**
+- 使用 **4 空格缩进**
 - 不要使用 Tab
 
 ### 大括号位置
 
+- **函数定义**：左大括号**另起一行**（Allman 风格）
+- **控制语句**（if/for/while）：左大括号**与关键字同行**
+
 ```c
-// 函数定义
+// 函数定义（Allman 风格）
 module_error_t module_init(module_context_t* ctx,
-                           const module_config_t* config) {
-  // ...
+    const module_config_t* config)
+{
+    // ...
 }
 
-// 控制语句
+// 控制语句（K&R 风格）
 if (condition) {
-  // ...
+    // ...
 } else {
-  // ...
+    // ...
 }
 
 // 循环
 for (uint32_t i = 0; i < count; i++) {
-  // ...
+    // ...
 }
 
 while (condition) {
-  // ...
+    // ...
 }
 ```
 
@@ -648,250 +654,11 @@ const uint8_t* module_get_buffer(const module_context_t* ctx);
 - [ ] 错误码返回正确
 - [ ] 未使用参数用 `(void)` 标记
 - [ ] 使用固定宽度整数类型
-- [ ] 代码格式符合要求（2空格缩进）
+- [ ] 代码格式符合要求（4空格缩进，WebKit风格）
 - [ ] 无编译错误和警告
 - [ ] **动态分配的内存已初始化为零**
 
 ---
-
-## 示例：完整模块代码
-
-### 头文件示例 (protocol_parser.h)
-
-```c
-//
-// Created by fubingyan on 25-4-5.
-//
-
-#ifndef __PROTOCOL_PARSER_H
-#define __PROTOCOL_PARSER_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* Includes ------------------------------------------------------------------*/
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-
-/* Exported types ------------------------------------------------------------*/
-
-/**
- * @brief 协议解析器错误码枚举
- */
-typedef enum {
-  PROTOCOL_PARSER_OK = 0,                 /**< 操作成功 */
-  PROTOCOL_PARSER_ERROR_NULL_PTR,         /**< 空指针错误 */
-  PROTOCOL_PARSER_ERROR_INVALID_PARAM,    /**< 无效参数 */
-  PROTOCOL_PARSER_ERROR_UNINITIALIZED,    /**< 未初始化 */
-} protocol_parser_error_t;
-
-/**
- * @brief 帧校验回调函数类型
- * @param buffer 帧数据缓冲区
- * @param len 帧数据长度
- * @return 校验结果错误码
- */
-typedef protocol_parser_error_t (*protocol_parser_check_cb_t)(
-    uint8_t* buffer, uint16_t len);
-
-/**
- * @brief 帧长度计算回调函数类型
- * @param buffer 帧数据缓冲区
- * @param len 当前数据长度
- * @return 完整帧长度，0表示数据不完整
- */
-typedef uint16_t (*protocol_parser_get_len_cb_t)(uint8_t* buffer, uint16_t len);
-
-/**
- * @brief 协议解析器配置结构体
- */
-typedef struct {
-  const char* name;                        /**< 协议名称 */
-  const uint8_t* header;                   /**< 帧头数据 */
-  const uint8_t* footer;                   /**< 帧尾数据 */
-  uint8_t* output_buffer;                  /**< 输出帧缓冲区 */
-  protocol_parser_get_len_cb_t get_len_cb; /**< 帧长度计算回调 */
-  protocol_parser_check_cb_t check_cb;     /**< 帧校验回调 */
-  uint16_t header_len;                     /**< 帧头长度 */
-  uint16_t footer_len;                     /**< 帧尾长度 */
-  uint16_t input_buffer_len;               /**< 输入缓冲区大小 */
-  uint16_t output_buffer_len;              /**< 输出缓冲区大小 */
-} protocol_parser_config_t;
-
-/**
- * @brief 协议解析器上下文结构体前向声明
- */
-typedef struct protocol_parser_context protocol_parser_context_t;
-
-/**
- * @brief 协议解析器上下文结构体
- */
-struct protocol_parser_context {
-  protocol_parser_config_t config; /**< 配置参数 */
-
-  void* fifo;             /**< 内部FIFO缓冲区 */
-  uint32_t idle_timer;    /**< 空闲计时器 */
-  bool initialized;       /**< 初始化标志 */
-};
-
-/* Exported functions prototypes ---------------------------------------------*/
-
-/**
- * @brief 初始化协议解析器
- * @param ctx 协议解析器上下文指针
- * @param config 配置结构体指针
- * @return 操作结果错误码
- */
-protocol_parser_error_t protocol_parser_init(
-    protocol_parser_context_t* ctx,
-    const protocol_parser_config_t* config);
-
-/**
- * @brief 反初始化协议解析器
- * @param ctx 协议解析器上下文指针
- */
-void protocol_parser_deinit(protocol_parser_context_t* ctx);
-
-/**
- * @brief 检查解析器是否已初始化
- * @param ctx 协议解析器上下文指针
- * @return true表示已初始化，false表示未初始化
- */
-bool protocol_parser_is_initialized(const protocol_parser_context_t* ctx);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* __PROTOCOL_PARSER_H */
-```
-
-### 源文件示例 (protocol_parser.c)
-
-```c
-//
-// Created by fubingyan on 25-4-5.
-//
-
-/**
- * @file    protocol_parser.c
- * @author  fubingyan
- * @version V1.0.0
- * @date    2025-04-05
- * @brief   通用协议解析器实现
- * @attention
- *
- * Copyright (c) 2025 Company Name.
- * All rights reserved.
- *
- */
-
-/* Includes ------------------------------------------------------------------*/
-#include "protocol_parser.h"
-
-#include <string.h>
-
-/* Private constants ---------------------------------------------------------*/
-
-#define IDLE_TIMER_US (1000 * 5)
-
-/* Private function prototypes -----------------------------------------------*/
-static protocol_parser_error_t parser_check_header(
-    const protocol_parser_context_t* ctx);
-
-/* Exported functions --------------------------------------------------------*/
-
-/**
- * @brief 初始化协议解析器
- * @param ctx 协议解析器上下文指针
- * @param config 配置结构体指针
- * @return 操作结果错误码
- */
-protocol_parser_error_t protocol_parser_init(
-    protocol_parser_context_t* ctx,
-    const protocol_parser_config_t* config) {
-  // 检查参数有效性
-  if (!ctx || !config) {
-    return PROTOCOL_PARSER_ERROR_NULL_PTR;
-  }
-
-  if (!config->output_buffer) {
-    return PROTOCOL_PARSER_ERROR_NULL_PTR;
-  }
-
-  // 处理空指针情况
-  uint16_t header_len = config->header_len;
-  if (config->header == NULL) {
-    header_len = 0;
-  }
-
-  // 检查缓冲区大小
-  if (config->output_buffer_len < (header_len + 1)) {
-    return PROTOCOL_PARSER_ERROR_INVALID_PARAM;
-  }
-
-  // 如果已初始化，先反初始化
-  if (ctx->initialized) {
-    protocol_parser_deinit(ctx);
-  }
-
-  // 保存配置
-  ctx->config = *config;
-  ctx->config.header_len = header_len;
-
-  // 初始化运行时状态
-  ctx->idle_timer = 0;
-  ctx->initialized = true;
-
-  return PROTOCOL_PARSER_OK;
-}
-
-/**
- * @brief 反初始化协议解析器
- * @param ctx 协议解析器上下文指针
- */
-void protocol_parser_deinit(protocol_parser_context_t* ctx) {
-  if (!ctx) {
-    return;
-  }
-
-  if (ctx->fifo != NULL) {
-    kfifo_free((kfifo_t*)ctx->fifo);
-    ctx->fifo = NULL;
-  }
-
-  ctx->initialized = false;
-}
-
-/**
- * @brief 检查解析器是否已初始化
- * @param ctx 协议解析器上下文指针
- * @return true表示已初始化，false表示未初始化
- */
-bool protocol_parser_is_initialized(const protocol_parser_context_t* ctx) {
-  return (ctx && ctx->initialized);
-}
-
-/* Private functions ---------------------------------------------------------*/
-
-/**
- * @brief 检查帧头匹配
- * @param ctx 协议解析器上下文指针
- * @return 操作结果错误码
- */
-static protocol_parser_error_t parser_check_header(
-    const protocol_parser_context_t* ctx) {
-  if (ctx->config.header_len == 0) {
-    return PROTOCOL_PARSER_OK;
-  }
-
-  // 实现帧头检查逻辑...
-
-  return PROTOCOL_PARSER_OK;
-}
-```
 
 ---
 
