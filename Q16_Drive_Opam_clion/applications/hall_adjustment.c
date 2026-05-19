@@ -8,6 +8,7 @@
 #include "easyflash.h"
 #include "flash_task.h"
 #include "foc_config_q16.h"
+#include "pll.h"
 
 pt1Filter_t hall_filter[ADC_CH_NUM];
 pt1Filter_t hall_filter_normal[ADC_CH_NUM];
@@ -21,7 +22,16 @@ const float rotation_circle = 2.5f;
 const uint16_t hall_filter_fcut_Normal = 10000;
 const uint16_t hall_filter_fcut_Adjust = 20;
 
-hall_pll_handle_t hall_pll;
+pll_context_t pll_ctx;
+
+const pll_config_t pll_config = {
+    .kp = 250.0f,
+    .ki = 32000.0f,
+    .sample_time = FOC_PWM_PERIOD,
+    .filter_freq_dq = 500.0f,
+    .filter_freq_omega = 20.0f,
+};
+
 static daemon_context_t* daemon_get_encoder;
 #define HALL_ADJUST_PRINTF(...)  // BSP_Printf(__VA_ARGS__)
 
@@ -152,7 +162,7 @@ static void HALL_Adjust_Init(void) {
   ef_get_env_blob(FLASH_MAGIC_HALL, &hall_save_param, sizeof(hall_save_param),
                   NULL);
 
-  hall_pll_init(&hall_pll);
+  pll_init(&pll_ctx, &pll_config);
   daemon_get_encoder = daemon_get_instance("encoder");
   DEBUG_ASSERT(daemon_get_encoder);
 }
@@ -182,8 +192,8 @@ static uint16_t HALL_Adjust_Get_Angle(void) {
   if (hall_save_param.hall_adjust_flag != ADJUST_FLAG) {
     _y = _x = 0.0001f;
   }
-  hall_pll_update(&hall_pll, _y, _x);
-  angle = hall_pll.pll.theta;
+  pll_update(&pll_ctx, _y, _x);
+  angle = pll_get_angle(&pll_ctx);
   angle = atan2_approx(_y, _x);
   hall_adjust.angle = angle;
   UTILS_NAN_ZERO(angle);

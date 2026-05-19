@@ -5,20 +5,20 @@
 extern "C" {
 #endif
 
+
 /* ===== Algorithm ===== */
 #include "algorithm/controller/gimbal_pid.h"
 #include "algorithm/controller/pid.h"
 #include "algorithm/crc.h"
 #include "algorithm/filter/filter.h"
-#include "algorithm/joint_pos.h"
-#include "algorithm/line_hall_pll.h"
+#include "algorithm/pll/pll.h"
 #include "algorithm/math/maths.h"
 #include "algorithm/math/user_lib.h"
 #include "algorithm/math/utils.h"
 #include "algorithm/math/utils_math.h"
 
-/* ===== HMI ===== */
-#include "hmi/key_base.h"
+/* ===== key_base ===== */
+#include "key_base/key_base.h"
 
 /* ===== Logic ===== */
 #include "logic/fsm.h"
@@ -40,6 +40,13 @@ extern "C" {
 #include "utils/kfifo.h"
 #include "utils/memory_pool.h"
 #include "utils/toolkit/toolkit.h"
+
+/* ===== STDLIB ===== */
+#include <limits.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
 #ifdef __cplusplus
 }

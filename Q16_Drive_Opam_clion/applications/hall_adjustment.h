@@ -5,6 +5,7 @@
 #ifndef HALL_ADJUSTMENT_H
 #define HALL_ADJUSTMENT_H
 #include "stdint.h"
+#include "pll.h"
 
 #define ADC_CH_NUM 2
 
@@ -42,5 +43,7 @@ typedef struct {
 } hall_adjust_t;
 
 extern hall_adjust_t hall_adjust;
+extern pll_context_t pll_ctx;
+extern const pll_config_t pll_config;
 
 #endif  // HALL_ADJUSTMENT_H

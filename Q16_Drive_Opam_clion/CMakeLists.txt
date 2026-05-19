@@ -55,10 +55,11 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/Q16_FOC FOC)
 
 # Middlewares 目录
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm MID_algorithm)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm/pll MID_pll)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm/controller MID_controller)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm/filter MID_filter)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm/math MID_math)
-aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/hmi MID_hmi)
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/key_base MID_key_base)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/logic MID_logic)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/message_center MID_message_center)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/protocol MID_protocol)
@@ -85,10 +86,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${HAL}
         ${FOC}
         ${MID_algorithm}
+        ${MID_pll}
         ${MID_controller}
         ${MID_filter}
         ${MID_math}
-        ${MID_hmi}
+        ${MID_key_base}
         ${MID_logic}
         ${MID_message_center}
         ${MID_protocol}
@@ -117,10 +119,11 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         Q16_FOC
         Middlewares
         Middlewares/algorithm
+        Middlewares/algorithm/pll
         Middlewares/algorithm/controller
         Middlewares/algorithm/filter
         Middlewares/algorithm/math
-        Middlewares/hmi
+        Middlewares/key_base
         Middlewares/logic
         Middlewares/message_center
         Middlewares/protocol

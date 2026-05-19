@@ -13,7 +13,6 @@
 #include "maths.h"
 #include "utils_math.h"
 #include "MT6816.h"
-#include "line_hall_pll.h"
 #include "foc_config_q16.h"
 #include "hall_adjustment.h"
 #include "perf_counter.h"
@@ -343,7 +342,7 @@ static void sensor_mt6816_set_offset(float offset)
 /* ==================== 线性霍尔传感器实现 ==================== */
 static int sensor_linear_hall_init(void)
 {
-    hall_pll_init(&hall_pll);
+    pll_init(&pll_ctx, &pll_config);
     hall_adjust.hall_adjust_init();
     g_sensor.info.type = SENSOR_TYPE_LINEAR_HALL;
     g_sensor.info.resolution = 65535;
@@ -371,7 +370,7 @@ static bool sensor_linear_hall_is_calibrated(void)
 
 static uint16_t sensor_linear_hall_get_raw_angle(void)
 {
-    float angle_rad = hall_pll_get_angle_rad(&hall_pll);
+    float angle_rad = pll_get_angle(&pll_ctx);
     while (angle_rad > M_2PI)
         angle_rad -= M_2PI;
     while (angle_rad < 0.0f)
@@ -382,7 +381,7 @@ static uint16_t sensor_linear_hall_get_raw_angle(void)
 
 static float sensor_linear_hall_get_angle_rad(void)
 {
-    float angle = hall_pll_get_angle_rad(&hall_pll);
+    float angle = pll_get_angle(&pll_ctx);
     angle += g_mechanical_offset;
     while (angle > M_2PI)
         angle -= M_2PI;
@@ -398,7 +397,7 @@ static float sensor_linear_hall_get_angle_rad(void)
 
 static float sensor_linear_hall_get_velocity_rads(void)
 {
-    return hall_pll_get_speed_rads(&hall_pll);
+    return pll_get_speed(&pll_ctx);
 }
 
 static void sensor_linear_hall_update(void)
