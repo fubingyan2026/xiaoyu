@@ -11,7 +11,8 @@
 #include "debug.h"
 #include "foc_port.h" // FOC端口适配层头文件
 #include "foc_port.h"
-#include "foc_sensor.h" // FOC传感器抽象层
+#include "angle_sensor.h"             // 角度传感器抽象层
+#include "angle_sensor_linear_hall.h" // 线性霍尔传感器
 #include "foc_sm.h"     // FOC状态机头文件
 #include "main.h"
 #include "memory_pool.h"
@@ -28,6 +29,8 @@ uint32_t current_dma_value[3];           // ADC DMA采样值缓冲区
 q16_16_t current_adc_init_buff[3] = {0}; // ADC初始偏置值（Q16.16格式）
 
 /* ==================== FOC全局变量 ==================== */
+
+static angle_sensor_context_t sensor_ctx; /**< 传感器上下文 */
 
 q16_16_pi_t q16_16_pi_id = {0};  // D轴PI控制器实例
 q16_16_pi_t q16_16_pi_iq = {0};  // Q轴PI控制器实例
@@ -166,7 +169,7 @@ static void stm32_pwm_stop(void)
  */
 static uint16_t stm32_encoder_read(void)
 {
-    return foc_sensor_get_raw_angle();
+    return angle_sensor_get_raw_angle(&sensor_ctx);
 }
 
 /**
@@ -211,8 +214,8 @@ static void foc_pll_run(q16_16_t phase_q, q16_16_t dt_q, q16_16_t *phase_var_q, 
  */
 extern void foc_init(void)
 {
-    foc_sensor_config_t sensor_cfg = { .type = SENSOR_TYPE_LINEAR_HALL };
-    foc_sensor_init(&sensor_cfg); // 传感器初始化
+    angle_sensor_linear_hall_init_context(&sensor_ctx);
+    angle_sensor_init(&sensor_ctx);
     encoder_alignment_init();                       // 加载电机闪存数据
 
     foc_ctrl.foc_ctrl_cycle_s = FOC_PWM_PERIOD_Q;

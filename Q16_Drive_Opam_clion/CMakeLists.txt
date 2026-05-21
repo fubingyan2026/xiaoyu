@@ -54,6 +54,7 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/hal_drivers HAL)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Q16_FOC FOC)
 
 # Middlewares 目录
+aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/angle_sensor MID_angle_sensor)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm MID_algorithm)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm/pll MID_pll)
 aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/algorithm/controller MID_controller)
@@ -85,6 +86,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${APP}
         ${HAL}
         ${FOC}
+        ${MID_angle_sensor}
         ${MID_algorithm}
         ${MID_pll}
         ${MID_controller}
@@ -118,6 +120,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         hal_drivers
         Q16_FOC
         Middlewares
+        Middlewares/angle_sensor
         Middlewares/algorithm
         Middlewares/algorithm/pll
         Middlewares/algorithm/controller

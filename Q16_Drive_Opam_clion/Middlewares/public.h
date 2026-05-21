@@ -6,6 +6,9 @@ extern "C" {
 #endif
 
 
+/* ===== Angle Sensor ===== */
+#include "angle_sensor/angle_sensor.h"
+
 /* ===== Algorithm ===== */
 #include "algorithm/controller/gimbal_pid.h"
 #include "algorithm/controller/pid.h"
@@ -13,7 +16,6 @@ extern "C" {
 #include "algorithm/filter/filter.h"
 #include "algorithm/pll/pll.h"
 #include "algorithm/math/maths.h"
-#include "algorithm/math/user_lib.h"
 #include "algorithm/math/utils.h"
 #include "algorithm/math/utils_math.h"
 

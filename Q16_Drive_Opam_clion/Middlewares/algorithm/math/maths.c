@@ -19,9 +19,8 @@
  */
 
 #include <stdint.h>
-#include <math.h>
+#include <string.h>
 
-#include "axis.h"
 #include "maths.h"
 
 #if defined(FAST_MATH) || defined(VERY_FAST_MATH)
@@ -34,15 +33,45 @@
 // sin_approx maximum absolute error = 2.305023e-06
 // cos_approx maximum absolute error = 2.857298e-06
 #define sinPolyCoef3 (-1.666568107e-1f)
-#define sinPolyCoef5  8.312366210e-3f
+#define sinPolyCoef5 8.312366210e-3f
 #define sinPolyCoef7 (-1.849218155e-4f)
-#define sinPolyCoef9  0
+#define sinPolyCoef9 0
 #else
-#define sinPolyCoef3 -1.666665710e-1f                                          // Double: -1.666665709650470145824129400050267289858e-1
-#define sinPolyCoef5  8.333017292e-3f                                          // Double:  8.333017291562218127986291618761571373087e-3
-#define sinPolyCoef7 -1.980661520e-4f                                          // Double: -1.980661520135080504411629636078917643846e-4
-#define sinPolyCoef9  2.600054768e-6f                                          // Double:  2.600054767890361277123254766503271638682e-6
+#define sinPolyCoef3 -1.666665710e-1f // Double: -1.666665709650470145824129400050267289858e-1
+#define sinPolyCoef5 8.333017292e-3f // Double:  8.333017291562218127986291618761571373087e-3
+#define sinPolyCoef7 -1.980661520e-4f // Double: -1.980661520135080504411629636078917643846e-4
+#define sinPolyCoef9 2.600054768e-6f // Double:  2.600054767890361277123254766503271638682e-6
 #endif
+
+/**
+ * @brief Computes the inverse square root of a given floating-point number using an optimized algorithm.
+ * @param num The input value for which the inverse square root is to be computed.
+ * @retval The inverse square root of the input value.
+ */
+static float inv_sqrt(const float num)
+{
+    const float halfnum = 0.5f * num;
+    float y = num;
+    uint32_t i;
+    // 使用 memcpy 规避 Strict Aliasing 未定义行为
+    // 现代编译器在开启优化时，会将其直接优化为寄存器间的搬运，不会产生实际的内存拷贝开销
+    memcpy(&i, &y, sizeof(i));
+    i = 0x5f3759df - (i >> 1);
+    memcpy(&y, &i, sizeof(y));
+    // 一次牛顿迭代
+    y = y * (1.5f - halfnum * y * y);
+    return y;
+}
+
+/**
+ * @brief Computes an approximation of the square root of a given floating-point number using a fast algorithm.
+ * @param num The input value for which the square root is to be computed.
+ * @retval The approximate square root of the input value.
+ */
+float sqrt_approx(const float num)
+{
+    return num * inv_sqrt(num);
+}
 
 /**
  * @brief Computes an approximation of the sine of a given angle.
@@ -57,8 +86,7 @@
  */
 float sin_approx(float x)
 {
-    while (x > M_PIf) x -= 2.0f * M_PIf; // always wrap input angle to -PI..PI
-    while (x < -M_PIf) x += 2.0f * M_PIf;
+    utils_norm_angle_rad(&x);
     if (x > 0.5f * M_PIf)
         x = 0.5f * M_PIf - (x - 0.5f * M_PIf); // We just pick -90..+90 Degree
     else if (x < -(0.5f * M_PIf))
@@ -89,25 +117,29 @@ float cos_approx(const float x)
 // atan2_approx maximum absolute error = 7.152557e-07 rads (4.098114e-05 degree)
 float atan2_approx(const float y, const float x)
 {
-#define atanPolyCoef1  3.14551665884836e-07f
-#define atanPolyCoef2  0.99997356613987f
-#define atanPolyCoef3  0.14744007058297684f
-#define atanPolyCoef4  0.3099814292351353f
-#define atanPolyCoef5  0.05030176425872175f
-#define atanPolyCoef6  0.1471039133652469f
-#define atanPolyCoef7  0.6444640676891548f
+#define atanPolyCoef1 3.14551665884836e-07f
+#define atanPolyCoef2 0.99997356613987f
+#define atanPolyCoef3 0.14744007058297684f
+#define atanPolyCoef4 0.3099814292351353f
+#define atanPolyCoef5 0.05030176425872175f
+#define atanPolyCoef6 0.1471039133652469f
+#define atanPolyCoef7 0.6444640676891548f
 
     float res;
     float absX = ABS_M(x);
     float absY = ABS_M(y);
     res = MAX_M(absX, absY);
-    if (res) res = MIN_M(absX, absY) / res;
-    else res = 0.0f;
-    res = -((((atanPolyCoef5 * res - atanPolyCoef4) * res - atanPolyCoef3) * res - atanPolyCoef2) * res -
-            atanPolyCoef1) / ((atanPolyCoef7 * res + atanPolyCoef6) * res + 1.0f);
-    if (absY > absX) res = (M_PIf *0.5f) - res;
-    if (x < 0) res = M_PIf - res;
-    if (y < 0) res = -res;
+    if (res)
+        res = MIN_M(absX, absY) / res;
+    else
+        res = 0.0f;
+    res = -((((atanPolyCoef5 * res - atanPolyCoef4) * res - atanPolyCoef3) * res - atanPolyCoef2) * res - atanPolyCoef1) / ((atanPolyCoef7 * res + atanPolyCoef6) * res + 1.0f);
+    if (absY > absX)
+        res = (M_PIf * 0.5f) - res;
+    if (x < 0)
+        res = M_PIf - res;
+    if (y < 0)
+        res = -res;
     return res;
 }
 
@@ -118,7 +150,7 @@ float atan2_approx(const float y, const float x)
 float acos_approx(const float x)
 {
     const float xa = fabsf(x);
-    const float result = sqrtf(1.0f - xa) * (1.5707288f + xa * (-0.2121144f + xa * (0.0742610f + (-0.0187293f * xa))));
+    const float result = sqrt_approx(1.0f - xa) * (1.5707288f + xa * (-0.2121144f + xa * (0.0742610f + (-0.0187293f * xa))));
     if (x < 0.0f)
         return M_PIf - result;
     return result;
@@ -178,7 +210,8 @@ int gcd(const int num, const int denom)
 float powerf(const float base, const int exp)
 {
     float result = base;
-    for (int count = 1; count < exp; count++) result *= base;
+    for (int count = 1; count < exp; count++)
+        result *= base;
 
     return result;
 }
@@ -216,7 +249,7 @@ float fapplyDeadband(const float value, const float deadband)
     return value >= 0 ? value - deadband : value + deadband;
 }
 
-void devClear(stdev_t *dev)
+void devClear(stdev_t* dev)
 {
     dev->m_n = 0;
 }
@@ -232,7 +265,7 @@ void devClear(stdev_t *dev)
  * @param dev Pointer to the `stdev_t` structure that holds the running statistics.
  * @param x The new data point to be included in the statistics.
  */
-void devPush(stdev_t *dev, const float x)
+void devPush(stdev_t* dev, const float x)
 {
     dev->m_n++;
     if (dev->m_n == 1) {
@@ -246,12 +279,12 @@ void devPush(stdev_t *dev, const float x)
     }
 }
 
-float devVariance(const stdev_t *dev)
+float devVariance(const stdev_t* dev)
 {
     return dev->m_n > 1 ? dev->m_newS / (dev->m_n - 1) : 0.0f;
 }
 
-float devStandardDeviation(const stdev_t *dev)
+float devStandardDeviation(const stdev_t* dev)
 {
     return sqrtf(devVariance(dev));
 }
@@ -263,8 +296,8 @@ float degreesToRadians(const int16_t degrees)
 
 int scaleRange(const int x, const int srcFrom, const int srcTo, const int destFrom, const int destTo)
 {
-    const long int a = ((long int) destTo - (long int) destFrom) * ((long int) x - (long int) srcFrom);
-    const long int b = (long int) srcTo - (long int) srcFrom;
+    const long int a = ((long int)destTo - (long int)destFrom) * ((long int)x - (long int)srcFrom);
+    const long int b = (long int)srcTo - (long int)srcFrom;
     return a / b + destFrom;
 }
 
@@ -276,9 +309,9 @@ float scaleRangef(float x, float srcFrom, float srcTo, float destFrom, float des
 }
 
 // Normalize a vector
-void normalizeV(const struct fp_vector *src, struct fp_vector *dest)
+void normalizeV(const struct fp_vector* src, struct fp_vector* dest)
 {
-    const float length = sqrtf(src->X * src->X + src->Y * src->Y + src->Z * src->Z);
+    const float length = sqrt_approx(src->X * src->X + src->Y * src->Y + src->Z * src->Z);
     if (length != 0) {
         dest->X = src->X / length;
         dest->Y = src->Y / length;
@@ -297,7 +330,7 @@ void normalizeV(const struct fp_vector *src, struct fp_vector *dest)
  * @param delta A pointer to a structure containing the roll, pitch, and yaw angles.
  * @param matrix A 3x3 matrix that will be filled with the rotation matrix elements.
  */
-void buildRotationMatrix(const fp_angles_t *delta, float matrix[3][3])
+void buildRotationMatrix(const fp_angles_t* delta, float matrix[3][3])
 {
     const float cosx = cos_approx(delta->angles.roll);
     const float sinx = sin_approx(delta->angles.roll);
@@ -336,7 +369,7 @@ void buildRotationMatrix(const fp_angles_t *delta, float matrix[3][3])
  * @param delta Pointer to a structure containing the rotation angles (roll,
  *              pitch, and yaw) used to build the rotation matrix.
  */
-void rotateV(struct fp_vector *v, const fp_angles_t *delta)
+void rotateV(struct fp_vector* v, const fp_angles_t* delta)
 {
     const struct fp_vector v_tmp = *v;
 
@@ -352,13 +385,36 @@ void rotateV(struct fp_vector *v, const fp_angles_t *delta)
 // Quick median filter implementation
 // (c) N. Devillard - 1998
 // http://ndevilla.free.fr/median/median.pdf
-#define QMF_SORT(a, b) { if ((a)>(b)) QMF_SWAP((a),(b)); }
-#define QMF_SWAP(a, b) { int32_t temp=(a);(a)=(b);(b)=temp; }
-#define QMF_COPY(p, v, n) { int32_t i; for (i=0; i<n; i++) p[i]=v[i]; }
-#define QMF_SORTF(a, b) { if ((a)>(b)) QMF_SWAPF((a),(b)); }
-#define QMF_SWAPF(a, b) { float temp=(a);(a)=(b);(b)=temp; }
+#define QMF_SORT(a, b)          \
+    {                           \
+        if ((a) > (b))          \
+            QMF_SWAP((a), (b)); \
+    }
+#define QMF_SWAP(a, b)      \
+    {                       \
+        int32_t temp = (a); \
+        (a) = (b);          \
+        (b) = temp;         \
+    }
+#define QMF_COPY(p, v, n)       \
+    {                           \
+        int32_t i;              \
+        for (i = 0; i < n; i++) \
+            p[i] = v[i];        \
+    }
+#define QMF_SORTF(a, b)          \
+    {                            \
+        if ((a) > (b))           \
+            QMF_SWAPF((a), (b)); \
+    }
+#define QMF_SWAPF(a, b)   \
+    {                     \
+        float temp = (a); \
+        (a) = (b);        \
+        (b) = temp;       \
+    }
 
-int32_t quickMedianFilter3(int32_t *v)
+int32_t quickMedianFilter3(int32_t* v)
 {
     int32_t p[3];
     QMF_COPY(p, v, 3);
@@ -369,7 +425,7 @@ int32_t quickMedianFilter3(int32_t *v)
     return p[1];
 }
 
-int32_t quickMedianFilter5(int32_t *v)
+int32_t quickMedianFilter5(int32_t* v)
 {
     int32_t p[5];
     QMF_COPY(p, v, 5);
@@ -384,7 +440,7 @@ int32_t quickMedianFilter5(int32_t *v)
     return p[2];
 }
 
-int32_t quickMedianFilter7(int32_t *v)
+int32_t quickMedianFilter7(int32_t* v)
 {
     int32_t p[7];
     QMF_COPY(p, v, 7);
@@ -405,7 +461,7 @@ int32_t quickMedianFilter7(int32_t *v)
     return p[3];
 }
 
-int32_t quickMedianFilter9(int32_t *v)
+int32_t quickMedianFilter9(int32_t* v)
 {
     int32_t p[9];
     QMF_COPY(p, v, 9);
@@ -432,7 +488,7 @@ int32_t quickMedianFilter9(int32_t *v)
     return p[4];
 }
 
-float quickMedianFilter3f(float *v)
+float quickMedianFilter3f(float* v)
 {
     float p[3];
     QMF_COPY(p, v, 3);
@@ -443,7 +499,7 @@ float quickMedianFilter3f(float *v)
     return p[1];
 }
 
-float quickMedianFilter5f(float *v)
+float quickMedianFilter5f(float* v)
 {
     float p[5];
     QMF_COPY(p, v, 5);
@@ -458,7 +514,7 @@ float quickMedianFilter5f(float *v)
     return p[2];
 }
 
-float quickMedianFilter7f(float *v)
+float quickMedianFilter7f(float* v)
 {
     float p[7];
     QMF_COPY(p, v, 7);
@@ -479,7 +535,7 @@ float quickMedianFilter7f(float *v)
     return p[3];
 }
 
-float quickMedianFilter9f(float *v)
+float quickMedianFilter9f(float* v)
 {
     float p[9];
     QMF_COPY(p, v, 9);
@@ -506,7 +562,7 @@ float quickMedianFilter9f(float *v)
     return p[4];
 }
 
-void arraySubInt32(int32_t *dest, const int32_t *array1, const int32_t *array2, const int count)
+void arraySubInt32(int32_t* dest, const int32_t* array1, const int32_t* array2, const int count)
 {
     for (int i = 0; i < count; i++) {
         dest[i] = array1[i] - array2[i];

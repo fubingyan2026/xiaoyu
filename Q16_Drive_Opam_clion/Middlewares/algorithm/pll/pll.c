@@ -95,7 +95,8 @@ pll_error_t pll_init(pll_context_t *ctx, const pll_config_t *config)
         pt1FilterInit(&ctx->filter_omega, k);
     }
 
-    // 标记初始化完成
+    // 标记初始化完成，进入启动阶段
+    ctx->startup_done = false;
     ctx->initialized = true;
 
     return PLL_OK;
@@ -137,6 +138,17 @@ pll_error_t pll_update(pll_context_t *ctx, float signal_a, float signal_b)
     if (!ctx->initialized)
     {
         return PLL_ERROR_UNINITIALIZED;
+    }
+
+    // 启动阶段：使用 atan2 直接估计初始角度，跳过低通滤波以加速收敛
+    if (!ctx->startup_done)
+    {
+        ctx->theta = atan2_approx(signal_a, signal_b);
+        ctx->omega = 0.0f;
+        ctx->intg_pll = 0.0f;
+        pll_normalize_angle(&ctx->theta);
+        ctx->startup_done = true;
+        return PLL_OK;
     }
 
     // 1. Park 变换（仅计算 q 轴分量用于锁相）
@@ -224,6 +236,7 @@ pll_error_t pll_reset(pll_context_t *ctx)
     ctx->theta = 0.0f;
     ctx->omega = 0.0f;
     ctx->intg_pll = 0.0f;
+    ctx->startup_done = false;
 
     // 重新初始化滤波器
     if (ctx->config.filter_freq_dq > 0.0f)

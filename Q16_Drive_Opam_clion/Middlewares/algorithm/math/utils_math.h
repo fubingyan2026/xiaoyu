@@ -1,21 +1,21 @@
 /*
-	Copyright 2016 - 2019 Benjamin Vedder	benjamin@vedder.se
+        Copyright 2016 - 2019 Benjamin Vedder	benjamin@vedder.se
 
-	This file is part of the VESC firmware.
+        This file is part of the VESC firmware.
 
-	The VESC firmware is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+        The VESC firmware is free software: you can redistribute it and/or modify
+        it under the terms of the GNU General Public License as published by
+        the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
 
-	The VESC firmware is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+        The VESC firmware is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	*/
+        You should have received a copy of the GNU General Public License
+        along with this program.  If not, see <http://www.gnu.org/licenses/>.
+        */
 
 #ifndef UTILS_MATH_H_
 #define UTILS_MATH_H_
@@ -26,42 +26,42 @@
 #include "math.h"
 #include "perf_counter.h"
 
-#if !defined(M_PI)
-#define M_PI 3.1415926f
-#else
-
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
 #endif
-#define PI 3.1415926f
+
+#define PI 3.14159265358979323846f
+#define TWO_PI 6.28318530717958647692f
 
 float utils_map_angle(float angle, float min, float max);
-void utils_deadband(float *value, float tres, float max);
+void utils_deadband(float* value, float tres, float max);
 float utils_angle_difference(float angle1, float angle2);
 float utils_angle_difference_rad(float angle1, float angle2);
-float utils_avg_angles_rad_fast(const float *angles, const float *weights, int angles_num);
+float utils_avg_angles_rad_fast(const float* angles, const float* weights, int angles_num);
 float utils_interpolate_angles_rad(float a1, float a2, float weight_a1);
 float utils_middle_of_3(float a, float b, float c);
 int utils_middle_of_3_int(int a, int b, int c);
 float utils_fast_atan2(float y, float x);
-void utils_fast_sincos(float angle, float *sin, float *cos);
-void utils_fast_sincos_better(float angle, float *sin, float *cos);
+void utils_fast_sincos(float angle, float* sin, float* cos);
+void utils_fast_sincos_better(float angle, float* sin, float* cos);
 float utils_min_abs(float va, float vb);
 float utils_max_abs(float va, float vb);
-void utils_byte_to_binary(int x, char *b);
+void utils_byte_to_binary(int x, char* b);
 float utils_throttle_curve(float val, float curve_acc, float curve_brake, int mode);
-uint32_t utils_crc32c(uint8_t *data, uint32_t len);
-void utils_fft32_bin0(const float *real_in, float *real, float *imag);
-void utils_fft32_bin1(float *real_in, float *real, float *imag);
-void utils_fft32_bin2(float *real_in, float *real, float *imag);
-void utils_fft16_bin0(float *real_in, float *real, float *imag);
-void utils_fft16_bin1(float *real_in, float *real, float *imag);
-void utils_fft16_bin2(float *real_in, float *real, float *imag);
-void utils_fft8_bin0(float *real_in, float *real, float *imag);
-void utils_fft8_bin1(float *real_in, float *real, float *imag);
-void utils_fft8_bin2(float *real_in, float *real, float *imag);
+uint32_t utils_crc32c(uint8_t* data, uint32_t len);
+void utils_fft32_bin0(const float* real_in, float* real, float* imag);
+void utils_fft32_bin1(float* real_in, float* real, float* imag);
+void utils_fft32_bin2(float* real_in, float* real, float* imag);
+void utils_fft16_bin0(float* real_in, float* real, float* imag);
+void utils_fft16_bin1(float* real_in, float* real, float* imag);
+void utils_fft16_bin2(float* real_in, float* real, float* imag);
+void utils_fft8_bin0(float* real_in, float* real, float* imag);
+void utils_fft8_bin1(float* real_in, float* real, float* imag);
+void utils_fft8_bin2(float* real_in, float* real, float* imag);
 float utils_batt_liion_norm_v_to_capacity(float norm_v);
-uint16_t utils_median_filter_uint16_run(uint16_t *buffer,
-										unsigned int *buffer_index, unsigned int filter_len, uint16_t sample);
-void utils_rotate_vector3(float *input, float *rotation, float *output, bool reverse);
+uint16_t utils_median_filter_uint16_run(uint16_t* buffer,
+    unsigned int* buffer_index, unsigned int filter_len, uint16_t sample);
+void utils_rotate_vector3(float* input, float* rotation, float* output, bool reverse);
 
 // Return the sign of the argument. -1.0 if negative, 1.0 if zero or positive.
 #define SIGN(x) (((x) < 0.0f) ? -1.0f : 1.0f)
@@ -135,30 +135,21 @@ extern const float utils_tab_cos_32_1[];
 extern const float utils_tab_cos_32_2[];
 
 // Inline functions
-static inline void utils_step_towards(float *value, float goal, float step)
+static inline void utils_step_towards(float* value, float goal, float step)
 {
-	if (*value < goal)
-	{
-		if ((*value + step) < goal)
-		{
-			*value += step;
-		}
-		else
-		{
-			*value = goal;
-		}
-	}
-	else if (*value > goal)
-	{
-		if ((*value - step) > goal)
-		{
-			*value -= step;
-		}
-		else
-		{
-			*value = goal;
-		}
-	}
+    if (*value < goal) {
+        if ((*value + step) < goal) {
+            *value += step;
+        } else {
+            *value = goal;
+        }
+    } else if (*value > goal) {
+        if ((*value - step) > goal) {
+            *value -= step;
+        } else {
+            *value = goal;
+        }
+    }
 }
 
 /**
@@ -167,79 +158,92 @@ static inline void utils_step_towards(float *value, float goal, float step)
  * @param angle
  * The angle to normalize.
  */
-static void utils_norm_angle(float *angle)
+static void utils_norm_angle(float* angle)
 {
-	*angle = fmodf(*angle, 360.0f);
+    *angle = fmodf(*angle, 360.0f);
 
-	if (*angle < 0.0f)
-	{
-		*angle += 360.0f;
-	}
+    if (*angle < 0.0f) {
+        *angle += 360.0f;
+    }
 }
 
 /**
  * Make sure that -pi <= angle < pi,
  *
- * @param angle
+ * @param theta
  * The angle to normalize in radians.
  * WARNING: Don't use too large angles.
  */
-static inline void utils_norm_angle_rad(float *angle)
+static inline void utils_norm_angle_rad(float* theta)
 {
-	while (*angle < -M_PI)
-	{
-		*angle += 2.0f * M_PI;
-	}
-	while (*angle >= M_PI)
-	{
-		*angle -= 2.0f * M_PI;
-	}
+    const float INV_TWO_PI = 1.0f / TWO_PI;
+    if (*theta > PI) {
+        // 将除法替换为乘法
+        *theta -= TWO_PI * (float)(int32_t)((*theta + PI) * INV_TWO_PI);
+    } else if (*theta < -PI) {
+        // 将除法替换为乘法
+        *theta += TWO_PI * (float)(int32_t)((-*theta + PI) * INV_TWO_PI);
+    }
 }
 
-static void utils_truncate_number(float *number, const float min, const float max)
+/**
+ * Make sure that 0 <= angle < 2*PI,
+ *
+ * @param angle
+ * The angle to normalize in radians.
+ * WARNING: Don't use too large angles to avoid integer overflow during conversion.
+ */
+static inline void utils_norm_angle_0_2pi(float* angle)
 {
-	if (*number > max)
-	{
-		*number = max;
-	}
-	else if (*number < min)
-	{
-		*number = min;
-	}
+    // 定义 1 / (2*PI) 的常数，编译器通常会在编译期将其直接计算为常量
+    const float INV_TWO_PI = 1.0f / TWO_PI;
+
+    // 统一进行截断减法
+    *angle -= TWO_PI * (float)(int32_t)(*angle * INV_TWO_PI);
+
+    // 如果原角为负数，减去负数的截断值后仍会是负数（例如 -0.1 * TWO_PI 仍为 -0.1 * TWO_PI）
+    // 此时只需简单加上一个 TWO_PI 即可。
+    // 注：若原角刚好是 -TWO_PI，计算后会直接变为 0.0f，不会触发此分支。
+    if (*angle < 0.0f) {
+        *angle += TWO_PI;
+    }
 }
 
-static void utils_truncate_number_int(int *number, const int min, const int max)
+static void utils_truncate_number(float* number, const float min, const float max)
 {
-	if (*number > max)
-	{
-		*number = max;
-	}
-	else if (*number < min)
-	{
-		*number = min;
-	}
+    if (*number > max) {
+        *number = max;
+    } else if (*number < min) {
+        *number = min;
+    }
 }
 
-static inline void utils_truncate_number_abs(float *number, float max)
+static void utils_truncate_number_int(int* number, const int min, const int max)
 {
-	if (*number > max)
-	{
-		*number = max;
-	}
-	else if (*number < -max)
-	{
-		*number = -max;
-	}
+    if (*number > max) {
+        *number = max;
+    } else if (*number < min) {
+        *number = min;
+    }
+}
+
+static inline void utils_truncate_number_abs(float* number, float max)
+{
+    if (*number > max) {
+        *number = max;
+    } else if (*number < -max) {
+        *number = -max;
+    }
 }
 
 static inline float utils_map(float x, float in_min, float in_max, float out_min, float out_max)
 {
-	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 static inline int utils_map_int(int x, int in_min, int in_max, int out_min, int out_max)
 {
-	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 /**
@@ -257,26 +261,24 @@ static inline int utils_map_int(int x, int in_min, int in_max, int out_min, int 
  * @return
  * True if saturation happened, false otherwise
  */
-static inline bool utils_saturate_vector_2d(float *x, float *y, float max)
+static inline bool utils_saturate_vector_2d(float* x, float* y, float max)
 {
-	bool retval = false;
-	float mag = NORM2_f(*x, *y);
-	max = fabsf(max);
+    bool retval = false;
+    float mag = NORM2_f(*x, *y);
+    max = fabsf(max);
 
-	if (mag < 0.0f)
-	{
-		mag = 0.0f;
-	}
+    if (mag < 0.0f) {
+        mag = 0.0f;
+    }
 
-	if (mag > max)
-	{
-		const float f = max / mag;
-		*x *= f;
-		*y *= f;
-		retval = true;
-	}
+    if (mag > max) {
+        const float f = max / mag;
+        *x *= f;
+        *y *= f;
+        retval = true;
+    }
 
-	return retval;
+    return retval;
 }
 
 #endif /* UTILS_MATH_H_ */

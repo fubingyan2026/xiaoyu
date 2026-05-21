@@ -59,6 +59,7 @@ struct pll_context {
     pt1Filter_t filter_omega;     /**< 角速度低通滤波器 */
 
     bool filters_enabled;         /**< 滤波器使能标志 */
+    bool startup_done;            /**< 启动阶段完成标志（atan2 初始化后置 true） */
     bool initialized;             /**< 初始化标志 */
 };
 
