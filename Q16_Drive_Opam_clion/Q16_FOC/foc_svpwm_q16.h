@@ -10,11 +10,10 @@
 #ifndef _SVPWM_H
 #define _SVPWM_H
 
-#include <stdint.h>
 #include "q16_16_math.h"
+#include <stdint.h>
 
-typedef struct svpwm
-{
+typedef struct svpwm {
     /* 输入变量 */
     q16_16_t vd, vq;
     q16_16_t v_alpha, v_beta;
@@ -24,7 +23,7 @@ typedef struct svpwm
 
     /* 输出变量（占空比） */
     q16_16_t ta, tb, tc; /* 三相占空比 */
-    q16_16_t td;         /* 最大占空比（用于ADC同步采样触发） */
+    q16_16_t td; /* 最大占空比（用于ADC同步采样触发） */
 
     /* 状态变量 */
     int sector; /* 当前扇区（扇区法） */
@@ -35,6 +34,6 @@ typedef struct svpwm
  * @param pHandle SVPWM结构体指针
  * @note  在此函数执行前，应先调用 q16_16_ipark_transform() 计算vAlpha和vBeta
  */
-void svpwm_calculate(svpwm_t *this);
+void svpwm_calculate(svpwm_t* this);
 
 #endif

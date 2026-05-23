@@ -20,8 +20,6 @@
 
 #include "filter.h"
 #include "maths.h"
-#include "utils_math.h"
-#include <math.h>
 
 /* Private constants ---------------------------------------------------------*/
 
@@ -34,12 +32,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
-
-/**
- * @brief 对角度进行归一化到 [-PI, PI] 范围
- * @param theta 角度指针
- */
-static void pll_normalize_angle(float *theta);
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -146,7 +138,7 @@ pll_error_t pll_update(pll_context_t *ctx, float signal_a, float signal_b)
         ctx->theta = atan2_approx(signal_a, signal_b);
         ctx->omega = 0.0f;
         ctx->intg_pll = 0.0f;
-        pll_normalize_angle(&ctx->theta);
+        utils_norm_angle_rad(&ctx->theta);
         ctx->startup_done = true;
         return PLL_OK;
     }
@@ -192,7 +184,7 @@ pll_error_t pll_update(pll_context_t *ctx, float signal_a, float signal_b)
 
     // 6. 积分得角度
     ctx->theta += ctx->omega * ctx->config.sample_time;
-    pll_normalize_angle(&ctx->theta);
+    utils_norm_angle_rad(&ctx->theta);
 
     return PLL_OK;
 }
@@ -255,21 +247,4 @@ pll_error_t pll_reset(pll_context_t *ctx)
     }
 
     return PLL_OK;
-}
-
-/* Private functions ---------------------------------------------------------*/
-
-/**
- * @brief 对角度进行归一化到 [-PI, PI] 范围（O(1) 整数除法，无库函数调用）
- */
-static void pll_normalize_angle(float *theta)
-{
-    if (*theta > PLL_PI)
-    {
-        *theta -= PLL_2PI * (float)(int32_t)((*theta + PLL_PI) / PLL_2PI);
-    }
-    else if (*theta < -PLL_PI)
-    {
-        *theta += PLL_2PI * (float)(int32_t)((-*theta + PLL_PI) / PLL_2PI);
-    }
 }

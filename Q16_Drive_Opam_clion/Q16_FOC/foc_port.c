@@ -20,7 +20,7 @@
  * @brief 全局端口管理器实例
  * 提供单例访问方式，方便FOC核心代码调用。
  */
-static foc_port_t g_foc_port = {0};
+static foc_port_t g_foc_port = { 0 };
 
 /* ==================== 公共API实现 ==================== */
 
@@ -35,19 +35,16 @@ static foc_port_t g_foc_port = {0};
  * @return true 初始化成功
  * @return false 初始化失败
  */
-bool foc_port_init(foc_port_t *port, const foc_port_config_t *config, foc_sample_t *sample, svpwm_t *svpwm,
-                   foc_ctrl_t *ctrl)
+bool foc_port_init(foc_port_t* port, const foc_port_config_t* config, foc_sample_t* sample, svpwm_t* svpwm,
+    foc_ctrl_t* ctrl)
 {
     /* 参数有效性检查 */
-    if (port == NULL || config == NULL || sample == NULL || svpwm == NULL || ctrl == NULL)
-    {
+    if (port == NULL || config == NULL || sample == NULL || svpwm == NULL || ctrl == NULL) {
         return false;
     }
 
     /* 验证必要的回调函数 */
-    if (config->adc_read == NULL || config->pwm_output == NULL || config->encoder_read == NULL ||
-        config->delay_ms == NULL)
-    {
+    if (config->adc_read == NULL || config->pwm_output == NULL || config->encoder_read == NULL || config->delay_ms == NULL) {
         return false;
     }
 
@@ -60,8 +57,7 @@ bool foc_port_init(foc_port_t *port, const foc_port_config_t *config, foc_sample
     port->ctrl = ctrl;
 
     /* 调用ADC初始化（如果配置了回调） */
-    if (config->adc_init != NULL)
-    {
+    if (config->adc_init != NULL) {
         config->adc_init();
     }
 
@@ -74,10 +70,9 @@ bool foc_port_init(foc_port_t *port, const foc_port_config_t *config, foc_sample
  *
  * @param port 端口管理器指针
  */
-void foc_port_adc_init(foc_port_t *port)
+void foc_port_adc_init(foc_port_t* port)
 {
-    if (port == NULL || !port->initialized || port->config.adc_init == NULL)
-    {
+    if (port == NULL || !port->initialized || port->config.adc_init == NULL) {
         return;
     }
 
@@ -89,10 +84,9 @@ void foc_port_adc_init(foc_port_t *port)
  *
  * @param port 端口管理器指针
  */
-void foc_port_adc_read(foc_port_t *port)
+void foc_port_adc_read(foc_port_t* port)
 {
-    if (port == NULL || !port->initialized || port->config.adc_read == NULL || port->sample == NULL)
-    {
+    if (port == NULL || !port->initialized || port->config.adc_read == NULL || port->sample == NULL) {
         return;
     }
 
@@ -111,10 +105,9 @@ void foc_port_adc_read(foc_port_t *port)
  *
  * @param port 端口管理器指针
  */
-void foc_port_pwm_update(foc_port_t *port)
+void foc_port_pwm_update(foc_port_t* port)
 {
-    if (port == NULL || !port->initialized || port->config.pwm_output == NULL || port->svpwm == NULL)
-    {
+    if (port == NULL || !port->initialized || port->config.pwm_output == NULL || port->svpwm == NULL) {
         return;
     }
 
@@ -134,18 +127,16 @@ void foc_port_pwm_update(foc_port_t *port)
  * @param port 端口管理器指针
  * @return 编码器原始角度值
  */
-uint16_t foc_port_encoder_read(foc_port_t *port)
+uint16_t foc_port_encoder_read(foc_port_t* port)
 {
-    if (port == NULL || !port->initialized || port->config.encoder_read == NULL)
-    {
+    if (port == NULL || !port->initialized || port->config.encoder_read == NULL) {
         return 0;
     }
 
     uint16_t raw_angle = port->config.encoder_read();
 
     /* 更新控制数据 */
-    if (port->ctrl != NULL)
-    {
+    if (port->ctrl != NULL) {
         port->ctrl->raw_angle_q = raw_angle;
     }
 
@@ -157,10 +148,9 @@ uint16_t foc_port_encoder_read(foc_port_t *port)
  *
  * @param port 端口管理器指针
  */
-void foc_port_pwm_start(foc_port_t *port)
+void foc_port_pwm_start(foc_port_t* port)
 {
-    if (port == NULL || !port->initialized || port->config.pwm_start == NULL)
-    {
+    if (port == NULL || !port->initialized || port->config.pwm_start == NULL) {
         return;
     }
 
@@ -172,10 +162,9 @@ void foc_port_pwm_start(foc_port_t *port)
  *
  * @param port 端口管理器指针
  */
-void foc_port_pwm_stop(foc_port_t *port)
+void foc_port_pwm_stop(foc_port_t* port)
 {
-    if (port == NULL || !port->initialized || port->config.pwm_stop == NULL)
-    {
+    if (port == NULL || !port->initialized || port->config.pwm_stop == NULL) {
         return;
     }
 
@@ -187,7 +176,7 @@ void foc_port_pwm_stop(foc_port_t *port)
  *
  * @return 端口管理器指针
  */
-foc_port_t *foc_port_get_instance(void)
+foc_port_t* foc_port_get_instance(void)
 {
     return &g_foc_port;
 }

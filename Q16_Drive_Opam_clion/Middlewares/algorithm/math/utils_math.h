@@ -35,20 +35,14 @@
 
 float utils_map_angle(float angle, float min, float max);
 void utils_deadband(float* value, float tres, float max);
-float utils_angle_difference(float angle1, float angle2);
 float utils_angle_difference_rad(float angle1, float angle2);
-float utils_avg_angles_rad_fast(const float* angles, const float* weights, int angles_num);
 float utils_interpolate_angles_rad(float a1, float a2, float weight_a1);
 float utils_middle_of_3(float a, float b, float c);
 int utils_middle_of_3_int(int a, int b, int c);
-float utils_fast_atan2(float y, float x);
-void utils_fast_sincos(float angle, float* sin, float* cos);
-void utils_fast_sincos_better(float angle, float* sin, float* cos);
 float utils_min_abs(float va, float vb);
 float utils_max_abs(float va, float vb);
 void utils_byte_to_binary(int x, char* b);
 float utils_throttle_curve(float val, float curve_acc, float curve_brake, int mode);
-uint32_t utils_crc32c(uint8_t* data, uint32_t len);
 void utils_fft32_bin0(const float* real_in, float* real, float* imag);
 void utils_fft32_bin1(float* real_in, float* real, float* imag);
 void utils_fft32_bin2(float* real_in, float* real, float* imag);
@@ -128,12 +122,6 @@ void utils_rotate_vector3(float* input, float* rotation, float* output, bool rev
 #define SIN_MINUS_30_DEG (-0.5f)
 #define ONE_BY_SQRT2 (0.7071067811865475f)
 
-// Tables
-extern const float utils_tab_sin_32_1[];
-extern const float utils_tab_sin_32_2[];
-extern const float utils_tab_cos_32_1[];
-extern const float utils_tab_cos_32_2[];
-
 // Inline functions
 static inline void utils_step_towards(float* value, float goal, float step)
 {
@@ -149,21 +137,6 @@ static inline void utils_step_towards(float* value, float goal, float step)
         } else {
             *value = goal;
         }
-    }
-}
-
-/**
- * Make sure that 0 <= angle < 360
- *
- * @param angle
- * The angle to normalize.
- */
-static void utils_norm_angle(float* angle)
-{
-    *angle = fmodf(*angle, 360.0f);
-
-    if (*angle < 0.0f) {
-        *angle += 360.0f;
     }
 }
 

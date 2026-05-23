@@ -22,7 +22,7 @@
 
 /* Exported functions --------------------------------------------------------*/
 
-angle_sensor_error_t angle_sensor_init(angle_sensor_context_t *ctx)
+angle_sensor_error_t angle_sensor_init(angle_sensor_context_t* ctx)
 {
     if (ctx == NULL) {
         return ANGLE_SENSOR_ERROR_NULL_PTR;
@@ -46,7 +46,7 @@ angle_sensor_error_t angle_sensor_init(angle_sensor_context_t *ctx)
     return ANGLE_SENSOR_OK;
 }
 
-angle_sensor_error_t angle_sensor_deinit(angle_sensor_context_t *ctx)
+angle_sensor_error_t angle_sensor_deinit(angle_sensor_context_t* ctx)
 {
     if (ctx == NULL) {
         return ANGLE_SENSOR_ERROR_NULL_PTR;
@@ -60,7 +60,7 @@ angle_sensor_error_t angle_sensor_deinit(angle_sensor_context_t *ctx)
     return ANGLE_SENSOR_OK;
 }
 
-bool angle_sensor_is_initialized(angle_sensor_context_t *ctx)
+bool angle_sensor_is_initialized(angle_sensor_context_t* ctx)
 {
     if (ctx == NULL) {
         return false;
@@ -73,8 +73,8 @@ angle_sensor_type_e angle_sensor_get_default_type(void)
     return SENSOR_TYPE_MT6701;
 }
 
-angle_sensor_error_t angle_sensor_get_data(angle_sensor_context_t *ctx,
-                                           angle_sensor_data_t *data)
+angle_sensor_error_t angle_sensor_get_data(angle_sensor_context_t* ctx,
+    angle_sensor_data_t* data)
 {
     if (ctx == NULL || data == NULL) {
         return ANGLE_SENSOR_ERROR_NULL_PTR;
@@ -83,23 +83,22 @@ angle_sensor_error_t angle_sensor_get_data(angle_sensor_context_t *ctx,
         return ANGLE_SENSOR_ERROR_UNINITIALIZED;
     }
 
-    data->electrical_angle =
-        ctx->ops && ctx->ops->get_angle_rad ? ctx->ops->get_angle_rad(ctx)
-                                            : 0.0f;
+    data->electrical_angle = ctx->ops && ctx->ops->get_angle_rad ? ctx->ops->get_angle_rad(ctx)
+                                                                 : 0.0f;
     data->mechanical_angle = data->electrical_angle / MOTOR_POLES;
     data->velocity = ctx->ops && ctx->ops->get_velocity_rads
-                         ? ctx->ops->get_velocity_rads(ctx)
-                         : 0.0f;
+        ? ctx->ops->get_velocity_rads(ctx)
+        : 0.0f;
     data->timestamp = get_system_ticks();
     data->status = (ctx->ops && ctx->ops->is_calibrated
-                    && ctx->ops->is_calibrated(ctx))
-                       ? SENSOR_STATUS_OK
-                       : SENSOR_STATUS_CALIBRATING;
+                       && ctx->ops->is_calibrated(ctx))
+        ? SENSOR_STATUS_OK
+        : SENSOR_STATUS_CALIBRATING;
 
     return ANGLE_SENSOR_OK;
 }
 
-float angle_sensor_get_electrical_angle(angle_sensor_context_t *ctx)
+float angle_sensor_get_electrical_angle(angle_sensor_context_t* ctx)
 {
     if (ctx == NULL || !ctx->initialized || ctx->ops == NULL
         || ctx->ops->get_angle_rad == NULL) {
@@ -108,7 +107,7 @@ float angle_sensor_get_electrical_angle(angle_sensor_context_t *ctx)
     return ctx->ops->get_angle_rad(ctx);
 }
 
-uint16_t angle_sensor_get_raw_angle(angle_sensor_context_t *ctx)
+uint16_t angle_sensor_get_raw_angle(angle_sensor_context_t* ctx)
 {
     if (ctx == NULL || !ctx->initialized || ctx->ops == NULL
         || ctx->ops->get_raw_angle == NULL) {
@@ -117,12 +116,12 @@ uint16_t angle_sensor_get_raw_angle(angle_sensor_context_t *ctx)
     return ctx->ops->get_raw_angle(ctx);
 }
 
-float angle_sensor_get_mechanical_angle(angle_sensor_context_t *ctx)
+float angle_sensor_get_mechanical_angle(angle_sensor_context_t* ctx)
 {
     return angle_sensor_get_electrical_angle(ctx) / MOTOR_POLES;
 }
 
-float angle_sensor_get_velocity(angle_sensor_context_t *ctx)
+float angle_sensor_get_velocity(angle_sensor_context_t* ctx)
 {
     if (ctx == NULL || !ctx->initialized || ctx->ops == NULL
         || ctx->ops->get_velocity_rads == NULL) {
@@ -131,7 +130,7 @@ float angle_sensor_get_velocity(angle_sensor_context_t *ctx)
     return ctx->ops->get_velocity_rads(ctx);
 }
 
-bool angle_sensor_is_calibrated(angle_sensor_context_t *ctx)
+bool angle_sensor_is_calibrated(angle_sensor_context_t* ctx)
 {
     if (ctx == NULL || !ctx->initialized || ctx->ops == NULL
         || ctx->ops->is_calibrated == NULL) {
@@ -140,7 +139,7 @@ bool angle_sensor_is_calibrated(angle_sensor_context_t *ctx)
     return ctx->ops->is_calibrated(ctx);
 }
 
-angle_sensor_error_t angle_sensor_calibrate(angle_sensor_context_t *ctx)
+angle_sensor_error_t angle_sensor_calibrate(angle_sensor_context_t* ctx)
 {
     if (ctx == NULL) {
         return ANGLE_SENSOR_ERROR_NULL_PTR;
@@ -158,7 +157,7 @@ angle_sensor_error_t angle_sensor_calibrate(angle_sensor_context_t *ctx)
     return ANGLE_SENSOR_OK;
 }
 
-void angle_sensor_update(angle_sensor_context_t *ctx)
+void angle_sensor_update(angle_sensor_context_t* ctx)
 {
     if (ctx == NULL || !ctx->initialized || ctx->ops == NULL
         || ctx->ops->update == NULL) {
@@ -167,8 +166,8 @@ void angle_sensor_update(angle_sensor_context_t *ctx)
     ctx->ops->update(ctx);
 }
 
-void angle_sensor_get_info(angle_sensor_context_t *ctx,
-                           angle_sensor_info_t *info)
+void angle_sensor_get_info(angle_sensor_context_t* ctx,
+    angle_sensor_info_t* info)
 {
     if (ctx == NULL || info == NULL) {
         return;
@@ -182,7 +181,7 @@ void angle_sensor_get_info(angle_sensor_context_t *ctx,
     }
 }
 
-void angle_sensor_set_offset(angle_sensor_context_t *ctx, float offset)
+void angle_sensor_set_offset(angle_sensor_context_t* ctx, float offset)
 {
     if (ctx == NULL) {
         return;
@@ -193,8 +192,8 @@ void angle_sensor_set_offset(angle_sensor_context_t *ctx, float offset)
     }
 }
 
-angle_sensor_error_t angle_sensor_switch_type(angle_sensor_context_t *ctx,
-                                              angle_sensor_type_e type)
+angle_sensor_error_t angle_sensor_switch_type(angle_sensor_context_t* ctx,
+    angle_sensor_type_e type)
 {
     if (ctx == NULL) {
         return ANGLE_SENSOR_ERROR_NULL_PTR;
@@ -224,7 +223,7 @@ angle_sensor_error_t angle_sensor_switch_type(angle_sensor_context_t *ctx,
     return ANGLE_SENSOR_OK;
 }
 
-angle_sensor_type_e angle_sensor_get_type(angle_sensor_context_t *ctx)
+angle_sensor_type_e angle_sensor_get_type(angle_sensor_context_t* ctx)
 {
     if (ctx == NULL || !ctx->initialized) {
         return SENSOR_TYPE_NONE;
@@ -232,7 +231,7 @@ angle_sensor_type_e angle_sensor_get_type(angle_sensor_context_t *ctx)
     return ctx->info.type;
 }
 
-bool angle_sensor_is_active(angle_sensor_context_t *ctx)
+bool angle_sensor_is_active(angle_sensor_context_t* ctx)
 {
     if (ctx == NULL) {
         return false;

@@ -7,7 +7,7 @@
  * @copyright (c) 2026 by fubingyan, All Rights Reserved.
  */
 
-#include "foc_svpwm_q16.h"  // 包含SVPWM头文件
+#include "foc_svpwm_q16.h" // 包含SVPWM头文件
 #include "foc_config_q16.h" // 包含FOC配置头文件
 
 /**
@@ -20,7 +20,7 @@
  * - 计算量更小，不需要扇区判断
  * @param this SVPWM结构体指针
  */
-static void svpwm_calculate_harmonic(svpwm_t *this)
+static void svpwm_calculate_harmonic(svpwm_t* this)
 {
     // 计算归一化电压（避免溢出，使用 64 位中间变量）
     q16_16_t v_bus_inv = q16_16_div(Q16_16_ONE, this->v_bus); // V_bus 倒数
@@ -64,7 +64,7 @@ static void svpwm_calculate_harmonic(svpwm_t *this)
  */
 volatile float ratio = 0;
 q16_16_t v_alpha_sq, v_beta_sq, v_mag_sq, max_v_sq, inv_mag, max_v_limited;
-void svpwm_calculate(svpwm_t *this)
+void svpwm_calculate(svpwm_t* this)
 {
     // 输入合理性检查
     if (this->v_bus <= 0 || this->v_bus > FLOAT_TO_Q16_16(V_BUS_MAX)) // 母线电压范围检查
@@ -75,14 +75,14 @@ void svpwm_calculate(svpwm_t *this)
 
     // 计算电压矢量幅度的平方
     v_alpha_sq = q16_16_mul(this->v_alpha, this->v_alpha); // α轴电压平方
-    v_beta_sq = q16_16_mul(this->v_beta, this->v_beta);    // β轴电压平方
-    v_mag_sq = q16_16_add(v_alpha_sq, v_beta_sq);          // 电压矢量幅度的平方
+    v_beta_sq = q16_16_mul(this->v_beta, this->v_beta); // β轴电压平方
+    v_mag_sq = q16_16_add(v_alpha_sq, v_beta_sq); // 电压矢量幅度的平方
 
     // 最大允许电压（内切圆，保留余度）
     // max_v = Vbus / √3 · duty_ratio
     q16_16_t max_v_radius = q16_16_mul(this->v_bus, Q16_16_INV_SQRT3); // 最大电压半径
-    max_v_limited = q16_16_mul(max_v_radius, this->max_duty_ratio);    // 限制后的最大电压
-    max_v_sq = q16_16_mul(max_v_limited, max_v_limited);               // 限制后的最大电压平方
+    max_v_limited = q16_16_mul(max_v_radius, this->max_duty_ratio); // 限制后的最大电压
+    max_v_sq = q16_16_mul(max_v_limited, max_v_limited); // 限制后的最大电压平方
 
     // 过调制检查和幅度缩放
     if (v_mag_sq > max_v_sq) // 如果电压矢量幅度平方超过最大允许值

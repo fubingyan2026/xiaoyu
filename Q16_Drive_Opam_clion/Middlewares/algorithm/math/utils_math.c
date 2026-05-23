@@ -22,10 +22,53 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * Map angle from 0 to 1 in the range min to max. If angle is
- * outside of the range it will be less truncated to the closest
- * angle. Angle units: Degrees
+/** @brief 32 点 FFT 基频正弦查找表（bin1 用） */
+const float utils_tab_sin_32_1[] = {
+    0.000000, 0.195090, 0.382683, 0.555570, 0.707107, 0.831470, 0.923880, 0.980785,
+    1.000000, 0.980785, 0.923880, 0.831470, 0.707107, 0.555570, 0.382683, 0.195090,
+    0.000000, -0.195090, -0.382683, -0.555570, -0.707107, -0.831470, -0.923880, -0.980785,
+    -1.000000, -0.980785, -0.923880, -0.831470, -0.707107, -0.555570, -0.382683, -0.195090
+};
+
+/** @brief 32 点 FFT 二次谐波正弦查找表（bin2 用） */
+const float utils_tab_sin_32_2[] = {
+    0.000000, 0.382683, 0.707107, 0.923880, 1.000000, 0.923880, 0.707107, 0.382683,
+    0.000000, -0.382683, -0.707107, -0.923880, -1.000000, -0.923880, -0.707107, -0.382683,
+    -0.000000, 0.382683, 0.707107, 0.923880, 1.000000, 0.923880, 0.707107, 0.382683,
+    0.000000, -0.382683, -0.707107, -0.923880, -1.000000, -0.923880, -0.707107, -0.382683
+};
+
+/** @brief 32 点 FFT 基频余弦查找表（bin1 用） */
+const float utils_tab_cos_32_1[] = {
+    1.000000, 0.980785, 0.923880, 0.831470, 0.707107, 0.555570, 0.382683, 0.195090,
+    0.000000, -0.195090, -0.382683, -0.555570, -0.707107, -0.831470, -0.923880, -0.980785,
+    -1.000000, -0.980785, -0.923880, -0.831470, -0.707107, -0.555570, -0.382683, -0.195090,
+    -0.000000, 0.195090, 0.382683, 0.555570, 0.707107, 0.831470, 0.923880, 0.980785
+};
+
+/** @brief 32 点 FFT 二次谐波余弦查找表（bin2 用） */
+const float utils_tab_cos_32_2[] = {
+    1.000000, 0.923880, 0.707107, 0.382683, 0.000000, -0.382683, -0.707107, -0.923880,
+    -1.000000, -0.923880, -0.707107, -0.382683, -0.000000, 0.382683, 0.707107, 0.923880,
+    1.000000, 0.923880, 0.707107, 0.382683, 0.000000, -0.382683, -0.707107, -0.923880,
+    -1.000000, -0.923880, -0.707107, -0.382683, -0.000000, 0.382683, 0.707107, 0.923880
+};
+
+/**
+ * @brief 将角度映射到 [0, 1] 区间
+ *
+ * 给定一个角度范围 [min, max]（单位为弧度），计算输入角度 angle 在该范围内
+ * 的归一化位置。返回值 0 表示 angle 等于 min，返回值 1 表示 angle 等于 max。
+ *
+ * 该函数正确处理了角度的循环特性（绕圈问题）。例如当 min=350°, max=10° 时，
+ * 角度范围跨越了 0°/360° 的包裹点，函数会自动处理这种跨周期情况。
+ *
+ * 如果 angle 落在 [min, max] 范围之外，结果会被截断到 0 或 1。
+ *
+ * @param angle 待映射的角度值（弧度），任意值均可（会自动归一化）
+ * @param min   范围起始角度（弧度）
+ * @param max   范围结束角度（弧度）
+ * @return      归一化后的位置，范围 [0, 1]；如果 max == min 则返回 -1
  */
 float utils_map_angle(float angle, const float min, const float max)
 {
@@ -34,15 +77,15 @@ float utils_map_angle(float angle, const float min, const float max)
     }
 
     float range_pos = max - min;
-    utils_norm_angle(&range_pos);
+    utils_norm_angle_rad(&range_pos);
     float range_neg = min - max;
-    utils_norm_angle(&range_neg);
-    const float margin = range_neg / 2.0f;
+    utils_norm_angle_rad(&range_neg);
+    const float margin = range_neg * 0.5f;
 
     angle -= min;
-    utils_norm_angle(&angle);
-    if (angle > 360 - margin) {
-        angle -= 360.0f;
+    utils_norm_angle_rad(&angle);
+    if (angle > M_PI * 2 - margin) {
+        angle -= M_PI * 2;
     }
 
     float res = angle / range_pos;
@@ -52,8 +95,16 @@ float utils_map_angle(float angle, const float min, const float max)
 }
 
 /**
- * Truncate absolute values less than tres to zero. The value
- * tres will be mapped to 0 and the value max to max.
+ * @brief 对输入值施加死区映射
+ *
+ * 绝对值小于阈值 tres 的值被置为 0，大于阈值的值被线性重新映射，
+ * 使得 tres 映射到 0、max 映射到 max，保证在死区边缘的连续性。
+ *
+ * 例如：value=0.6, tres=0.5, max=1.0 → 结果约 0.2（从死区边缘线性外推）
+ *
+ * @param value 待处理的输入值（会被原地修改）
+ * @param tres  死区阈值
+ * @param max   映射上限
  */
 void utils_deadband(float* value, const float tres, const float max)
 {
@@ -70,87 +121,33 @@ void utils_deadband(float* value, const float tres, const float max)
 }
 
 /**
- * Get the difference between two angles. Will always be between -180 and +180 degrees.
- * @param angle1
- * The first angle
- * @param angle2
- * The second angle
- * @return
- * The difference between the angles
- */
-float utils_angle_difference(const float angle1, const float angle2)
-{
-    float difference = angle1 - angle2;
-    while (difference < -180.0f)
-        difference += 2.0f * 180.0f;
-    while (difference > 180.0f)
-        difference -= 2.0f * 180.0f;
-    return difference;
-}
-
-/**
- * Get the difference between two angles. Will always be between -pi and +pi radians.
- * @param angle1
- * The first angle in radians
- * @param angle2
- * The second angle in radians
- * @return
- * The difference between the angles in radians
+ * @brief 计算两个弧度角之间的差值
+ *
+ * 返回差值始终在 [-PI, +PI] 范围内，通过 utils_norm_angle_rad 自动处理环绕。
+ *
+ * @param angle1 第一个角度（弧度）
+ * @param angle2 第二个角度（弧度）
+ * @return       两个角度的差值（弧度），范围 [-PI, PI]
  */
 float utils_angle_difference_rad(const float angle1, const float angle2)
 {
     float difference = angle1 - angle2;
-    while (difference < -M_PI)
-        difference += 2.0f * M_PI;
-    while (difference > M_PI)
-        difference -= 2.0f * M_PI;
+    utils_norm_angle_rad(&difference);
     return difference;
 }
 
 /**
- * Takes the average of a number of angles.
+ * @brief 在弧度角之间进行插值
  *
- * @param angles
- * The angles in radians.
+ * 相比普通线性插值，此函数正确处理了角度的循环特性：当 a1 和 a2 跨越 ±PI 边界时，
+ * 会自动选择较短路径进行插值，避免插值结果绕远路。
  *
- * @param angles_num
- * The number of angles.
+ * 例如：a1=170°, a2=-170°，普通插值中点会是 0°，而这里选择较短路径得到 180°（PI）。
  *
- * @param weights
- * The weight of the summarized angles
- *
- * @return
- * The average angle.
- */
-float utils_avg_angles_rad_fast(const float* angles, const float* weights, const int angles_num)
-{
-    float s_sum = 0.0f;
-    float c_sum = 0.0f;
-
-    for (int i = 0; i < angles_num; i++) {
-        float s, c;
-        utils_fast_sincos_better(angles[i], &s, &c);
-        s_sum += s * weights[i];
-        c_sum += c * weights[i];
-    }
-
-    return utils_fast_atan2(s_sum, c_sum);
-}
-
-/**
- * Interpolate two angles in radians and normalize the result to
- * -pi to pi.
- *
- * @param a1
- * The first angle
- *
- * @param a2
- * The second angle
- *
- * @param weight_a1
- * The weight of the first angle. If this is 1.0 the result will
- * be a1 and if it is 0.0 the result will be a2.
- *
+ * @param a1        第一个角度（弧度）
+ * @param a2        第二个角度（弧度）
+ * @param weight_a1 a1 的权重，1.0 时结果为 a1，0.0 时结果为 a2
+ * @return          插值后的角度（弧度），已归一化到 [-PI, PI]
  */
 float utils_interpolate_angles_rad(float a1, float a2, float weight_a1)
 {
@@ -165,19 +162,12 @@ float utils_interpolate_angles_rad(float a1, float a2, float weight_a1)
 }
 
 /**
- * Get the middle value of three values
+ * @brief 返回三个浮点数中的中间值（中位数）
  *
- * @param a
- * First value
- *
- * @param b
- * Second value
- *
- * @param c
- * Third value
- *
- * @return
- * The middle value
+ * @param a 第一个值
+ * @param b 第二个值
+ * @param c 第三个值
+ * @return  三个值中的中间值
  */
 float utils_middle_of_3(float a, float b, float c)
 {
@@ -194,19 +184,12 @@ float utils_middle_of_3(float a, float b, float c)
 }
 
 /**
- * Get the middle value of three values
+ * @brief 返回三个整数中的中间值（中位数）
  *
- * @param a
- * First value
- *
- * @param b
- * Second value
- *
- * @param c
- * Third value
- *
- * @return
- * The middle value
+ * @param a 第一个值
+ * @param b 第二个值
+ * @param c 第三个值
+ * @return  三个值中的中间值
  */
 int utils_middle_of_3_int(int a, int b, int c)
 {
@@ -223,171 +206,11 @@ int utils_middle_of_3_int(int a, int b, int c)
 }
 
 /**
- * Fast atan2
+ * @brief 返回两个数中绝对值较小的那个
  *
- * See http://www.dspguru.com/dsp/tricks/fixed-point-atan2-with-self-normalization
- *
- * @param y
- * y
- *
- * @param x
- * x
- *
- * @return
- * The angle in radians
- */
-float utils_fast_atan2(float y, float x)
-{
-    float abs_y = fabsf(y) + 0.0f; // kludge to prevent 0/0 condition
-    float angle;
-
-    if (x >= 0.0f) {
-        float r = (x - abs_y) / (x + abs_y);
-        float rsq = r * r;
-        angle = ((0.1963f * rsq) - 0.9817f) * r + (M_PI / 4.0f);
-    } else {
-        float r = (x + abs_y) / (abs_y - x);
-        float rsq = r * r;
-        angle = ((0.1963f * rsq) - 0.9817f) * r + (3.0f * M_PI / 4.0f);
-    }
-
-    UTILS_NAN_ZERO(angle);
-
-    if (y < 0) {
-        return (-angle);
-    } else {
-        return (angle);
-    }
-}
-
-/**
- * Fast sine and cosine implementation.
- *
- * See http://lab.polygonal.de/?p=205
- *
- * @param angle
- * The angle in radians
- * WARNING: Don't use too large angles.
- *
- * @param sin
- * A pointer to store the sine value.
- *
- * @param cos
- * A pointer to store the cosine value.
- */
-void utils_fast_sincos(float angle, float* sin, float* cos)
-{
-    // always wrap input angle to -PI..PI
-    while (angle < -M_PI) {
-        angle += 2.0f * M_PI;
-    }
-
-    while (angle > M_PI) {
-        angle -= 2.0f * M_PI;
-    }
-
-    // compute sine
-    if (angle < 0.0f) {
-        *sin = 1.27323954f * angle + 0.405284735f * angle * angle;
-    } else {
-        *sin = 1.27323954f * angle - 0.405284735f * angle * angle;
-    }
-
-    // compute cosine: sin(x + PI/2) = cos(x)
-    angle += 0.5f * M_PI;
-
-    if (angle > M_PI) {
-        angle -= 2.0f * M_PI;
-    }
-
-    if (angle < 0.0f) {
-        *cos = 1.27323954f * angle + 0.405284735f * angle * angle;
-    } else {
-        *cos = 1.27323954f * angle - 0.405284735f * angle * angle;
-    }
-}
-
-/**
- * Fast sine and cosine implementation.
- *
- * See http://lab.polygonal.de/?p=205
- *
- * @param angle
- * The angle in radians
- * WARNING: Don't use too large angles.
- *
- * @param sin
- * A pointer to store the sine value.
- *
- * @param cos
- * A pointer to store the cosine value.
- */
-void utils_fast_sincos_better(float angle, float* sin, float* cos)
-{
-    // always wrap input angle to -PI..PI
-    while (angle < -M_PI) {
-        angle += 2.0f * M_PI;
-    }
-
-    while (angle > M_PI) {
-        angle -= 2.0f * M_PI;
-    }
-
-    // compute sine
-    if (angle < 0.0f) {
-        *sin = 1.27323954f * angle + 0.405284735f * angle * angle;
-
-        if (*sin < 0.0f) {
-            *sin = 0.225f * (*sin * -*sin - *sin) + *sin;
-        } else {
-            *sin = 0.225f * (*sin * *sin - *sin) + *sin;
-        }
-    } else {
-        *sin = 1.27323954f * angle - 0.405284735f * angle * angle;
-
-        if (*sin < 0.0f) {
-            *sin = 0.225f * (*sin * -*sin - *sin) + *sin;
-        } else {
-            *sin = 0.225f * (*sin * *sin - *sin) + *sin;
-        }
-    }
-
-    // compute cosine: sin(x + PI/2) = cos(x)
-    angle += 0.5f * M_PI;
-    if (angle > M_PI) {
-        angle -= 2.0f * M_PI;
-    }
-
-    if (angle < 0.0f) {
-        *cos = 1.27323954f * angle + 0.405284735f * angle * angle;
-
-        if (*cos < 0.0f) {
-            *cos = 0.225f * (*cos * -*cos - *cos) + *cos;
-        } else {
-            *cos = 0.225f * (*cos * *cos - *cos) + *cos;
-        }
-    } else {
-        *cos = 1.27323954f * angle - 0.405284735f * angle * angle;
-
-        if (*cos < 0.0f) {
-            *cos = 0.225f * (*cos * -*cos - *cos) + *cos;
-        } else {
-            *cos = 0.225f * (*cos * *cos - *cos) + *cos;
-        }
-    }
-}
-
-/**
- * Calculate the values with the lowest magnitude.
- *
- * @param va
- * The first value.
- *
- * @param vb
- * The second value.
- *
- * @return
- * The value with the lowest magnitude.
+ * @param va 第一个值
+ * @param vb 第二个值
+ * @return   va 和 vb 中绝对值较小者（保留原始符号）
  */
 float utils_min_abs(const float va, const float vb)
 {
@@ -402,16 +225,11 @@ float utils_min_abs(const float va, const float vb)
 }
 
 /**
- * Calculate the values with the highest magnitude.
+ * @brief 返回两个数中绝对值较大的那个
  *
- * @param va
- * The first value.
- *
- * @param vb
- * The second value.
- *
- * @return
- * The value with the highest magnitude.
+ * @param va 第一个值
+ * @param vb 第二个值
+ * @return   va 和 vb 中绝对值较大者（保留原始符号）
  */
 float utils_max_abs(float va, float vb)
 {
@@ -426,13 +244,13 @@ float utils_max_abs(float va, float vb)
 }
 
 /**
- * Create string representation of the binary content of a byte
+ * @brief 将一个字节转换为二进制字符串表示
  *
- * @param x
- * The byte.
+ * 将整数 x 的低 8 位转换为 8 字符的二进制字符串（如 "01011010"），
+ * 结果追加写入到 b 指向的缓冲区（b 必须已初始化为空字符串）。
  *
- * @param b
- * Array to store the string representation in.
+ * @param x 待转换的字节值（仅使用低 8 位）
+ * @param b 输出缓冲区，至少 9 字节（8 字符 + 结束符）
  */
 void utils_byte_to_binary(const int x, char* b)
 {
@@ -443,6 +261,26 @@ void utils_byte_to_binary(const int x, char* b)
     }
 }
 
+/**
+ * @brief 油门曲线映射函数
+ *
+ * 将归一化输入 val ∈ [-1, 1] 按指定曲线模式映射到输出，支持正反向独立曲率。
+ * 正向（val ≥ 0）使用 curve_acc 曲率，反向（val < 0）使用 curve_brake 曲率。
+ *
+ * 四种模式：
+ * - mode=0 指数模式：ret = 1-(1-|val|)^(1+curve) 或 |val|^(1-curve)
+ * - mode=1 自然指数：ret = 1-(exp(curve*(1-|val|))-1)/(exp(curve)-1)
+ * - mode=2 多项式：  ret = 1-(1-|val|)/(1+curve*|val|) 或 |val|/(1-curve*(1-|val|))
+ * - mode=3+线性：    ret = |val|（无曲线）
+ *
+ * 参考：http://math.stackexchange.com/questions/297768
+ *
+ * @param val         归一化输入值，会被截断到 [-1, 1]
+ * @param curve_acc   正向（加速）曲率，0 为线性，正值越大约束越强
+ * @param curve_brake 反向（制动）曲率，0 为线性
+ * @param mode        曲线模式：0=指数, 1=自然指数, 2=多项式, 其他=线性
+ * @return            映射后的输出值，范围 [-1, 1]，符号与 val 一致
+ */
 float utils_throttle_curve(float val, const float curve_acc, const float curve_brake, const int mode)
 {
     float ret = 0.0f;
@@ -464,15 +302,13 @@ float utils_throttle_curve(float val, const float curve_acc, const float curve_b
         curve = curve_brake;
     }
 
-    // See
-    // http://math.stackexchange.com/questions/297768/how-would-i-create-a-exponential-ramp-function-from-0-0-to-1-1-with-a-single-val
-    if (mode == 0) { // Exponential
+    if (mode == 0) { // 指数模式
         if (curve >= 0.0f) {
             ret = 1.0f - powf(1.0f - val_a, 1.0f + curve);
         } else {
             ret = powf(val_a, 1.0f - curve);
         }
-    } else if (mode == 1) { // Natural
+    } else if (mode == 1) { // 自然指数模式
         if (fabsf(curve) < 0.0f) {
             ret = val_a;
         } else {
@@ -482,13 +318,13 @@ float utils_throttle_curve(float val, const float curve_acc, const float curve_b
                 ret = (expf(-curve * val_a) - 1.0f) / (expf(-curve) - 1.0f);
             }
         }
-    } else if (mode == 2) { // Polynomial
+    } else if (mode == 2) { // 多项式模式
         if (curve >= 0.0f) {
             ret = 1.0f - ((1.0f - val_a) / (1.0f + curve * val_a));
         } else {
             ret = val_a / (1.0f - curve * (1.0f - val_a));
         }
-    } else { // Linear
+    } else { // 线性模式
         ret = val_a;
     }
 
@@ -499,24 +335,15 @@ float utils_throttle_curve(float val, const float curve_acc, const float curve_b
     return ret;
 }
 
-uint32_t utils_crc32c(uint8_t* data, uint32_t len)
-{
-    uint32_t crc = 0xFFFFFFFF;
-
-    for (uint32_t i = 0; i < len; i++) {
-        const uint32_t byte = data[i];
-        crc = crc ^ byte;
-
-        for (int j = 7; j >= 0; j--) {
-            const uint32_t mask = -(crc & 1);
-            crc = (crc >> 1 ^ 0x82F63B78) & mask;
-        }
-    }
-
-    return ~crc;
-}
-
-// Yes, this is only the average...
+/**
+ * @brief 32 点 FFT 的 DC 分量（bin0）计算
+ *
+ * 实际上就是 32 个采样点的算术平均值。对于纯实数输入，bin0 即为直流偏置。
+ *
+ * @param real_in 输入实数数组（32 点）
+ * @param real    输出实部（直流分量）
+ * @param imag    输出虚部（恒为 0）
+ */
 void utils_fft32_bin0(const float* real_in, float* real, float* imag)
 {
     *real = 0.0f;
@@ -529,6 +356,15 @@ void utils_fft32_bin0(const float* real_in, float* real, float* imag)
     *real /= 32.0f;
 }
 
+/**
+ * @brief 32 点 FFT 的基频分量（bin1）计算
+ *
+ * 将 32 个采样点与基频正弦/余弦表做相关运算，提取基频（fs/32）的幅度和相位。
+ *
+ * @param real_in 输入实数数组（32 点）
+ * @param real    输出实部
+ * @param imag    输出虚部
+ */
 void utils_fft32_bin1(float* real_in, float* real, float* imag)
 {
     *real = 0.0f;
@@ -541,6 +377,15 @@ void utils_fft32_bin1(float* real_in, float* real, float* imag)
     *imag /= 32.0f;
 }
 
+/**
+ * @brief 32 点 FFT 的二次谐波分量（bin2）计算
+ *
+ * 提取 2×fs/32（即 fs/16）频率分量的幅度和相位。
+ *
+ * @param real_in 输入实数数组（32 点）
+ * @param real    输出实部
+ * @param imag    输出虚部
+ */
 void utils_fft32_bin2(float* real_in, float* real, float* imag)
 {
     *real = 0.0f;
@@ -553,6 +398,15 @@ void utils_fft32_bin2(float* real_in, float* real, float* imag)
     *imag /= 32.0f;
 }
 
+/**
+ * @brief 16 点 FFT 的 DC 分量（bin0）计算
+ *
+ * 16 个采样点的算术平均值。
+ *
+ * @param real_in 输入实数数组（16 点）
+ * @param real    输出实部（直流分量）
+ * @param imag    输出虚部（恒为 0）
+ */
 void utils_fft16_bin0(float* real_in, float* real, float* imag)
 {
     *real = 0.0f;
@@ -565,6 +419,15 @@ void utils_fft16_bin0(float* real_in, float* real, float* imag)
     *real /= 16.0f;
 }
 
+/**
+ * @brief 16 点 FFT 的基频分量（bin1）计算
+ *
+ * 使用 32 点查找表的偶数下标（步长 2）对 16 点数据做基频提取。
+ *
+ * @param real_in 输入实数数组（16 点）
+ * @param real    输出实部
+ * @param imag    输出虚部
+ */
 void utils_fft16_bin1(float* real_in, float* real, float* imag)
 {
     *real = 0.0f;
@@ -577,6 +440,13 @@ void utils_fft16_bin1(float* real_in, float* real, float* imag)
     *imag /= 16.0f;
 }
 
+/**
+ * @brief 16 点 FFT 的二次谐波分量（bin2）计算
+ *
+ * @param real_in 输入实数数组（16 点）
+ * @param real    输出实部
+ * @param imag    输出虚部
+ */
 void utils_fft16_bin2(float* real_in, float* real, float* imag)
 {
     *real = 0.0f;
@@ -589,6 +459,15 @@ void utils_fft16_bin2(float* real_in, float* real, float* imag)
     *imag /= 16.0f;
 }
 
+/**
+ * @brief 8 点 FFT 的 DC 分量（bin0）计算
+ *
+ * 8 个采样点的算术平均值。
+ *
+ * @param real_in 输入实数数组（8 点）
+ * @param real    输出实部（直流分量）
+ * @param imag    输出虚部（恒为 0）
+ */
 void utils_fft8_bin0(float* real_in, float* real, float* imag)
 {
     *real = 0.0f;
@@ -601,6 +480,15 @@ void utils_fft8_bin0(float* real_in, float* real, float* imag)
     *real /= 8.0f;
 }
 
+/**
+ * @brief 8 点 FFT 的基频分量（bin1）计算
+ *
+ * 使用 32 点查找表的每第 4 个下标（步长 4）对 8 点数据做基频提取。
+ *
+ * @param real_in 输入实数数组（8 点）
+ * @param real    输出实部
+ * @param imag    输出虚部
+ */
 void utils_fft8_bin1(float* real_in, float* real, float* imag)
 {
     *real = 0.0f;
@@ -613,6 +501,13 @@ void utils_fft8_bin1(float* real_in, float* real, float* imag)
     *imag /= 8.0f;
 }
 
+/**
+ * @brief 8 点 FFT 的二次谐波分量（bin2）计算
+ *
+ * @param real_in 输入实数数组（8 点）
+ * @param real    输出实部
+ * @param imag    输出虚部
+ */
 void utils_fft8_bin2(float* real_in, float* real, float* imag)
 {
     *real = 0.0f;
@@ -625,11 +520,18 @@ void utils_fft8_bin2(float* real_in, float* real, float* imag)
     *imag /= 8.0f;
 }
 
-// A mapping of a samsung 30q cell for % remaining capacity vs. voltage from
-// 4.2 to 3.2, note that the you lose 15% of the 3Ah rated capacity in this range
+/**
+ * @brief 锂电池归一化电压 → 剩余容量百分比映射
+ *
+ * 使用 4 阶多项式拟合 Samsung 30Q 电芯在 4.2V~3.2V 范围内的放电曲线。
+ * 注意：此电压范围内实际可用容量约为标称 3Ah 的 85%（约 15% 不可用）。
+ *
+ * @param norm_v 归一化电压，输入会被截断到 [0, 1]
+ * @return       剩余容量百分比（0~1），非线性和电压的关系
+ */
 float utils_batt_liion_norm_v_to_capacity(float norm_v)
 {
-    // constants for polynomial fit of lithium ion battery
+    // 锂电池放电曲线的多项式拟合系数
     const float li_p[] = {
         -2.979767f, 5.487810f, -3.501286f, 1.675683f, 0.317147f
     };
@@ -642,22 +544,57 @@ float utils_batt_liion_norm_v_to_capacity(float norm_v)
     return capacity;
 }
 
+/**
+ * @brief qsort 比较函数：比较两个 uint16_t 值
+ *
+ * @param a 指向第一个值的指针
+ * @param b 指向第二个值的指针
+ * @return  差值（a - b）
+ */
 static int uint16_cmp_func(const void* a, const void* b)
 {
     return (*(uint16_t*)a - *(uint16_t*)b);
 }
 
+/**
+ * @brief 运行中值滤波器（滑动窗口）
+ *
+ * 维护一个长度为 filter_len 的环形缓冲区，每收到一个新采样就替换最旧的值，
+ * 然后对窗口内所有数据排序取中位数。适合消除脉冲噪声同时保留信号边缘。
+ *
+ * 注意：每次调用都会执行 qsort，适合较低采样率场景；高频场景建议用更高效的
+ * 在线中值滤波算法。
+ *
+ * @param buffer       环形缓冲区（调用者分配，长度 = filter_len）
+ * @param buffer_index 当前写入位置索引（会被更新并自动取模）
+ * @param filter_len   滤波器窗口长度
+ * @param sample       新采样值
+ * @return             当前窗口的中值
+ */
 uint16_t utils_median_filter_uint16_run(uint16_t* buffer,
     unsigned int* buffer_index, unsigned int filter_len, uint16_t sample)
 {
     buffer[(*buffer_index)++] = sample;
     *buffer_index %= filter_len;
-    uint16_t buffer_sorted[filter_len]; // Assume we have enough stack space
+    uint16_t buffer_sorted[filter_len]; // 假设栈空间足够
     memcpy(buffer_sorted, buffer, sizeof(uint16_t) * filter_len);
     qsort(buffer_sorted, filter_len, sizeof(uint16_t), uint16_cmp_func);
     return buffer_sorted[filter_len / 2];
 }
 
+/**
+ * @brief 3D 向量旋转（欧拉角方式）
+ *
+ * 使用 ZYX 顺序（先绕 Z 轴 yaw，再绕 Y 轴 pitch，再绕 X 轴 roll）的旋转矩阵
+ * 对输入向量进行旋转。支持正向旋转和反向旋转（reverse=true 时使用转置矩阵）。
+ *
+ * 旋转矩阵元素在函数内根据 rotation 角度实时计算。
+ *
+ * @param input    输入向量 [x, y, z]
+ * @param rotation 旋转角度 [roll, pitch, yaw]（弧度），按 Z→Y→X 顺序应用
+ * @param output   输出向量 [x, y, z]（可以和 input 指向不同位置）
+ * @param reverse  true=反向旋转（转置矩阵），false=正向旋转
+ */
 void utils_rotate_vector3(float* input, float* rotation, float* output, bool reverse)
 {
     float s1, c1, s2, c2, s3, c3;
@@ -706,31 +643,3 @@ void utils_rotate_vector3(float* input, float* rotation, float* output, bool rev
         output[2] = input[0] * m31 + input[1] * m32 + input[2] * m33;
     }
 }
-
-const float utils_tab_sin_32_1[] = {
-    0.000000, 0.195090, 0.382683, 0.555570, 0.707107, 0.831470, 0.923880, 0.980785,
-    1.000000, 0.980785, 0.923880, 0.831470, 0.707107, 0.555570, 0.382683, 0.195090,
-    0.000000, -0.195090, -0.382683, -0.555570, -0.707107, -0.831470, -0.923880, -0.980785,
-    -1.000000, -0.980785, -0.923880, -0.831470, -0.707107, -0.555570, -0.382683, -0.195090
-};
-
-const float utils_tab_sin_32_2[] = {
-    0.000000, 0.382683, 0.707107, 0.923880, 1.000000, 0.923880, 0.707107, 0.382683,
-    0.000000, -0.382683, -0.707107, -0.923880, -1.000000, -0.923880, -0.707107, -0.382683,
-    -0.000000, 0.382683, 0.707107, 0.923880, 1.000000, 0.923880, 0.707107, 0.382683,
-    0.000000, -0.382683, -0.707107, -0.923880, -1.000000, -0.923880, -0.707107, -0.382683
-};
-
-const float utils_tab_cos_32_1[] = {
-    1.000000, 0.980785, 0.923880, 0.831470, 0.707107, 0.555570, 0.382683, 0.195090,
-    0.000000, -0.195090, -0.382683, -0.555570, -0.707107, -0.831470, -0.923880, -0.980785,
-    -1.000000, -0.980785, -0.923880, -0.831470, -0.707107, -0.555570, -0.382683, -0.195090,
-    -0.000000, 0.195090, 0.382683, 0.555570, 0.707107, 0.831470, 0.923880, 0.980785
-};
-
-const float utils_tab_cos_32_2[] = {
-    1.000000, 0.923880, 0.707107, 0.382683, 0.000000, -0.382683, -0.707107, -0.923880,
-    -1.000000, -0.923880, -0.707107, -0.382683, -0.000000, 0.382683, 0.707107, 0.923880,
-    1.000000, 0.923880, 0.707107, 0.382683, 0.000000, -0.382683, -0.707107, -0.923880,
-    -1.000000, -0.923880, -0.707107, -0.382683, -0.000000, 0.382683, 0.707107, 0.923880
-};

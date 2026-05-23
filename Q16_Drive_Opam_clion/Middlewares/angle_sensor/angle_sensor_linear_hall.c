@@ -20,17 +20,17 @@
 
 /* Private function prototypes -----------------------------------------------*/
 
-static int sensor_linear_hall_init(angle_sensor_context_t *ctx);
-static int sensor_linear_hall_calibrate(angle_sensor_context_t *ctx);
-static bool sensor_linear_hall_is_calibrated(angle_sensor_context_t *ctx);
-static uint16_t sensor_linear_hall_get_raw_angle(angle_sensor_context_t *ctx);
-static float sensor_linear_hall_get_angle_rad(angle_sensor_context_t *ctx);
-static float sensor_linear_hall_get_velocity_rads(angle_sensor_context_t *ctx);
-static void sensor_linear_hall_update(angle_sensor_context_t *ctx);
-static void sensor_linear_hall_get_info(angle_sensor_context_t *ctx,
-                                        angle_sensor_info_t *info);
-static void sensor_linear_hall_set_offset(angle_sensor_context_t *ctx,
-                                          float offset);
+static int sensor_linear_hall_init(angle_sensor_context_t* ctx);
+static int sensor_linear_hall_calibrate(angle_sensor_context_t* ctx);
+static bool sensor_linear_hall_is_calibrated(angle_sensor_context_t* ctx);
+static uint16_t sensor_linear_hall_get_raw_angle(angle_sensor_context_t* ctx);
+static float sensor_linear_hall_get_angle_rad(angle_sensor_context_t* ctx);
+static float sensor_linear_hall_get_velocity_rads(angle_sensor_context_t* ctx);
+static void sensor_linear_hall_update(angle_sensor_context_t* ctx);
+static void sensor_linear_hall_get_info(angle_sensor_context_t* ctx,
+    angle_sensor_info_t* info);
+static void sensor_linear_hall_set_offset(angle_sensor_context_t* ctx,
+    float offset);
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -49,7 +49,7 @@ static const angle_sensor_ops_t sensor_ops_linear_hall = {
 /* Exported functions --------------------------------------------------------*/
 
 angle_sensor_error_t angle_sensor_linear_hall_init_context(
-    angle_sensor_context_t *ctx)
+    angle_sensor_context_t* ctx)
 {
     if (ctx == NULL) {
         return ANGLE_SENSOR_ERROR_NULL_PTR;
@@ -64,7 +64,7 @@ angle_sensor_error_t angle_sensor_linear_hall_init_context(
 
 /* Private functions ---------------------------------------------------------*/
 
-static int sensor_linear_hall_init(angle_sensor_context_t *ctx)
+static int sensor_linear_hall_init(angle_sensor_context_t* ctx)
 {
     hall_adjust_init();
     ctx->info.type = SENSOR_TYPE_LINEAR_HALL;
@@ -76,7 +76,7 @@ static int sensor_linear_hall_init(angle_sensor_context_t *ctx)
     return 0;
 }
 
-static int sensor_linear_hall_calibrate(angle_sensor_context_t *ctx)
+static int sensor_linear_hall_calibrate(angle_sensor_context_t* ctx)
 {
     (void)ctx;
     if (hall_adjust_get_state() == HALL_ADJUST_STATE_NONE) {
@@ -86,13 +86,13 @@ static int sensor_linear_hall_calibrate(angle_sensor_context_t *ctx)
     return -1;
 }
 
-static bool sensor_linear_hall_is_calibrated(angle_sensor_context_t *ctx)
+static bool sensor_linear_hall_is_calibrated(angle_sensor_context_t* ctx)
 {
     (void)ctx;
     return hall_adjust_is_calibrated();
 }
 
-static uint16_t sensor_linear_hall_get_raw_angle(angle_sensor_context_t *ctx)
+static uint16_t sensor_linear_hall_get_raw_angle(angle_sensor_context_t* ctx)
 {
     (void)ctx;
     float angle_rad = pll_get_angle(&pll_ctx);
@@ -101,20 +101,20 @@ static uint16_t sensor_linear_hall_get_raw_angle(angle_sensor_context_t *ctx)
     return (uint16_t)(raw & 0xFFFF);
 }
 
-static float sensor_linear_hall_get_angle_rad(angle_sensor_context_t *ctx)
+static float sensor_linear_hall_get_angle_rad(angle_sensor_context_t* ctx)
 {
     (void)ctx;
     float angle = pll_get_angle(&pll_ctx);
     return angle;
 }
 
-static float sensor_linear_hall_get_velocity_rads(angle_sensor_context_t *ctx)
+static float sensor_linear_hall_get_velocity_rads(angle_sensor_context_t* ctx)
 {
     (void)ctx;
     return pll_get_speed(&pll_ctx);
 }
 
-static void sensor_linear_hall_update(angle_sensor_context_t *ctx)
+static void sensor_linear_hall_update(angle_sensor_context_t* ctx)
 {
     (void)ctx;
     if (!hall_adjust_is_calibrated()) {
@@ -122,8 +122,8 @@ static void sensor_linear_hall_update(angle_sensor_context_t *ctx)
     }
 }
 
-static void sensor_linear_hall_get_info(angle_sensor_context_t *ctx,
-                                        angle_sensor_info_t *info)
+static void sensor_linear_hall_get_info(angle_sensor_context_t* ctx,
+    angle_sensor_info_t* info)
 {
     if (info) {
         info->type = SENSOR_TYPE_LINEAR_HALL;
@@ -135,8 +135,8 @@ static void sensor_linear_hall_get_info(angle_sensor_context_t *ctx,
     }
 }
 
-static void sensor_linear_hall_set_offset(angle_sensor_context_t *ctx,
-                                          float offset)
+static void sensor_linear_hall_set_offset(angle_sensor_context_t* ctx,
+    float offset)
 {
     ctx->mechanical_offset = offset;
     ctx->info.offset = offset;

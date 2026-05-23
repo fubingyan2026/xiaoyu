@@ -30,7 +30,7 @@ typedef int32_t q16_16_t;
 /* ============= 缩放因子定义 ============= */
 #define Q16_16_FRAC_BITS 16 ///< 小数位数：16位
 
-#define Q16_16_SCALE 65536                   ///< 缩放因子：65536
+#define Q16_16_SCALE 65536 ///< 缩放因子：65536
 #define Q16_16_SCALE_INV 0.0000152587890625f ///< 逆缩放因子：1/65536
 
 /* ============= 浮点与Q16.16互转 ============= */
@@ -70,15 +70,15 @@ typedef int32_t q16_16_t;
 #define Q16_16_TO_INT_ROUND(x) (((x) + (1 << (Q16_16_FRAC_BITS - 1))) >> Q16_16_FRAC_BITS)
 
 /* ============= 常数定义 (Q16.16格式，预计算整数常量) ============= */
-#define Q16_16_PI (INT32_C(205887))       ///< π ≈ 3.141592653590 (0x3243f)
-#define Q16_16_2PI (INT32_C(411775))      ///< 2π ≈ 6.283185307180 (0x6487f)
-#define Q16_16_PI_2 (INT32_C(102944))     ///< π/2 ≈ 1.570796326795 (0x19220)
-#define Q16_16_PI_4 (INT32_C(51472))      ///< π/4 ≈ 0.785398163397 (0xc910)
-#define Q16_16_SQRT2 (INT32_C(92682))     ///< √2 ≈ 1.414213562373 (0x16a0a)
-#define Q16_16_SQRT3 (INT32_C(113512))    ///< √3 ≈ 1.732050807569 (0x1bb68)
-#define Q16_16_SQRT3_2 (INT32_C(56756))   ///< √3/2 ≈ 0.866025403784 (0xddb4)
+#define Q16_16_PI (INT32_C(205887)) ///< π ≈ 3.141592653590 (0x3243f)
+#define Q16_16_2PI (INT32_C(411775)) ///< 2π ≈ 6.283185307180 (0x6487f)
+#define Q16_16_PI_2 (INT32_C(102944)) ///< π/2 ≈ 1.570796326795 (0x19220)
+#define Q16_16_PI_4 (INT32_C(51472)) ///< π/4 ≈ 0.785398163397 (0xc910)
+#define Q16_16_SQRT2 (INT32_C(92682)) ///< √2 ≈ 1.414213562373 (0x16a0a)
+#define Q16_16_SQRT3 (INT32_C(113512)) ///< √3 ≈ 1.732050807569 (0x1bb68)
+#define Q16_16_SQRT3_2 (INT32_C(56756)) ///< √3/2 ≈ 0.866025403784 (0xddb4)
 #define Q16_16_INV_SQRT3 (INT32_C(37837)) ///< 1/√3 ≈ 0.577350269190 (0x93cd)
-#define Q16_16_ONE (INT32_C(0x00010000))  ///< 1.0
+#define Q16_16_ONE (INT32_C(0x00010000)) ///< 1.0
 #define Q16_16_HALF (INT32_C(0x00008000)) ///< 0.5
 
 /* ============= 饱和限幅宏定义 ============= */
@@ -108,7 +108,7 @@ typedef int32_t q16_16_t;
 /**
  * @brief 单位范围饱和（归一化值）
  */
-#define Q16_16_SAT_UNIT(x) Q16_16_SAT_SYM((x), Q16_16_ONE)     ///< 限制在[-1, 1]
+#define Q16_16_SAT_UNIT(x) Q16_16_SAT_SYM((x), Q16_16_ONE) ///< 限制在[-1, 1]
 #define Q16_16_SAT_UNIT_POS(x) Q16_16_SAT_POS((x), Q16_16_ONE) ///< 限制在[0, 1]
 
 /**
@@ -187,13 +187,11 @@ static inline q16_16_t q16_16_add(q16_16_t a, q16_16_t b)
 {
     q16_16_t res = a + b;
     // 检查是否发生正向或负向溢出
-    if (((a ^ res) & (b ^ res)) < 0)
-    {
+    if (((a ^ res) & (b ^ res)) < 0) {
         return (a < 0) ? INT32_MIN : INT32_MAX;
     }
     return res;
 }
-
 
 /**
  * @brief Q16.16定点数除法
@@ -243,7 +241,7 @@ static inline q16_16_t q16_16_min(q16_16_t a, q16_16_t b)
  * @param sin_out 输出正弦值指针
  * @param cos_out 输出余弦值指针
  */
-void q16_16_sin_cos(q16_16_t angle_q, q16_16_t *sin_out, q16_16_t *cos_out);
+void q16_16_sin_cos(q16_16_t angle_q, q16_16_t* sin_out, q16_16_t* cos_out);
 
 /**
  * @brief Q16.16定点数平方根
@@ -283,7 +281,7 @@ q16_16_t q16_16_atan2(q16_16_t y, q16_16_t x);
  * @param alpha 输出α轴电流指针
  * @param beta 输出β轴电流指针
  */
-void q16_16_clarke_transform(q16_16_t ia, q16_16_t ib, q16_16_t ic, q16_16_t *alpha, q16_16_t *beta);
+void q16_16_clarke_transform(q16_16_t ia, q16_16_t ib, q16_16_t ic, q16_16_t* alpha, q16_16_t* beta);
 
 /**
  * @brief Park变换（两相静止→两相旋转坐标系）
@@ -298,8 +296,8 @@ void q16_16_clarke_transform(q16_16_t ia, q16_16_t ib, q16_16_t ic, q16_16_t *al
  * @param d 输出d轴分量指针
  * @param q 输出q轴分量指针
  */
-void q16_16_park_transform(q16_16_t alpha, q16_16_t beta, q16_16_t sin_theta, q16_16_t cos_theta, q16_16_t *d,
-                           q16_16_t *q);
+void q16_16_park_transform(q16_16_t alpha, q16_16_t beta, q16_16_t sin_theta, q16_16_t cos_theta, q16_16_t* d,
+    q16_16_t* q);
 
 /**
  * @brief 逆Park变换（两相旋转→两相静止坐标系）
@@ -314,8 +312,8 @@ void q16_16_park_transform(q16_16_t alpha, q16_16_t beta, q16_16_t sin_theta, q1
  * @param alpha 输出α轴分量指针
  * @param beta 输出β轴分量指针
  */
-void q16_16_ipark_transform(q16_16_t d, q16_16_t q, q16_16_t sin_theta, q16_16_t cos_theta, q16_16_t *alpha,
-                            q16_16_t *beta);
+void q16_16_ipark_transform(q16_16_t d, q16_16_t q, q16_16_t sin_theta, q16_16_t cos_theta, q16_16_t* alpha,
+    q16_16_t* beta);
 
 /**
  * @brief 计算二维矢量的幅值
@@ -343,12 +341,12 @@ q16_16_t q16_16_vector_magnitude_sq(q16_16_t alpha, q16_16_t beta);
  */
 typedef struct
 {
-    q16_16_t kp, ki;               ///< 比例增益和积分增益
+    q16_16_t kp, ki; ///< 比例增益和积分增益
     q16_16_t max_value, min_value; ///< 输出限幅值
-    q16_16_t integ_sat;            ///< 积分饱和限制
-    q16_16_t integral;             ///< 积分累积值
-    q16_16_t target, real, err;    ///< 目标值、实际值、误差
-    q16_16_t out;                  ///< 控制器输出
+    q16_16_t integ_sat; ///< 积分饱和限制
+    q16_16_t integral; ///< 积分累积值
+    q16_16_t target, real, err; ///< 目标值、实际值、误差
+    q16_16_t out; ///< 控制器输出
 } q16_16_pi_t;
 
 /**
@@ -360,7 +358,7 @@ typedef struct
  * @param min_val 最小输出值
  * @param integ_sat 积分饱和限制
  */
-void q16_16_pi_init(q16_16_pi_t *pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val, q16_16_t min_val, q16_16_t integ_sat);
+void q16_16_pi_init(q16_16_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val, q16_16_t min_val, q16_16_t integ_sat);
 
 /**
  * @brief 执行PI控制器计算
@@ -368,9 +366,9 @@ void q16_16_pi_init(q16_16_pi_t *pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val,
  * @param pi PI控制器指针
  * @param dt_q 采样周期（Q16.16格式）
  */
-void q16_16_pi_calc(q16_16_pi_t *pi, q16_16_t dt_q);
+void q16_16_pi_calc(q16_16_pi_t* pi, q16_16_t dt_q);
 
-void q16_16_pi_reset(q16_16_pi_t *pi);
+void q16_16_pi_reset(q16_16_pi_t* pi);
 
 /**
  * @brief 重置PI控制器状态
@@ -381,14 +379,14 @@ q16_16_t q16_16_lpf_update(q16_16_t old_val, q16_16_t new_val, q16_16_t lpf_k);
 
 typedef struct
 {
-    q16_16_t *buffer;
+    q16_16_t* buffer;
     uint16_t length;
     uint16_t idx;
     q16_16_t sum;
 } q16_16_ma_filter_t;
 
-void q16_16_ma_filter_init(q16_16_ma_filter_t *filter, q16_16_t *buf, uint16_t len);
-q16_16_t q16_16_ma_filter_update(q16_16_ma_filter_t *filter, q16_16_t new_val);
+void q16_16_ma_filter_init(q16_16_ma_filter_t* filter, q16_16_t* buf, uint16_t len);
+q16_16_t q16_16_ma_filter_update(q16_16_ma_filter_t* filter, q16_16_t new_val);
 
 /* ============= Q16.16 角度处理 ============= */
 q16_16_t q16_16_normalize_angle(q16_16_t angle_q);

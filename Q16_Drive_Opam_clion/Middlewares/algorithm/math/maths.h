@@ -28,6 +28,13 @@
 #endif
 #define power3(x) ((x) * (x) * (x))
 
+#ifndef NAN
+#define NAN (0.0f / 0.0f)
+#endif
+#ifndef INFINITY
+#define INFINITY (1.0f / 0.0f)
+#endif
+
 // Undefine this for use libc sinf/cosf. Keep this defined to use fast sin/cos approximations
 #define FAST_MATH // order 9 approximation
 #define VERY_FAST_MATH // order 7 approximation
@@ -126,18 +133,20 @@ float quickMedianFilter7f(float* v);
 float quickMedianFilter9f(float* v);
 
 #if defined(FAST_MATH) || defined(VERY_FAST_MATH)
+float inv_sqrt_approx(const float num);
 float sqrt_approx(const float num);
 float sin_approx(float x);
 float cos_approx(float x);
 float atan2_approx(float y, float x);
 float acos_approx(float x);
 float asin_approx(float x);
-
-#define tan_approx(x) (sin_approx(x) / cos_approx(x))
+float tan_approx(float x);
 float exp_approx(float val);
 float log_approx(float val);
 float pow_approx(float a, float b);
 #else
+#define inv_sqrt_approx(x) (1.0f / sqrtf(x))
+#define sqrt_approx(x) sqrtf(x)
 #define sin_approx(x) sinf(x)
 #define cos_approx(x) cosf(x)
 #define atan2_approx(y, x) atan2f(y, x)
@@ -145,7 +154,7 @@ float pow_approx(float a, float b);
 #define tan_approx(x) tanf(x)
 #define exp_approx(x) expf(x)
 #define log_approx(x) logf(x)
-#define pow_approx(a, b) powf(b, a)
+#define pow_approx(a, b) powf(a, b)
 #endif
 
 void arraySubInt32(int32_t* dest, const int32_t* array1, const int32_t* array2, int count);

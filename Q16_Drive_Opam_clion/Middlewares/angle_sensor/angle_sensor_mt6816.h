@@ -22,7 +22,7 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 
 angle_sensor_error_t angle_sensor_mt6816_init_context(
-    angle_sensor_context_t *ctx);
+    angle_sensor_context_t* ctx);
 
 #ifdef __cplusplus
 }
