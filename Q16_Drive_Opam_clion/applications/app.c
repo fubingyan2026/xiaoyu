@@ -15,7 +15,7 @@
 #include <stdint.h>
 
 #include "CAN_Server.h"
-#include "WS2812_SPI.h"
+#include "device_ws2812.h"
 #include "easyflash.h"
 #include "flash_task.h"
 #include "foc_ctrl_q16.h"
@@ -61,8 +61,8 @@ tk_timer_t* timer_driverTask = NULL;
 /* 定时器3超时回调函数 */
 void timer_ledTask_timeout_callback(tk_timer_t* timer) {
   led_task_refresh();
-  WS2812_SPI_Loop();
-  WS2812Flush();
+  device_ws2812_loop();
+  device_ws2812_flush();
 
   key_func_task();
   warning_task();
@@ -126,7 +126,7 @@ void AppInit(void) {
   can_comm_init();      // 初始化CAN通信模块
 
   warning_Init();  // led任务初始化
-  WS2812_SPI_Init();
+  device_ws2812_init();
   FDCAN1_Config();
   CANCommInit();  // 注册CAN收发实例
   uart_it_init();

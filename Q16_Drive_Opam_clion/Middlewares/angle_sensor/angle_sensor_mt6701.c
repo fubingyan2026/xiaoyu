@@ -14,7 +14,8 @@
 
 #include <string.h>
 
-#include "MT6816.h"
+#include "device_mt6701.h"
+#include "device_mt6816.h"
 #include "foc_config_q16.h"
 #include "utils_math.h"
 
@@ -65,7 +66,7 @@ angle_sensor_error_t angle_sensor_mt6701_init_context(
 
 static int sensor_mt6701_init(angle_sensor_context_t* ctx)
 {
-    MT6816_Init();
+    device_mt6816_init();
     ctx->info.type = SENSOR_TYPE_MT6701;
     ctx->info.resolution = 16384;
     ctx->info.pulses_per_rev = 16384.0f;
@@ -90,12 +91,12 @@ static bool sensor_mt6701_is_calibrated(angle_sensor_context_t* ctx)
 static uint16_t sensor_mt6701_get_raw_angle(angle_sensor_context_t* ctx)
 {
     (void)ctx;
-    return REIN_MT6701_Get_AngleData();
+    return device_mt6701_get_angle_data();
 }
 
 static float sensor_mt6701_get_angle_rad(angle_sensor_context_t* ctx)
 {
-    uint16_t raw = REIN_MT6701_Get_AngleData();
+    uint16_t raw = device_mt6701_get_angle_data();
     float angle = ((float)raw / 16384.0f) * M_2PI;
     angle += ctx->mechanical_offset;
     utils_norm_angle_rad(&angle);

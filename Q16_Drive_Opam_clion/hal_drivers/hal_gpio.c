@@ -31,8 +31,9 @@ static inline bool is_valid_pin(uint8_t pin);
  * @param port 要检查的端口号
  * @return true 表示有效，false 表示无效
  */
-static inline bool is_valid_port(uint8_t port) {
-  return port < HAL_GPIO_PORT_LEN;
+static inline bool is_valid_port(uint8_t port)
+{
+    return port < HAL_GPIO_PORT_LEN;
 }
 
 /**
@@ -40,8 +41,9 @@ static inline bool is_valid_port(uint8_t port) {
  * @param pin 要检查的引脚号
  * @return true 表示有效，false 表示无效
  */
-static inline bool is_valid_pin(uint8_t pin) {
-  return pin <= HAL_GPIO_PIN_MAX_VALUE;
+static inline bool is_valid_pin(uint8_t pin)
+{
+    return pin <= HAL_GPIO_PIN_MAX_VALUE;
 }
 
 /* Exported functions --------------------------------------------------------*/
@@ -56,24 +58,24 @@ static inline bool is_valid_pin(uint8_t pin) {
  *       此函数主要用于多平台切换或单元测试场景。
  */
 hal_gpio_error_t hal_gpio_set_ops(hal_gpio_context_t* ctx,
-                                  const hal_gpio_ops_t* ops) {
-  // 检查参数有效性
-  if (ctx == NULL || ops == NULL) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    const hal_gpio_ops_t* ops)
+{
+    // 检查参数有效性
+    if (ctx == NULL || ops == NULL) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查必要的函数指针是否为 NULL
-  if (ops->init == NULL || ops->deinit == NULL || ops->write == NULL ||
-      ops->read == NULL || ops->toggle == NULL) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    // 检查必要的函数指针是否为 NULL
+    if (ops->init == NULL || ops->deinit == NULL || ops->write == NULL || ops->read == NULL || ops->toggle == NULL) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 进入临界区，保护共享资源
-  HAL_GPIO_ENTER_CRITICAL();
-  ctx->ops = ops;
-  HAL_GPIO_EXIT_CRITICAL();
+    // 进入临界区，保护共享资源
+    HAL_GPIO_ENTER_CRITICAL();
+    ctx->ops = ops;
+    HAL_GPIO_EXIT_CRITICAL();
 
-  return HAL_GPIO_OK;
+    return HAL_GPIO_OK;
 }
 
 /**
@@ -83,33 +85,34 @@ hal_gpio_error_t hal_gpio_set_ops(hal_gpio_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_gpio_error_t hal_gpio_init(hal_gpio_context_t* ctx,
-                               const hal_gpio_config_t* config) {
-  // 检查参数有效性
-  if (ctx == NULL || config == NULL) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    const hal_gpio_config_t* config)
+{
+    // 检查参数有效性
+    if (ctx == NULL || config == NULL) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查端口和引脚号是否有效
-  if (!is_valid_port(config->port) || !is_valid_pin(config->pin)) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    // 检查端口和引脚号是否有效
+    if (!is_valid_port(config->port) || !is_valid_pin(config->pin)) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 如果是第一次初始化，标记为已初始化
-  if (!ctx->initialized) {
-    ctx->initialized = 1;
-  }
+    // 如果是第一次初始化，标记为已初始化
+    if (!ctx->initialized) {
+        ctx->initialized = 1;
+    }
 
-  // 检查操作函数是否已设置
-  if (ctx->ops == NULL || ctx->ops->init == NULL) {
-    return HAL_GPIO_ERROR_UNINITIALIZED;
-  }
+    // 检查操作函数是否已设置
+    if (ctx->ops == NULL || ctx->ops->init == NULL) {
+        return HAL_GPIO_ERROR_UNINITIALIZED;
+    }
 
-  // 进入临界区，调用平台特定的初始化函数
-  HAL_GPIO_ENTER_CRITICAL();
-  hal_gpio_error_t result = ctx->ops->init(ctx, config);
-  HAL_GPIO_EXIT_CRITICAL();
+    // 进入临界区，调用平台特定的初始化函数
+    HAL_GPIO_ENTER_CRITICAL();
+    hal_gpio_error_t result = ctx->ops->init(ctx, config);
+    HAL_GPIO_EXIT_CRITICAL();
 
-  return result;
+    return result;
 }
 
 /**
@@ -120,28 +123,29 @@ hal_gpio_error_t hal_gpio_init(hal_gpio_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_gpio_error_t hal_gpio_deinit(hal_gpio_context_t* ctx, uint8_t port,
-                                 uint8_t pin) {
-  // 检查参数有效性
-  if (ctx == NULL) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    uint8_t pin)
+{
+    // 检查参数有效性
+    if (ctx == NULL) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查端口和引脚号是否有效
-  if (!is_valid_port(port) || !is_valid_pin(pin)) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    // 检查端口和引脚号是否有效
+    if (!is_valid_port(port) || !is_valid_pin(pin)) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查操作函数是否已设置
-  if (ctx->ops == NULL || ctx->ops->deinit == NULL) {
-    return HAL_GPIO_ERROR_UNINITIALIZED;
-  }
+    // 检查操作函数是否已设置
+    if (ctx->ops == NULL || ctx->ops->deinit == NULL) {
+        return HAL_GPIO_ERROR_UNINITIALIZED;
+    }
 
-  // 进入临界区，调用平台特定的反初始化函数
-  HAL_GPIO_ENTER_CRITICAL();
-  hal_gpio_error_t result = ctx->ops->deinit(ctx, port, pin);
-  HAL_GPIO_EXIT_CRITICAL();
+    // 进入临界区，调用平台特定的反初始化函数
+    HAL_GPIO_ENTER_CRITICAL();
+    hal_gpio_error_t result = ctx->ops->deinit(ctx, port, pin);
+    HAL_GPIO_EXIT_CRITICAL();
 
-  return result;
+    return result;
 }
 
 /**
@@ -153,33 +157,34 @@ hal_gpio_error_t hal_gpio_deinit(hal_gpio_context_t* ctx, uint8_t port,
  * @return 操作结果错误码
  */
 hal_gpio_error_t hal_gpio_write(hal_gpio_context_t* ctx, uint8_t port,
-                                uint8_t pin, hal_gpio_pin_state_t state) {
-  // 检查参数有效性
-  if (ctx == NULL) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    uint8_t pin, hal_gpio_pin_state_t state)
+{
+    // 检查参数有效性
+    if (ctx == NULL) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查端口和引脚号是否有效
-  if (!is_valid_port(port) || !is_valid_pin(pin)) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    // 检查端口和引脚号是否有效
+    if (!is_valid_port(port) || !is_valid_pin(pin)) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查状态值是否有效
-  if (state != HAL_GPIO_PIN_RESET && state != HAL_GPIO_PIN_SET) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    // 检查状态值是否有效
+    if (state != HAL_GPIO_PIN_RESET && state != HAL_GPIO_PIN_SET) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查操作函数是否已设置
-  if (ctx->ops == NULL || ctx->ops->write == NULL) {
-    return HAL_GPIO_ERROR_UNINITIALIZED;
-  }
+    // 检查操作函数是否已设置
+    if (ctx->ops == NULL || ctx->ops->write == NULL) {
+        return HAL_GPIO_ERROR_UNINITIALIZED;
+    }
 
-  // 进入临界区，调用平台特定的写入函数
-  HAL_GPIO_ENTER_CRITICAL();
-  hal_gpio_error_t result = ctx->ops->write(ctx, port, pin, state);
-  HAL_GPIO_EXIT_CRITICAL();
+    // 进入临界区，调用平台特定的写入函数
+    HAL_GPIO_ENTER_CRITICAL();
+    hal_gpio_error_t result = ctx->ops->write(ctx, port, pin, state);
+    HAL_GPIO_EXIT_CRITICAL();
 
-  return result;
+    return result;
 }
 
 /**
@@ -191,28 +196,29 @@ hal_gpio_error_t hal_gpio_write(hal_gpio_context_t* ctx, uint8_t port,
  * @return 操作结果错误码
  */
 hal_gpio_error_t hal_gpio_read(hal_gpio_context_t* ctx, uint8_t port,
-                               uint8_t pin, hal_gpio_pin_state_t* state) {
-  // 检查参数有效性
-  if (ctx == NULL || state == NULL) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    uint8_t pin, hal_gpio_pin_state_t* state)
+{
+    // 检查参数有效性
+    if (ctx == NULL || state == NULL) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查端口和引脚号是否有效
-  if (!is_valid_port(port) || !is_valid_pin(pin)) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    // 检查端口和引脚号是否有效
+    if (!is_valid_port(port) || !is_valid_pin(pin)) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查操作函数是否已设置
-  if (ctx->ops == NULL || ctx->ops->read == NULL) {
-    return HAL_GPIO_ERROR_UNINITIALIZED;
-  }
+    // 检查操作函数是否已设置
+    if (ctx->ops == NULL || ctx->ops->read == NULL) {
+        return HAL_GPIO_ERROR_UNINITIALIZED;
+    }
 
-  // 进入临界区，调用平台特定的读取函数
-  HAL_GPIO_ENTER_CRITICAL();
-  hal_gpio_error_t result = ctx->ops->read(ctx, port, pin, state);
-  HAL_GPIO_EXIT_CRITICAL();
+    // 进入临界区，调用平台特定的读取函数
+    HAL_GPIO_ENTER_CRITICAL();
+    hal_gpio_error_t result = ctx->ops->read(ctx, port, pin, state);
+    HAL_GPIO_EXIT_CRITICAL();
 
-  return result;
+    return result;
 }
 
 /**
@@ -223,28 +229,29 @@ hal_gpio_error_t hal_gpio_read(hal_gpio_context_t* ctx, uint8_t port,
  * @return 操作结果错误码
  */
 hal_gpio_error_t hal_gpio_toggle(hal_gpio_context_t* ctx, uint8_t port,
-                                 uint8_t pin) {
-  // 检查参数有效性
-  if (ctx == NULL) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    uint8_t pin)
+{
+    // 检查参数有效性
+    if (ctx == NULL) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查端口和引脚号是否有效
-  if (!is_valid_port(port) || !is_valid_pin(pin)) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    // 检查端口和引脚号是否有效
+    if (!is_valid_port(port) || !is_valid_pin(pin)) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查操作函数是否已设置
-  if (ctx->ops == NULL || ctx->ops->toggle == NULL) {
-    return HAL_GPIO_ERROR_UNINITIALIZED;
-  }
+    // 检查操作函数是否已设置
+    if (ctx->ops == NULL || ctx->ops->toggle == NULL) {
+        return HAL_GPIO_ERROR_UNINITIALIZED;
+    }
 
-  // 进入临界区，调用平台特定的翻转函数
-  HAL_GPIO_ENTER_CRITICAL();
-  hal_gpio_error_t result = ctx->ops->toggle(ctx, port, pin);
-  HAL_GPIO_EXIT_CRITICAL();
+    // 进入临界区，调用平台特定的翻转函数
+    HAL_GPIO_ENTER_CRITICAL();
+    hal_gpio_error_t result = ctx->ops->toggle(ctx, port, pin);
+    HAL_GPIO_EXIT_CRITICAL();
 
-  return result;
+    return result;
 }
 
 /**
@@ -257,31 +264,31 @@ hal_gpio_error_t hal_gpio_toggle(hal_gpio_context_t* ctx, uint8_t port,
  * @return 操作结果错误码
  */
 hal_gpio_error_t hal_gpio_register_callback(hal_gpio_context_t* ctx,
-                                            uint8_t port, uint8_t pin,
-                                            hal_gpio_callback_t callback,
-                                            void* user_data) {
-  // 检查参数有效性
-  if (ctx == NULL) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    uint8_t port, uint8_t pin,
+    hal_gpio_callback_t callback,
+    void* user_data)
+{
+    // 检查参数有效性
+    if (ctx == NULL) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查端口和引脚号是否有效
-  if (!is_valid_port(port) || !is_valid_pin(pin)) {
-    return HAL_GPIO_ERROR_INVALID_PARAM;
-  }
+    // 检查端口和引脚号是否有效
+    if (!is_valid_port(port) || !is_valid_pin(pin)) {
+        return HAL_GPIO_ERROR_INVALID_PARAM;
+    }
 
-  // 检查操作函数是否已设置
-  if (ctx->ops == NULL || ctx->ops->register_callback == NULL) {
-    return HAL_GPIO_ERROR_UNSUPPORTED;
-  }
+    // 检查操作函数是否已设置
+    if (ctx->ops == NULL || ctx->ops->register_callback == NULL) {
+        return HAL_GPIO_ERROR_UNSUPPORTED;
+    }
 
-  // 进入临界区，保存回调函数和用户数据，然后调用平台特定的注册函数
-  HAL_GPIO_ENTER_CRITICAL();
-  ctx->callback = callback;
-  ctx->user_data = user_data;
-  hal_gpio_error_t result =
-      ctx->ops->register_callback(ctx, port, pin, callback, user_data);
-  HAL_GPIO_EXIT_CRITICAL();
+    // 进入临界区，保存回调函数和用户数据，然后调用平台特定的注册函数
+    HAL_GPIO_ENTER_CRITICAL();
+    ctx->callback = callback;
+    ctx->user_data = user_data;
+    hal_gpio_error_t result = ctx->ops->register_callback(ctx, port, pin, callback, user_data);
+    HAL_GPIO_EXIT_CRITICAL();
 
-  return result;
+    return result;
 }

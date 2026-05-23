@@ -11,7 +11,7 @@
 
 #include "warning_task.h"
 
-#include "WS2812_SPI.h"
+#include "device_ws2812.h"
 #include "key_menu.h"
 
 static daemon_context_t* daemon_warning;
@@ -81,10 +81,10 @@ void warning_task(void) {
     last_error_code = error_code;
   reset_code:
     if (last_error_code) {
-      WS2812_Mode_Set(WS2812_MODE_ERROR_CODE, last_error_code);
+      device_ws2812_mode_set(DEVICE_WS2812_MODE_ERROR_CODE, last_error_code);
     } else  // 没有错误.
     {
-      WS2812_Mode_Set(WS2812_MODE_FLOW, 0);
+      device_ws2812_mode_set(DEVICE_WS2812_MODE_FLOW, 0);
     }
   }
 }

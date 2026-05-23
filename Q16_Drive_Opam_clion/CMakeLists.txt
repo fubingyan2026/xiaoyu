@@ -80,6 +80,7 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/lwshell/src MID
 
 # common 目录 (仅保留 toolkit)
 aux_source_directory(${CMAKE_SOURCE_DIR}/../common/toolkit COMMON_toolkit)
+aux_source_directory(${CMAKE_SOURCE_DIR}/device_drivers DEV_DRV)
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
@@ -107,6 +108,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ${MID_lwmem}
         ${MID_lwshell}
         ${MID_utils_toolkit}
+        ${DEV_DRV}
 
         # 汇编文件需要单独添加
         Middlewares/Third_Party/CmBacktrace/cm_backtrace/fault_handler/gcc/cmb_fault.S
@@ -117,6 +119,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         applications
+        device_drivers
         hal_drivers
         Q16_FOC
         Middlewares

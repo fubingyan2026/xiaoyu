@@ -20,16 +20,17 @@
  *       此函数主要用于多平台切换或单元测试场景。
  */
 hal_tim_pwm_error_t hal_tim_pwm_set_ops(hal_tim_pwm_context_t* ctx,
-                                        const hal_tim_pwm_ops_t* ops) {
-  if (ctx == NULL || ops == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    const hal_tim_pwm_ops_t* ops)
+{
+    if (ctx == NULL || ops == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  HAL_TIM_PWM_ENTER_CRITICAL();
-  ctx->ops = ops;
-  HAL_TIM_PWM_EXIT_CRITICAL();
+    HAL_TIM_PWM_ENTER_CRITICAL();
+    ctx->ops = ops;
+    HAL_TIM_PWM_EXIT_CRITICAL();
 
-  return HAL_TIM_PWM_OK;
+    return HAL_TIM_PWM_OK;
 }
 
 /**
@@ -39,26 +40,27 @@ hal_tim_pwm_error_t hal_tim_pwm_set_ops(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_init(hal_tim_pwm_context_t* ctx,
-                                     const hal_tim_pwm_config_t* config) {
-  if (ctx == NULL || config == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    const hal_tim_pwm_config_t* config)
+{
+    if (ctx == NULL || config == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->ops == NULL || ctx->ops->init == NULL) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->ops == NULL || ctx->ops->init == NULL) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  hal_tim_pwm_error_t ret = ctx->ops->init(ctx, config);
+    hal_tim_pwm_error_t ret = ctx->ops->init(ctx, config);
 
-  if (ret == HAL_TIM_PWM_OK) {
-    HAL_TIM_PWM_ENTER_CRITICAL();
-    ctx->initialized = 1;
-    ctx->config = *config;
-    ctx->running = 0;
-    HAL_TIM_PWM_EXIT_CRITICAL();
-  }
+    if (ret == HAL_TIM_PWM_OK) {
+        HAL_TIM_PWM_ENTER_CRITICAL();
+        ctx->initialized = 1;
+        ctx->config = *config;
+        ctx->running = 0;
+        HAL_TIM_PWM_EXIT_CRITICAL();
+    }
 
-  return ret;
+    return ret;
 }
 
 /**
@@ -69,27 +71,28 @@ hal_tim_pwm_error_t hal_tim_pwm_init(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_deinit(hal_tim_pwm_context_t* ctx,
-                                       hal_tim_pwm_instance_t instance,
-                                       hal_tim_pwm_channel_t channel) {
-  if (ctx == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel)
+{
+    if (ctx == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->initialized == 0) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->initialized == 0) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  if (ctx->ops == NULL || ctx->ops->deinit == NULL) {
-    return HAL_TIM_PWM_ERROR_UNSUPPORTED;
-  }
+    if (ctx->ops == NULL || ctx->ops->deinit == NULL) {
+        return HAL_TIM_PWM_ERROR_UNSUPPORTED;
+    }
 
-  hal_tim_pwm_error_t ret = ctx->ops->deinit(ctx, instance, channel);
+    hal_tim_pwm_error_t ret = ctx->ops->deinit(ctx, instance, channel);
 
-  if (ret == HAL_TIM_PWM_OK) {
-    ctx->initialized = 0;
-  }
+    if (ret == HAL_TIM_PWM_OK) {
+        ctx->initialized = 0;
+    }
 
-  return ret;
+    return ret;
 }
 
 /**
@@ -99,16 +102,17 @@ hal_tim_pwm_error_t hal_tim_pwm_deinit(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_gpio_alternate(
-    hal_tim_pwm_context_t* ctx, const hal_tim_pwm_gpio_config_t* gpio_config) {
-  if (ctx == NULL || gpio_config == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    hal_tim_pwm_context_t* ctx, const hal_tim_pwm_gpio_config_t* gpio_config)
+{
+    if (ctx == NULL || gpio_config == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->ops == NULL || ctx->ops->gpio_alternate == NULL) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->ops == NULL || ctx->ops->gpio_alternate == NULL) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  return ctx->ops->gpio_alternate(ctx, gpio_config);
+    return ctx->ops->gpio_alternate(ctx, gpio_config);
 }
 
 /**
@@ -119,29 +123,30 @@ hal_tim_pwm_error_t hal_tim_pwm_gpio_alternate(
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_start(hal_tim_pwm_context_t* ctx,
-                                      hal_tim_pwm_instance_t instance,
-                                      hal_tim_pwm_channel_t channel) {
-  if (ctx == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel)
+{
+    if (ctx == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->initialized == 0) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->initialized == 0) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  if (ctx->ops == NULL || ctx->ops->start == NULL) {
-    return HAL_TIM_PWM_ERROR_UNSUPPORTED;
-  }
+    if (ctx->ops == NULL || ctx->ops->start == NULL) {
+        return HAL_TIM_PWM_ERROR_UNSUPPORTED;
+    }
 
-  hal_tim_pwm_error_t ret = ctx->ops->start(ctx, instance, channel);
+    hal_tim_pwm_error_t ret = ctx->ops->start(ctx, instance, channel);
 
-  if (ret == HAL_TIM_PWM_OK) {
-    HAL_TIM_PWM_ENTER_CRITICAL();
-    ctx->running = 1;
-    HAL_TIM_PWM_EXIT_CRITICAL();
-  }
+    if (ret == HAL_TIM_PWM_OK) {
+        HAL_TIM_PWM_ENTER_CRITICAL();
+        ctx->running = 1;
+        HAL_TIM_PWM_EXIT_CRITICAL();
+    }
 
-  return ret;
+    return ret;
 }
 
 /**
@@ -152,29 +157,30 @@ hal_tim_pwm_error_t hal_tim_pwm_start(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_stop(hal_tim_pwm_context_t* ctx,
-                                     hal_tim_pwm_instance_t instance,
-                                     hal_tim_pwm_channel_t channel) {
-  if (ctx == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel)
+{
+    if (ctx == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->initialized == 0) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->initialized == 0) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  if (ctx->ops == NULL || ctx->ops->stop == NULL) {
-    return HAL_TIM_PWM_ERROR_UNSUPPORTED;
-  }
+    if (ctx->ops == NULL || ctx->ops->stop == NULL) {
+        return HAL_TIM_PWM_ERROR_UNSUPPORTED;
+    }
 
-  hal_tim_pwm_error_t ret = ctx->ops->stop(ctx, instance, channel);
+    hal_tim_pwm_error_t ret = ctx->ops->stop(ctx, instance, channel);
 
-  if (ret == HAL_TIM_PWM_OK) {
-    HAL_TIM_PWM_ENTER_CRITICAL();
-    ctx->running = 0;
-    HAL_TIM_PWM_EXIT_CRITICAL();
-  }
+    if (ret == HAL_TIM_PWM_OK) {
+        HAL_TIM_PWM_ENTER_CRITICAL();
+        ctx->running = 0;
+        HAL_TIM_PWM_EXIT_CRITICAL();
+    }
 
-  return ret;
+    return ret;
 }
 
 /**
@@ -186,22 +192,23 @@ hal_tim_pwm_error_t hal_tim_pwm_stop(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_set_duty_cycle(hal_tim_pwm_context_t* ctx,
-                                               hal_tim_pwm_instance_t instance,
-                                               hal_tim_pwm_channel_t channel,
-                                               uint32_t duty_cycle) {
-  if (ctx == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel,
+    uint32_t duty_cycle)
+{
+    if (ctx == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->initialized == 0) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->initialized == 0) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  if (ctx->ops == NULL || ctx->ops->set_duty_cycle == NULL) {
-    return HAL_TIM_PWM_ERROR_UNSUPPORTED;
-  }
+    if (ctx->ops == NULL || ctx->ops->set_duty_cycle == NULL) {
+        return HAL_TIM_PWM_ERROR_UNSUPPORTED;
+    }
 
-  return ctx->ops->set_duty_cycle(ctx, instance, channel, duty_cycle);
+    return ctx->ops->set_duty_cycle(ctx, instance, channel, duty_cycle);
 }
 
 /**
@@ -213,22 +220,23 @@ hal_tim_pwm_error_t hal_tim_pwm_set_duty_cycle(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_set_frequency(hal_tim_pwm_context_t* ctx,
-                                              hal_tim_pwm_instance_t instance,
-                                              hal_tim_pwm_channel_t channel,
-                                              uint32_t frequency) {
-  if (ctx == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel,
+    uint32_t frequency)
+{
+    if (ctx == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->initialized == 0) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->initialized == 0) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  if (ctx->ops == NULL || ctx->ops->set_frequency == NULL) {
-    return HAL_TIM_PWM_ERROR_UNSUPPORTED;
-  }
+    if (ctx->ops == NULL || ctx->ops->set_frequency == NULL) {
+        return HAL_TIM_PWM_ERROR_UNSUPPORTED;
+    }
 
-  return ctx->ops->set_frequency(ctx, instance, channel, frequency);
+    return ctx->ops->set_frequency(ctx, instance, channel, frequency);
 }
 
 /**
@@ -240,22 +248,23 @@ hal_tim_pwm_error_t hal_tim_pwm_set_frequency(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_get_duty_cycle(hal_tim_pwm_context_t* ctx,
-                                               hal_tim_pwm_instance_t instance,
-                                               hal_tim_pwm_channel_t channel,
-                                               uint32_t* duty_cycle) {
-  if (ctx == NULL || duty_cycle == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel,
+    uint32_t* duty_cycle)
+{
+    if (ctx == NULL || duty_cycle == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->initialized == 0) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->initialized == 0) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  if (ctx->ops == NULL || ctx->ops->get_duty_cycle == NULL) {
-    return HAL_TIM_PWM_ERROR_UNSUPPORTED;
-  }
+    if (ctx->ops == NULL || ctx->ops->get_duty_cycle == NULL) {
+        return HAL_TIM_PWM_ERROR_UNSUPPORTED;
+    }
 
-  return ctx->ops->get_duty_cycle(ctx, instance, channel, duty_cycle);
+    return ctx->ops->get_duty_cycle(ctx, instance, channel, duty_cycle);
 }
 
 /**
@@ -267,22 +276,23 @@ hal_tim_pwm_error_t hal_tim_pwm_get_duty_cycle(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_get_frequency(hal_tim_pwm_context_t* ctx,
-                                              hal_tim_pwm_instance_t instance,
-                                              hal_tim_pwm_channel_t channel,
-                                              uint32_t* frequency) {
-  if (ctx == NULL || frequency == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel,
+    uint32_t* frequency)
+{
+    if (ctx == NULL || frequency == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->initialized == 0) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->initialized == 0) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  if (ctx->ops == NULL || ctx->ops->get_frequency == NULL) {
-    return HAL_TIM_PWM_ERROR_UNSUPPORTED;
-  }
+    if (ctx->ops == NULL || ctx->ops->get_frequency == NULL) {
+        return HAL_TIM_PWM_ERROR_UNSUPPORTED;
+    }
 
-  return ctx->ops->get_frequency(ctx, instance, channel, frequency);
+    return ctx->ops->get_frequency(ctx, instance, channel, frequency);
 }
 
 /**
@@ -294,31 +304,31 @@ hal_tim_pwm_error_t hal_tim_pwm_get_frequency(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_set_polarity(hal_tim_pwm_context_t* ctx,
-                                             hal_tim_pwm_instance_t instance,
-                                             hal_tim_pwm_channel_t channel,
-                                             hal_tim_pwm_polarity_t polarity) {
-  if (ctx == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel,
+    hal_tim_pwm_polarity_t polarity)
+{
+    if (ctx == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->initialized == 0) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->initialized == 0) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  if (ctx->ops == NULL || ctx->ops->set_polarity == NULL) {
-    return HAL_TIM_PWM_ERROR_UNSUPPORTED;
-  }
+    if (ctx->ops == NULL || ctx->ops->set_polarity == NULL) {
+        return HAL_TIM_PWM_ERROR_UNSUPPORTED;
+    }
 
-  hal_tim_pwm_error_t ret =
-      ctx->ops->set_polarity(ctx, instance, channel, polarity);
+    hal_tim_pwm_error_t ret = ctx->ops->set_polarity(ctx, instance, channel, polarity);
 
-  if (ret == HAL_TIM_PWM_OK) {
-    HAL_TIM_PWM_ENTER_CRITICAL();
-    ctx->config.polarity = polarity;
-    HAL_TIM_PWM_EXIT_CRITICAL();
-  }
+    if (ret == HAL_TIM_PWM_OK) {
+        HAL_TIM_PWM_ENTER_CRITICAL();
+        ctx->config.polarity = polarity;
+        HAL_TIM_PWM_EXIT_CRITICAL();
+    }
 
-  return ret;
+    return ret;
 }
 
 /**
@@ -330,22 +340,23 @@ hal_tim_pwm_error_t hal_tim_pwm_set_polarity(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_get_polarity(hal_tim_pwm_context_t* ctx,
-                                             hal_tim_pwm_instance_t instance,
-                                             hal_tim_pwm_channel_t channel,
-                                             hal_tim_pwm_polarity_t* polarity) {
-  if (ctx == NULL || polarity == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    hal_tim_pwm_instance_t instance,
+    hal_tim_pwm_channel_t channel,
+    hal_tim_pwm_polarity_t* polarity)
+{
+    if (ctx == NULL || polarity == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->initialized == 0) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->initialized == 0) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  if (ctx->ops == NULL || ctx->ops->get_polarity == NULL) {
-    return HAL_TIM_PWM_ERROR_UNSUPPORTED;
-  }
+    if (ctx->ops == NULL || ctx->ops->get_polarity == NULL) {
+        return HAL_TIM_PWM_ERROR_UNSUPPORTED;
+    }
 
-  return ctx->ops->get_polarity(ctx, instance, channel, polarity);
+    return ctx->ops->get_polarity(ctx, instance, channel, polarity);
 }
 
 /**
@@ -355,14 +366,15 @@ hal_tim_pwm_error_t hal_tim_pwm_get_polarity(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_is_running(hal_tim_pwm_context_t* ctx,
-                                           bool* running) {
-  if (ctx == NULL || running == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    bool* running)
+{
+    if (ctx == NULL || running == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  *running = (ctx->running != 0);
+    *running = (ctx->running != 0);
 
-  return HAL_TIM_PWM_OK;
+    return HAL_TIM_PWM_OK;
 }
 
 /**
@@ -372,14 +384,15 @@ hal_tim_pwm_error_t hal_tim_pwm_is_running(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_is_initialized(hal_tim_pwm_context_t* ctx,
-                                               bool* initialized) {
-  if (ctx == NULL || initialized == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    bool* initialized)
+{
+    if (ctx == NULL || initialized == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  *initialized = (ctx->initialized != 0);
+    *initialized = (ctx->initialized != 0);
 
-  return HAL_TIM_PWM_OK;
+    return HAL_TIM_PWM_OK;
 }
 
 /**
@@ -389,20 +402,21 @@ hal_tim_pwm_error_t hal_tim_pwm_is_initialized(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_get_config(hal_tim_pwm_context_t* ctx,
-                                           hal_tim_pwm_config_t* config) {
-  if (ctx == NULL || config == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    hal_tim_pwm_config_t* config)
+{
+    if (ctx == NULL || config == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->initialized == 0) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->initialized == 0) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  HAL_TIM_PWM_ENTER_CRITICAL();
-  *config = ctx->config;
-  HAL_TIM_PWM_EXIT_CRITICAL();
+    HAL_TIM_PWM_ENTER_CRITICAL();
+    *config = ctx->config;
+    HAL_TIM_PWM_EXIT_CRITICAL();
 
-  return HAL_TIM_PWM_OK;
+    return HAL_TIM_PWM_OK;
 }
 
 /**
@@ -412,16 +426,17 @@ hal_tim_pwm_error_t hal_tim_pwm_get_config(hal_tim_pwm_context_t* ctx,
  * @return 操作结果错误码
  */
 hal_tim_pwm_error_t hal_tim_pwm_update_config(
-    hal_tim_pwm_context_t* ctx, const hal_tim_pwm_config_t* config) {
-  if (ctx == NULL || config == NULL) {
-    return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-  }
+    hal_tim_pwm_context_t* ctx, const hal_tim_pwm_config_t* config)
+{
+    if (ctx == NULL || config == NULL) {
+        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
+    }
 
-  if (ctx->initialized == 0) {
-    return HAL_TIM_PWM_ERROR_UNINITIALIZED;
-  }
+    if (ctx->initialized == 0) {
+        return HAL_TIM_PWM_ERROR_UNINITIALIZED;
+    }
 
-  hal_tim_pwm_error_t ret = hal_tim_pwm_init(ctx, config);
+    hal_tim_pwm_error_t ret = hal_tim_pwm_init(ctx, config);
 
-  return ret;
+    return ret;
 }
