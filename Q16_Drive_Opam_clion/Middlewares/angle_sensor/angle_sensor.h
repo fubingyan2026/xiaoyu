@@ -1,9 +1,9 @@
 /**
  * @file    angle_sensor.h
  * @author  fubingyan
- * @version V2.0.0
- * @date    2026-05-22
- * @brief   角度传感器抽象层 — 统一传感器接口
+ * @version V2.1.0
+ * @date    2026-05-24
+ * @brief   角度传感器抽象层 — 统一传感器接口（配置驱动）
  * @attention
  *
  * Copyright (c) 2026 by fubingyan, All Rights Reserved.
@@ -68,40 +68,15 @@ typedef struct {
     float offset; /**< 机械偏移(弧度) */
 } angle_sensor_info_t;
 
-/**
- * @brief 传感器数据结构体（输出）
- */
-typedef struct {
-    float electrical_angle; /**< 电角度(弧度, 0-2π) */
-    float mechanical_angle; /**< 机械角度(弧度, 0-2π) */
-    float velocity; /**< 角速度(rad/s) */
-    uint32_t timestamp; /**< 测量时间戳 */
-    angle_sensor_status_e status; /**< 传感器状态 */
-} angle_sensor_data_t;
-
-/* 前向声明 — ops 和 context 相互引用 */
+/* 前向声明 */
 typedef struct angle_sensor_context angle_sensor_context_t;
-
-/**
- * @brief 传感器操作表（函数指针多态）
- */
-typedef struct angle_sensor_ops_s {
-    int (*init)(angle_sensor_context_t* ctx);
-    int (*calibrate)(angle_sensor_context_t* ctx);
-    bool (*is_calibrated)(angle_sensor_context_t* ctx);
-    uint16_t (*get_raw_angle)(angle_sensor_context_t* ctx);
-    float (*get_angle_rad)(angle_sensor_context_t* ctx);
-    float (*get_velocity_rads)(angle_sensor_context_t* ctx);
-    void (*update)(angle_sensor_context_t* ctx);
-    void (*get_info)(angle_sensor_context_t* ctx, angle_sensor_info_t* info);
-    void (*set_offset)(angle_sensor_context_t* ctx, float offset);
-} angle_sensor_ops_t;
+typedef struct sensor_config sensor_config_t;
 
 /**
  * @brief 传感器上下文结构体
  */
 struct angle_sensor_context {
-    const angle_sensor_ops_t* ops; /**< 传感器操作表（由 init_context 设置） */
+    const sensor_config_t* config; /**< 传感器配置（设备驱动绑定） */
     angle_sensor_info_t info; /**< 传感器信息缓存 */
     float mechanical_offset; /**< 机械角度偏移（弧度） */
     bool is_active; /**< 激活标志 */
@@ -110,12 +85,11 @@ struct angle_sensor_context {
 
 /* Exported functions prototypes ---------------------------------------------*/
 
+angle_sensor_error_t angle_sensor_init_context(angle_sensor_context_t* ctx,
+    angle_sensor_type_e type);
 angle_sensor_error_t angle_sensor_init(angle_sensor_context_t* ctx);
 angle_sensor_error_t angle_sensor_deinit(angle_sensor_context_t* ctx);
 bool angle_sensor_is_initialized(angle_sensor_context_t* ctx);
-angle_sensor_type_e angle_sensor_get_default_type(void);
-angle_sensor_error_t angle_sensor_get_data(angle_sensor_context_t* ctx,
-    angle_sensor_data_t* data);
 float angle_sensor_get_electrical_angle(angle_sensor_context_t* ctx);
 uint16_t angle_sensor_get_raw_angle(angle_sensor_context_t* ctx);
 float angle_sensor_get_mechanical_angle(angle_sensor_context_t* ctx);
@@ -126,8 +100,6 @@ void angle_sensor_update(angle_sensor_context_t* ctx);
 void angle_sensor_get_info(angle_sensor_context_t* ctx,
     angle_sensor_info_t* info);
 void angle_sensor_set_offset(angle_sensor_context_t* ctx, float offset);
-angle_sensor_error_t angle_sensor_switch_type(angle_sensor_context_t* ctx,
-    angle_sensor_type_e type);
 angle_sensor_type_e angle_sensor_get_type(angle_sensor_context_t* ctx);
 bool angle_sensor_is_active(angle_sensor_context_t* ctx);
 

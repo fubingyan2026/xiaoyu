@@ -8,7 +8,6 @@
  */
 #include "foc_ctrl_q16.h" // FOC控制器头文件
 #include "angle_sensor.h" // 角度传感器抽象层
-#include "angle_sensor_linear_hall.h" // 线性霍尔传感器
 #include "bsp_delay.h"
 #include "debug.h"
 #include "foc_port.h" // FOC端口适配层头文件
@@ -210,7 +209,7 @@ static void foc_pll_run(q16_16_t phase_q, q16_16_t dt_q, q16_16_t* phase_var_q, 
  */
 extern void foc_init(void)
 {
-    angle_sensor_linear_hall_init_context(&sensor_ctx);
+    angle_sensor_init_context(&sensor_ctx, SENSOR_TYPE_LINEAR_HALL);
     angle_sensor_init(&sensor_ctx);
     encoder_alignment_init(); // 加载电机闪存数据
 
