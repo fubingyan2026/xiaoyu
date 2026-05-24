@@ -47,7 +47,7 @@ extern void foc_init(void);
 /**
  * @brief FOC状态机计算函数
  */
-void foc_sm_calc(void);
+void foc_fsm_calc(void);
 
 /**
  * @brief FOC ADC中断计算函数

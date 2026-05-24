@@ -1596,8 +1596,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Q16_FOC\foc_sm.c</PathWithFileName>
-      <FilenameWithoutPath>foc_sm.c</FilenameWithoutPath>
+      <PathWithFileName>..\Q16_FOC\foc_fsm.c</PathWithFileName>
+      <FilenameWithoutPath>foc_fsm.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

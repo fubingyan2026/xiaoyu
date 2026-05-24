@@ -94,7 +94,7 @@ void timer_uartTask_timeout_callback(tk_timer_t* timer) {
 /* 定时器4超时回调函数(1ms) */
 void timer_driverTask_timeout_callback(tk_timer_t* timer) {
   FDCAN_Server_Task();
-  foc_sm_calc();
+  foc_fsm_calc();
 }
 
 void AppInit(void) {

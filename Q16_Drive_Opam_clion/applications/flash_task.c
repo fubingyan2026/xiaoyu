@@ -33,17 +33,17 @@ const ef_env default_env_set[] = {
 /**
  * @brief 写入校准数据任务处理
  */
-static void task_write_cali(void* data, size_t size) {
+static void task_write_angle_align(void* data, size_t size) {
   ef_set_env_blob(FLASH_MAGIC_ENCODER, data, size);
   DEBUG_LOGI("flash", "编码器校准写入");
 }
 
-static void task_write_hall(void* data, size_t size) {
+static void task_write_linear_hall(void* data, size_t size) {
   ef_set_env_blob(FLASH_MAGIC_HALL, data, size);
   DEBUG_LOGI("flash", "霍尔参数写入");
 }
 
-static void task_write_can(void* data, size_t size) {
+static void task_write_can_identify(void* data, size_t size) {
   ef_set_env_blob(FLASH_MAGIC_CAN, data, size);
   DEBUG_LOGI("flash", "CAN ID 写入为: %d", *(int*)data);
 }
@@ -59,9 +59,9 @@ static void task_erase_all(void* data, size_t size) {
 
 /* 任务处理函数表 */
 static void (*task_handler[])(void*, size_t) = {
-    [FLASH_TASK_WRITE_ENCODER] = task_write_cali,
-    [FLASH_TASK_WRITE_HALL] = task_write_hall,
-    [FLASH_TASK_WRITE_CAN] = task_write_can,
+    [FLASH_TASK_WRITE_ANGLE] = task_write_angle_align,
+    [FLASH_TASK_WRITE_HALL] = task_write_linear_hall,
+    [FLASH_TASK_WRITE_CAN] = task_write_can_identify,
     [FLASH_TASK_ERASE_ALL] = task_erase_all,
 };
 

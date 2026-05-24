@@ -12,7 +12,7 @@
 #include "debug.h"
 #include "foc_port.h" // FOC端口适配层头文件
 #include "foc_port.h"
-#include "foc_sm.h" // FOC状态机头文件
+#include "foc_fsm.h" // FOC状态机头文件
 #include "main.h"
 #include "memory_pool.h"
 
@@ -243,8 +243,8 @@ extern void foc_init(void)
     q16_16_pi_init(&q16_16_pi_iq, CURRENT_IQ_KP_Q, CURRENT_IQ_KI_Q, CURRENT_IQ_OUT_MAX_Q, CURRENT_IQ_OUT_MIN_Q,
         CURRENT_IQ_INTEG_SAT_Q);
 
-    foc_sm_init(foc_sm_get_instance(), &foc_ctrl); // FOC状态机初始化
-    foc_sm_set_flash_data(foc_sm_get_instance(), &g_motor_flash_cfg); // 设置Flash数据
+    foc_fsm_init(foc_fsm_get_instance(), &foc_ctrl); // FOC状态机初始化
+    foc_fsm_set_flash_data(foc_fsm_get_instance(), &g_motor_flash_cfg); // 设置Flash数据
 
     g_svpwm.v_bus = FLOAT_TO_Q16_16(V_BUS); // 设置SVPWM母线电压
     g_svpwm.max_duty_ratio = FLOAT_TO_Q16_16(0.95f); // 设置SVPWM最大占空比
@@ -267,7 +267,7 @@ void foc_adc_irq_calc(void)
     get_time_us_last = micros();
 
     // // 如果不是对齐状态，则更新电气角度
-    if (foc_sm_current_state() == FOC_SM_STATE_RUN) {
+    if (foc_fsm_current_state() == FOC_FSM_STATE_RUN) {
         float electrical_angle = encoder_track_sector(foc_ctrl.raw_angle_q, &g_encoder_calib); // 扇区跟踪器计算电气角度
         //        foc_ctrl.electrical_angle_q += FLOAT_TO_Q16_16(0.001f); // 转换为Q16.16格式
 

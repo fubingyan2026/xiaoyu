@@ -3667,7 +3667,7 @@
         <PaneID>0</PaneID>
       </Doc>
       <Doc>
-        <Name>..\Q16_FOC\foc_sm.c</Name>
+        <Name>..\Q16_FOC\foc_fsm.c</Name>
         <ColumnNumber>51</ColumnNumber>
         <TopLine>331</TopLine>
         <CurrentLine>338</CurrentLine>
@@ -3703,7 +3703,7 @@
         <PaneID>0</PaneID>
       </Doc>
       <Doc>
-        <Name>..\Q16_FOC\foc_sm.h</Name>
+        <Name>..\Q16_FOC\foc_fsm.h</Name>
         <ColumnNumber>8</ColumnNumber>
         <TopLine>13</TopLine>
         <CurrentLine>27</CurrentLine>

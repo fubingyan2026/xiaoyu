@@ -27,7 +27,7 @@
 #include "crc16.h"
 #include "encoder_alignment.h"
 #include "foc_ctrl_q16.h"
-#include "foc_sm.h"
+#include "foc_fsm.h"
 #include "hal_uart.h"
 #include "stm32g4xx_hal.h"
 
@@ -581,7 +581,7 @@ static usart_protocol_error_t cmd_get_status_handler(uint8_t func_code,
 
   usart_protocol_status_data_t status = {0U};
 
-  status.state = (uint8_t)foc_sm_current_state();
+  status.state = (uint8_t)foc_fsm_current_state();
   status.error_code = 0U;
 
   status.id_current = (int16_t)(foc_ctrl.target_id_q / 65536);
@@ -608,7 +608,7 @@ static usart_protocol_error_t cmd_get_state_handler(uint8_t func_code,
   (void)data;
   (void)len;
 
-  uint8_t state = (uint8_t)foc_sm_current_state();
+  uint8_t state = (uint8_t)foc_fsm_current_state();
   (void)memcpy(response, &state, 1U);
   *resp_len = 1U;
   return USART_PROTOCOL_OK;
@@ -742,7 +742,7 @@ static usart_protocol_error_t cmd_start_calib_handler(uint8_t func_code,
   (void)response;
   *resp_len = 0U;
 
-  (void)foc_sm_request_state(foc_sm_get_instance(), FOC_SM_STATE_ALIGNMENT);
+  (void)foc_fsm_request_state(foc_fsm_get_instance(), FOC_FSM_STATE_ALIGNMENT);
 
   return USART_PROTOCOL_OK;
 }
@@ -762,10 +762,10 @@ static usart_protocol_error_t cmd_get_calib_status_handler(uint8_t func_code,
 
   usart_protocol_calib_status_data_t calib_status = {0U};
 
-  uint8_t state = (uint8_t)foc_sm_current_state();
+  uint8_t state = (uint8_t)foc_fsm_current_state();
 
-  if ((state == (uint8_t)FOC_SM_STATE_ALIGN) ||
-      (state == (uint8_t)FOC_SM_STATE_ALIGNMENT)) {
+  if ((state == (uint8_t)FOC_FSM_STATE_ALIGN) ||
+      (state == (uint8_t)FOC_FSM_STATE_ALIGNMENT)) {
     calib_status.status = USART_PROTOCOL_CALIB_STATUS_RUNNING;
     calib_status.progress = 50U;
   } else if (g_encoder_calib.is_valid) {

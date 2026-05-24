@@ -42,11 +42,11 @@
  * @brief Flash任务类型
  */
 typedef enum __attribute__((packed)) {
-  FLASH_TASK_WRITE_ENCODER = 0,  ///< 写入校准数据
-  FLASH_TASK_WRITE_HALL,         ///< 写入霍尔参数
-  FLASH_TASK_WRITE_CAN,          ///< 写入CAN-ID
-  FLASH_TASK_ERASE_ALL,          ///< 擦除所有
-  FLASH_TASK_COUNT
+    FLASH_TASK_WRITE_ANGLE = 0, ///< 写入校准数据
+    FLASH_TASK_WRITE_HALL, ///< 写入霍尔参数
+    FLASH_TASK_WRITE_CAN, ///< 写入CAN-ID
+    FLASH_TASK_ERASE_ALL, ///< 擦除所有
+    FLASH_TASK_COUNT
 } flash_task_type_t;
 
 extern motor_flash_config_t g_motor_flash_cfg;
@@ -63,19 +63,19 @@ extern const ef_env default_env_set[FLASH_ENV_SET_SIZE];
  * @brief Flash任务请求结构
  */
 typedef struct {
-  flash_task_type_t type;  ///< 任务类型
-  void* data;              ///< 指向要写入的数据
-  size_t size;             ///< 数据大小
+    flash_task_type_t type; ///< 任务类型
+    void* data; ///< 指向要写入的数据
+    size_t size; ///< 数据大小
 } flash_task_request_t;
 
 /**
  * @brief Flash任务管理器（基于message_center）
  */
 typedef struct {
-  message_center_publisher_t* publisher;    ///< 消息发布者
-  message_center_subscriber_t* subscriber;  ///< 消息订阅者
-  uint32_t pending_count;                   ///< 等待执行的任务数
-  uint8_t idle_threshold;                   ///< CPU空闲阈值(%)
+    message_center_publisher_t* publisher; ///< 消息发布者
+    message_center_subscriber_t* subscriber; ///< 消息订阅者
+    uint32_t pending_count; ///< 等待执行的任务数
+    uint8_t idle_threshold; ///< CPU空闲阈值(%)
 } flash_task_mgr_t;
 
 /*============================================================================
@@ -119,12 +119,5 @@ flash_task_mgr_t* flash_task_get_instance(void);
  * @brief 销毁Flash任务管理器（释放资源）
  */
 void flash_task_destroy(void);
-
-/**
- * @brief 获取默认环境变量表大小
- * @return 默认环境变量表大小
- * @note 供ef_port.c使用
- */
-size_t flash_task_get_env_set_size(void);
 
 #endif /* FLASH_TASK_H */

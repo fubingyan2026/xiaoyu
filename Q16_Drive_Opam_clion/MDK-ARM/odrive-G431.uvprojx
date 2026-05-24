@@ -2437,9 +2437,9 @@
               <FilePath>..\Q16_FOC\foc_ctrl_q16.c</FilePath>
             </File>
             <File>
-              <FileName>foc_sm.c</FileName>
+              <FileName>foc_fsm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Q16_FOC\foc_sm.c</FilePath>
+              <FilePath>..\Q16_FOC\foc_fsm.c</FilePath>
             </File>
             <File>
               <FileName>foc_svpwm_q16.c</FileName>

@@ -19,7 +19,7 @@
 #include "easyflash.h"
 #include "flash_task.h"
 #include "foc_ctrl_q16.h"
-#include "foc_sm.h"
+#include "foc_fsm.h"
 
 /* ==================== 配置常量 ==================== */
 
@@ -127,11 +127,11 @@ static void handle_motor_control(uint8_t value) {
       KEY_FUNC_PRINTF("Motor: 25%% current");
       break;
     case MOTOR_SUBCMD_ALIGN:
-      foc_sm_request_state(foc_sm_get_instance(), FOC_SM_STATE_ALIGN);
+      foc_fsm_request_state(foc_fsm_get_instance(), FOC_FSM_STATE_ALIGN);
       KEY_FUNC_PRINTF("Motor: ALIGN mode");
       break;
     case MOTOR_SUBCMD_HALL:
-      foc_sm_request_state(foc_sm_get_instance(), FOC_SM_STATE_HALL);
+      foc_fsm_request_state(foc_fsm_get_instance(), FOC_FSM_STATE_HALL);
       KEY_FUNC_PRINTF("Motor: HALL mode");
       break;
     case MOTOR_SUBCMD_RESET_DEFAULT:
