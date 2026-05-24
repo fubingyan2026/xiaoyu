@@ -14,8 +14,9 @@
 
 #include <string.h>
 
+#include "device_linear_hall.h"
 #include "foc_config_q16.h"
-#include "hall_adjustment.h"
+#include "fsm_linear_hall_aligened.h"
 #include "utils_math.h"
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,12 +67,13 @@ angle_sensor_error_t angle_sensor_linear_hall_init_context(
 
 static int sensor_linear_hall_init(angle_sensor_context_t* ctx)
 {
-    hall_adjust_init();
+    device_linear_hall_init();
+    fsm_linear_hall_aligened_init();
     ctx->info.type = SENSOR_TYPE_LINEAR_HALL;
     ctx->info.resolution = 65535;
     ctx->info.pulses_per_rev = 65535.0f;
     ctx->info.poles = MOTOR_POLES;
-    ctx->info.is_calibrated = hall_adjust_is_calibrated();
+    ctx->info.is_calibrated = fsm_linear_hall_aligened_is_done();
     ctx->info.offset = ctx->mechanical_offset;
     return 0;
 }
@@ -79,8 +81,8 @@ static int sensor_linear_hall_init(angle_sensor_context_t* ctx)
 static int sensor_linear_hall_calibrate(angle_sensor_context_t* ctx)
 {
     (void)ctx;
-    if (hall_adjust_get_state() == HALL_ADJUST_STATE_NONE) {
-        hall_adjust_start_calibration();
+    if (fsm_linear_hall_aligened_get_state() == FSM_LINEAR_HALL_ALIGENED_STATE_NONE) {
+        fsm_linear_hall_aligened_start();
         return 0;
     }
     return -1;
@@ -89,13 +91,13 @@ static int sensor_linear_hall_calibrate(angle_sensor_context_t* ctx)
 static bool sensor_linear_hall_is_calibrated(angle_sensor_context_t* ctx)
 {
     (void)ctx;
-    return hall_adjust_is_calibrated();
+    return fsm_linear_hall_aligened_is_done();
 }
 
 static uint16_t sensor_linear_hall_get_raw_angle(angle_sensor_context_t* ctx)
 {
     (void)ctx;
-    float angle_rad = pll_get_angle(&pll_ctx);
+    float angle_rad = device_linear_hall_get_angle_rad();
     utils_norm_angle_0_2pi(&angle_rad);
     uint32_t raw = (uint32_t)((angle_rad / M_2PI) * 65536.0f);
     return (uint16_t)(raw & 0xFFFF);
@@ -104,21 +106,20 @@ static uint16_t sensor_linear_hall_get_raw_angle(angle_sensor_context_t* ctx)
 static float sensor_linear_hall_get_angle_rad(angle_sensor_context_t* ctx)
 {
     (void)ctx;
-    float angle = pll_get_angle(&pll_ctx);
-    return angle;
+    return device_linear_hall_get_angle_rad();
 }
 
 static float sensor_linear_hall_get_velocity_rads(angle_sensor_context_t* ctx)
 {
     (void)ctx;
-    return pll_get_speed(&pll_ctx);
+    return device_linear_hall_get_velocity_rads();
 }
 
 static void sensor_linear_hall_update(angle_sensor_context_t* ctx)
 {
     (void)ctx;
-    if (!hall_adjust_is_calibrated()) {
-        hall_adjust_task();
+    if (!fsm_linear_hall_aligened_is_done()) {
+        fsm_linear_hall_aligened_task();
     }
 }
 
@@ -130,7 +131,7 @@ static void sensor_linear_hall_get_info(angle_sensor_context_t* ctx,
         info->resolution = 65535;
         info->pulses_per_rev = 65535.0f;
         info->poles = MOTOR_POLES;
-        info->is_calibrated = hall_adjust_is_calibrated();
+        info->is_calibrated = fsm_linear_hall_aligened_is_done();
         info->offset = ctx->mechanical_offset;
     }
 }

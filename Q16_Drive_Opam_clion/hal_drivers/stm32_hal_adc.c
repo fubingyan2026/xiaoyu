@@ -512,7 +512,7 @@ static hal_adc_error_t stm32_adc_start_dma(
     uint32_t length = dma_config->buffer_length;
 
     if (HAL_ADC_Start_DMA(hadc, dma_config->buffer, length) != HAL_OK) {
-        return HAL_ADC_ERROR_DMA;
+        return HAL_ADC_ERR_DMA;
     }
 
     return HAL_ADC_OK;
@@ -539,7 +539,7 @@ static hal_adc_error_t stm32_adc_stop_dma(hal_adc_context_t* ctx,
     (void)ctx;
 
     if (HAL_ADC_Stop_DMA(hadc) != HAL_OK) {
-        return HAL_ADC_ERROR_DMA;
+        return HAL_ADC_ERR_DMA;
     }
 
     return HAL_ADC_OK;

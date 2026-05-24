@@ -27,7 +27,7 @@ typedef enum {
     HAL_ADC_ERROR_BUSY, /**< 设备忙 */
     HAL_ADC_ERROR_UNSUPPORTED, /**< 不支持的操作 */
     HAL_ADC_ERROR_TIMEOUT, /**< 超时 */
-    HAL_ADC_ERROR_DMA, /**< DMA错误 */
+    HAL_ADC_ERR_DMA, /**< DMA错误 */
     HAL_ADC_ERROR_CALIBRATION, /**< 校准错误 */
 } hal_adc_error_t;
 

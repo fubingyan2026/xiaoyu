@@ -28,7 +28,7 @@
 /* USER CODE BEGIN TD */
 #include "usart_receive.h"
 #include "app.h"
-#include "hall_adjustment.h"
+#include "device_linear_hall.h"
 #include "foc_ctrl_q16.h"
 
 /* USER CODE END TD */
@@ -265,7 +265,7 @@ void TIM1_CC_IRQHandler(void)
   /* USER CODE BEGIN TIM1_CC_IRQn 1 */
 
   adc_dma_start_convert();
-  hall_adjust_adc_dma_start();
+  device_linear_hall_start_dma();
 
   /* USER CODE END TIM1_CC_IRQn 1 */
 }

@@ -15,7 +15,7 @@
 #include "debug.h"
 #include "encoder_alignment.h"
 #include "flash_task.h"
-#include "hall_adjustment.h"
+#include "fsm_linear_hall_aligened.h"
 #include "memory_pool.h"
 #include "stdint.h"
 #include "stm32g4xx_hal.h"

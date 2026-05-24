@@ -36,7 +36,6 @@ typedef struct {
     float kp;                     /**< PI 控制器比例增益 */
     float ki;                     /**< PI 控制器积分增益 */
     float sample_time;            /**< 采样时间 (秒) */
-    float filter_freq_dq;         /**< DQ 通道低通滤波截止频率 (Hz)，0 表示不使用滤波 */
     float filter_freq_omega;      /**< 角速度输出低通滤波截止频率 (Hz)，0 表示不使用滤波 */
 } pll_config_t;
 
@@ -54,11 +53,8 @@ struct pll_context {
     float intg_pll;               /**< PI 积分器 */
 
     // PT1 滤波器（可选，由配置中的 filter_freq 决定）
-    pt1Filter_t filter_uq_a;      /**< Q 轴通道 A 低通滤波器 */
-    pt1Filter_t filter_uq_b;      /**< Q 轴通道 B 低通滤波器 */
     pt1Filter_t filter_omega;     /**< 角速度低通滤波器 */
 
-    bool filters_enabled;         /**< 滤波器使能标志 */
     bool startup_done;            /**< 启动阶段完成标志（atan2 初始化后置 true） */
     bool initialized;             /**< 初始化标志 */
 };

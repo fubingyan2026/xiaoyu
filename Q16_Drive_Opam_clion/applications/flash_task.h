@@ -15,7 +15,7 @@
 
 #include "easyflash.h"
 #include "encoder_alignment.h"
-#include "hall_adjustment.h"
+#include "fsm_linear_hall_aligened.h"
 
 /*============================================================================
  * 宏定义

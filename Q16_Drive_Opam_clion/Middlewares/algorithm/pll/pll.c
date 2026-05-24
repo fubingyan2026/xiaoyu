@@ -38,23 +38,20 @@
 /**
  * @brief 初始化 PLL
  */
-pll_error_t pll_init(pll_context_t *ctx, const pll_config_t *config)
+pll_error_t pll_init(pll_context_t* ctx, const pll_config_t* config)
 {
     // 检查参数有效性
-    if (!ctx || !config)
-    {
+    if (!ctx || !config) {
         return PLL_ERROR_NULL_PTR;
     }
 
     // 检查配置有效性
-    if (config->sample_time <= 0.0f)
-    {
+    if (config->sample_time <= 0.0f) {
         return PLL_ERROR_INVALID_PARAM;
     }
 
     // 如果已初始化，先反初始化
-    if (ctx->initialized)
-    {
+    if (ctx->initialized) {
         pll_deinit(ctx);
     }
 
@@ -66,24 +63,9 @@ pll_error_t pll_init(pll_context_t *ctx, const pll_config_t *config)
     ctx->omega = 0.0f;
     ctx->intg_pll = 0.0f;
 
-    // 初始化滤波器（如果配置了截止频率）
-    if (config->filter_freq_dq > 0.0f)
-    {
-        float k = pt1FilterGain((uint16_t)config->filter_freq_dq,
-                                config->sample_time);
-        pt1FilterInit(&ctx->filter_uq_a, k);
-        pt1FilterInit(&ctx->filter_uq_b, k);
-        ctx->filters_enabled = true;
-    }
-    else
-    {
-        ctx->filters_enabled = false;
-    }
-
-    if (config->filter_freq_omega > 0.0f)
-    {
+    if (config->filter_freq_omega > 0.0f) {
         float k = pt1FilterGain((uint16_t)config->filter_freq_omega,
-                                config->sample_time);
+            config->sample_time);
         pt1FilterInit(&ctx->filter_omega, k);
     }
 
@@ -97,10 +79,9 @@ pll_error_t pll_init(pll_context_t *ctx, const pll_config_t *config)
 /**
  * @brief 反初始化 PLL
  */
-void pll_deinit(pll_context_t *ctx)
+void pll_deinit(pll_context_t* ctx)
 {
-    if (!ctx)
-    {
+    if (!ctx) {
         return;
     }
 
@@ -112,7 +93,7 @@ void pll_deinit(pll_context_t *ctx)
 /**
  * @brief 检查 PLL 是否已初始化
  */
-bool pll_is_initialized(const pll_context_t *ctx)
+bool pll_is_initialized(const pll_context_t* ctx)
 {
     return (ctx && ctx->initialized);
 }
@@ -120,21 +101,18 @@ bool pll_is_initialized(const pll_context_t *ctx)
 /**
  * @brief 更新 PLL（输入两路正交信号）
  */
-pll_error_t pll_update(pll_context_t *ctx, float signal_a, float signal_b)
+pll_error_t pll_update(pll_context_t* ctx, float signal_a, float signal_b)
 {
-    if (!ctx)
-    {
+    if (!ctx) {
         return PLL_ERROR_NULL_PTR;
     }
 
-    if (!ctx->initialized)
-    {
+    if (!ctx->initialized) {
         return PLL_ERROR_UNINITIALIZED;
     }
 
     // 启动阶段：使用 atan2 直接估计初始角度，跳过低通滤波以加速收敛
-    if (!ctx->startup_done)
-    {
+    if (!ctx->startup_done) {
         ctx->theta = atan2_approx(signal_a, signal_b);
         ctx->omega = 0.0f;
         ctx->intg_pll = 0.0f;
@@ -143,42 +121,24 @@ pll_error_t pll_update(pll_context_t *ctx, float signal_a, float signal_b)
         return PLL_OK;
     }
 
-    // 1. Park 变换（仅计算 q 轴分量用于锁相）
+    // Park 变换（仅计算 q 轴分量用于锁相）
     const float sin_th = sin_approx(ctx->theta);
     const float cos_th = cos_approx(ctx->theta);
 
     const float uq_a = 2.0f * signal_a * cos_th;
     const float uq_b = -2.0f * signal_b * sin_th;
 
-    // 2. 低通滤波（可选）
-    float uq_a_filtered;
-    float uq_b_filtered;
-
-    if (ctx->filters_enabled)
-    {
-        uq_a_filtered = pt1FilterApply(&ctx->filter_uq_a, uq_a);
-        uq_b_filtered = pt1FilterApply(&ctx->filter_uq_b, uq_b);
-    }
-    else
-    {
-        uq_a_filtered = uq_a;
-        uq_b_filtered = uq_b;
-    }
-
-    // 3. 相位误差 = 平均 q 轴
-    const float err_pll = 0.5f * (uq_a_filtered + uq_b_filtered);
+    // 相位误差 = 平均 q 轴
+    const float err_pll = 0.5f * (uq_a + uq_b);
 
     // 4. PI 计算频率
     ctx->intg_pll += err_pll * ctx->config.ki * ctx->config.sample_time;
     const float omega_raw = ctx->intg_pll + err_pll * ctx->config.kp;
 
     // 5. 角速度滤波（可选）
-    if (ctx->config.filter_freq_omega > 0.0f)
-    {
+    if (ctx->config.filter_freq_omega > 0.0f) {
         ctx->omega = pt1FilterApply(&ctx->filter_omega, omega_raw);
-    }
-    else
-    {
+    } else {
         ctx->omega = omega_raw;
     }
 
@@ -192,10 +152,9 @@ pll_error_t pll_update(pll_context_t *ctx, float signal_a, float signal_b)
 /**
  * @brief 获取估计角度
  */
-float pll_get_angle(const pll_context_t *ctx)
+float pll_get_angle(const pll_context_t* ctx)
 {
-    if (!ctx || !ctx->initialized)
-    {
+    if (!ctx || !ctx->initialized) {
         return 0.0f;
     }
 
@@ -205,10 +164,9 @@ float pll_get_angle(const pll_context_t *ctx)
 /**
  * @brief 获取估计角速度
  */
-float pll_get_speed(const pll_context_t *ctx)
+float pll_get_speed(const pll_context_t* ctx)
 {
-    if (!ctx || !ctx->initialized)
-    {
+    if (!ctx || !ctx->initialized) {
         return 0.0f;
     }
 
@@ -218,10 +176,9 @@ float pll_get_speed(const pll_context_t *ctx)
 /**
  * @brief 重置 PLL 状态（保持配置不变）
  */
-pll_error_t pll_reset(pll_context_t *ctx)
+pll_error_t pll_reset(pll_context_t* ctx)
 {
-    if (!ctx)
-    {
+    if (!ctx) {
         return PLL_ERROR_NULL_PTR;
     }
 
@@ -230,19 +187,9 @@ pll_error_t pll_reset(pll_context_t *ctx)
     ctx->intg_pll = 0.0f;
     ctx->startup_done = false;
 
-    // 重新初始化滤波器
-    if (ctx->config.filter_freq_dq > 0.0f)
-    {
-        float k = pt1FilterGain((uint16_t)ctx->config.filter_freq_dq,
-                                ctx->config.sample_time);
-        pt1FilterInit(&ctx->filter_uq_a, k);
-        pt1FilterInit(&ctx->filter_uq_b, k);
-    }
-
-    if (ctx->config.filter_freq_omega > 0.0f)
-    {
+    if (ctx->config.filter_freq_omega > 0.0f) {
         float k = pt1FilterGain((uint16_t)ctx->config.filter_freq_omega,
-                                ctx->config.sample_time);
+            ctx->config.sample_time);
         pt1FilterInit(&ctx->filter_omega, k);
     }
 

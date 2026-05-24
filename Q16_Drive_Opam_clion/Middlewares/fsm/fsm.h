@@ -165,18 +165,6 @@ fsm_err_t fsm_step(fsm_t* ctx);
 fsm_err_t fsm_goto(fsm_t* ctx, fsm_state_t target_state);
 
 /**
- * @brief 强制状态转换（绕过转换矩阵校验）
- *
- * 不检查转换规则和条件函数，直接切换到目标状态。
- * 适用于紧急停机、错误恢复等需要绕过限制的场景。
- *
- * @param ctx 状态机上下文指针
- * @param target_state 目标状态
- * @return 操作结果错误码
- */
-fsm_err_t fsm_jump(fsm_t* ctx, fsm_state_t target_state);
-
-/**
  * @brief 填充转换矩阵，使所有状态之间可相互转换
  *
  * 将整个 state_count × state_count 的转换矩阵填充为同一个条件函数，

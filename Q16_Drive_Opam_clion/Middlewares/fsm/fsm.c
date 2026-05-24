@@ -182,26 +182,6 @@ fsm_err_t fsm_goto(fsm_t* ctx, fsm_state_t target_state)
     return FSM_ERR_TRANS;
 }
 
-fsm_err_t fsm_jump(fsm_t* ctx, fsm_state_t target_state)
-{
-    if (!ctx) {
-        return FSM_ERR_NULL;
-    }
-
-    if (!ctx->initialized) {
-        return FSM_ERR_INIT;
-    }
-
-    if (target_state >= ctx->config.state_count) {
-        return FSM_ERR_STATE;
-    }
-
-    // 不检查转换矩阵和条件，直接切换
-    ctx->last_state = ctx->current_state;
-    ctx->current_state = target_state;
-    return FSM_OK;
-}
-
 /* Config helpers -----------------------------------------------------------*/
 
 void fsm_fill(fsm_config_t* config, fsm_guard_t condition)

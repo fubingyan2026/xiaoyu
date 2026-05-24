@@ -17,7 +17,7 @@
 #include "encoder_alignment.h"
 #include "flash_task.h"
 #include "foc_port.h"
-#include "hall_adjustment.h"
+#include "fsm_linear_hall_aligened.h"
 #include "stdlib.h"
 
 static foc_sm_context_t g_foc_sm = { 0 };
@@ -300,11 +300,11 @@ static fsm_state_t handler_run(fsm_t* ctx)
 static fsm_state_t handler_hall(fsm_t* ctx)
 {
     foc_sm_context_t* foc_ctx = (foc_sm_context_t*)ctx;
-    hall_adjust_task();
-    foc_ctx->ctrl->target_iq_q = FLOAT_TO_Q16_16(hall_adjust_get_target_current());
-    foc_ctx->ctrl->electrical_angle_q = FLOAT_TO_Q16_16(hall_adjust_get_target_elec_angle());
+    fsm_linear_hall_aligened_task();
+    foc_ctx->ctrl->target_iq_q = FLOAT_TO_Q16_16(fsm_linear_hall_aligened_get_current());
+    foc_ctx->ctrl->electrical_angle_q = FLOAT_TO_Q16_16(fsm_linear_hall_aligened_get_elec_angle());
 
-    if (hall_adjust_is_calibrated()) {
+    if (fsm_linear_hall_aligened_is_done()) {
         return FOC_SM_STATE_ALIGN;
     }
 
