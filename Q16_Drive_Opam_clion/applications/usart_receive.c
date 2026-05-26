@@ -120,11 +120,6 @@ void uart_it_init(void)
         return;
     }
 
-    /* 初始化UART上下文 */
-    if (stm32_uart_init_context(&uart1_ctx) != HAL_UART_OK) {
-        return;
-    }
-
     if (hal_uart_init(&uart1_ctx, &s_uart1_config) != HAL_UART_OK) {
         return;
     }

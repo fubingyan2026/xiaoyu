@@ -187,22 +187,14 @@ static const hal_uart_ops_t stm32_uart_ops = {
 /* Exported functions --------------------------------------------------------*/
 
 /**
- * @brief  初始化UART上下文并设置操作函数
- * @param  ctx: UART上下文指针
- * @return HAL_UART_OK 成功，其他值为错误码
+ * @brief 自动注册 STM32 平台 UART 操作函数
+ *
+ * 通过 constructor 在 main() 之前自动注册，
+ * 使用者无需手动调用 stm32_uart_init_context()。
  */
-hal_uart_error_t stm32_uart_init_context(hal_uart_context_t* ctx)
+__attribute__((constructor)) static void _stm32_uart_auto_register(void)
 {
-    if (ctx == NULL) {
-        return HAL_UART_ERROR_INVALID_PARAM;
-    }
-
-    ctx->ops = &stm32_uart_ops;
-    ctx->initialized = 0;
-    ctx->callback = NULL;
-    ctx->user_data = NULL;
-
-    return HAL_UART_OK;
+    hal_uart_register_platform_ops(&stm32_uart_ops);
 }
 
 /* Private functions ---------------------------------------------------------*/

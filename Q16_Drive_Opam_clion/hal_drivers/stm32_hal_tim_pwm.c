@@ -100,21 +100,9 @@ static const hal_tim_pwm_ops_t stm32_tim_pwm_ops = {
     .get_polarity = stm32_tim_pwm_get_polarity
 };
 
-/**
- * @brief  STM32 平台 TIM PWM 上下文初始化函数
- * @param ctx TIM PWM 上下文指针
- * @return 操作结果错误码
- */
-hal_tim_pwm_error_t stm32_tim_pwm_init_context(hal_tim_pwm_context_t* ctx)
+__attribute__((constructor)) static void _stm32_tim_pwm_auto_register(void)
 {
-    if (ctx == NULL) {
-        return HAL_TIM_PWM_ERROR_INVALID_PARAM;
-    }
-
-    ctx->ops = &stm32_tim_pwm_ops;
-    ctx->initialized = 0;
-
-    return HAL_TIM_PWM_OK;
+    hal_tim_pwm_register_platform_ops(&stm32_tim_pwm_ops);
 }
 
 /**

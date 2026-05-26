@@ -599,25 +599,12 @@ hal_adc_error_t hal_adc_register_dma_callback(hal_adc_context_t* ctx,
 void hal_adc_irq_handler(hal_adc_context_t* ctx, hal_adc_instance_t instance);
 
 /**
- * @brief 设置 ADC 操作函数
- * @param ctx ADC 上下文指针
- * @param ops ADC 操作函数结构体指针
- * @return 操作结果错误码
+ * @brief 注册平台 ADC 操作函数
+ * @param ops 平台特定的操作函数结构体指针
  *
- * @note 通常不需要直接调用此函数，使用平台特定的初始化函数即可。
- *       此函数主要用于多平台切换或单元测试场景。
+ * 由平台实现文件在 constructor 中自动调用，应用代码无需直接使用。
  */
-hal_adc_error_t hal_adc_set_ops(hal_adc_context_t* ctx,
-    const hal_adc_ops_t* ops);
-
-/**
- * @brief STM32 平台 ADC 上下文初始化函数
- * @param ctx ADC 上下文指针
- * @return 操作结果错误码
- *
- * 使用此函数初始化 STM32 平台的 ADC 上下文，会自动设置好平台特定的操作函数。
- */
-hal_adc_error_t stm32_adc_init_context(hal_adc_context_t* ctx);
+void hal_adc_register_platform_ops(const hal_adc_ops_t* ops);
 
 /**
  * @brief 检查ADC是否已初始化

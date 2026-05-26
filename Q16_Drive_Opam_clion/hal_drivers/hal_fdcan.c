@@ -7,6 +7,10 @@
 /* Private function prototypes -----------------------------------------------*/
 static inline bool is_valid_instance(hal_fdcan_instance_t instance);
 
+/* Private variables ---------------------------------------------------------*/
+
+static const hal_fdcan_ops_t* g_hal_fdcan_platform_ops = NULL;
+
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -19,36 +23,26 @@ static inline bool is_valid_instance(hal_fdcan_instance_t instance)
     return instance < HAL_FDCAN_INSTANCE_LEN;
 }
 
+/**
+ * @brief 自动装配 ctx->ops（若尚未装配且有平台已注册）
+ * @param ctx FDCAN 上下文指针
+ */
+static inline void hal_fdcan_ensure_ops(hal_fdcan_context_t* ctx)
+{
+    if (ctx->ops == NULL && g_hal_fdcan_platform_ops != NULL) {
+        ctx->ops = g_hal_fdcan_platform_ops;
+    }
+}
+
 /* Exported functions --------------------------------------------------------*/
 
 /**
- * @brief  设置 FDCAN 操作函数
- * @param  ctx FDCAN 上下文指针
- * @param  ops FDCAN 操作函数结构体指针
- * @return 操作结果错误码
- *
- * @note 通常不需要直接调用此函数，使用平台特定的初始化函数即可。
- *       此函数主要用于多平台切换或单元测试场景。
+ * @brief 注册平台 FDCAN 操作函数
+ * @param ops 平台特定的操作函数结构体指针
  */
-hal_fdcan_error_t hal_fdcan_set_ops(hal_fdcan_context_t* ctx,
-    const hal_fdcan_ops_t* ops)
+void hal_fdcan_register_platform_ops(const hal_fdcan_ops_t* ops)
 {
-    // 检查参数有效性
-    if (ctx == NULL || ops == NULL) {
-        return HAL_FDCAN_ERROR_INVALID_PARAM;
-    }
-
-    // 检查必要的函数指针是否为 NULL
-    if (ops->init == NULL || ops->deinit == NULL || ops->send == NULL || ops->receive == NULL) {
-        return HAL_FDCAN_ERROR_INVALID_PARAM;
-    }
-
-    // 进入临界区，保护共享资源
-    HAL_FDCAN_ENTER_CRITICAL();
-    ctx->ops = ops;
-    HAL_FDCAN_EXIT_CRITICAL();
-
-    return HAL_FDCAN_OK;
+    g_hal_fdcan_platform_ops = ops;
 }
 
 /**
@@ -69,6 +63,8 @@ hal_fdcan_error_t hal_fdcan_init(hal_fdcan_context_t* ctx,
     if (!is_valid_instance(config->instance)) {
         return HAL_FDCAN_ERROR_INVALID_PARAM;
     }
+
+    hal_fdcan_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->init == NULL) {
@@ -105,6 +101,8 @@ hal_fdcan_error_t hal_fdcan_deinit(hal_fdcan_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return HAL_FDCAN_ERROR_INVALID_PARAM;
     }
+
+    hal_fdcan_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->deinit == NULL) {
@@ -143,6 +141,8 @@ hal_fdcan_error_t hal_fdcan_send(hal_fdcan_context_t* ctx,
         return HAL_FDCAN_ERROR_INVALID_PARAM;
     }
 
+    hal_fdcan_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->send == NULL) {
         return HAL_FDCAN_ERROR_UNINITIALIZED;
@@ -176,6 +176,8 @@ hal_fdcan_error_t hal_fdcan_receive(hal_fdcan_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return HAL_FDCAN_ERROR_INVALID_PARAM;
     }
+
+    hal_fdcan_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->receive == NULL) {
@@ -213,6 +215,8 @@ hal_fdcan_error_t hal_fdcan_get_receive_level(hal_fdcan_context_t* ctx,
         return HAL_FDCAN_ERROR_INVALID_PARAM;
     }
 
+    hal_fdcan_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->receive_level == NULL) {
         return HAL_FDCAN_ERROR_UNSUPPORTED;
@@ -246,6 +250,8 @@ hal_fdcan_error_t hal_fdcan_get_send_fifo_level(hal_fdcan_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return HAL_FDCAN_ERROR_INVALID_PARAM;
     }
+
+    hal_fdcan_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->get_send_level == NULL) {
@@ -281,6 +287,8 @@ hal_fdcan_error_t hal_fdcan_set_filter(hal_fdcan_context_t* ctx,
         return HAL_FDCAN_ERROR_INVALID_PARAM;
     }
 
+    hal_fdcan_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->set_filter == NULL) {
         return HAL_FDCAN_ERROR_UNSUPPORTED;
@@ -314,6 +322,8 @@ hal_fdcan_error_t hal_fdcan_set_mode(hal_fdcan_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return HAL_FDCAN_ERROR_INVALID_PARAM;
     }
+
+    hal_fdcan_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->set_mode == NULL) {
@@ -352,6 +362,8 @@ hal_fdcan_error_t hal_fdcan_get_error_count(hal_fdcan_context_t* ctx,
         return HAL_FDCAN_ERROR_INVALID_PARAM;
     }
 
+    hal_fdcan_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->get_error_count == NULL) {
         return HAL_FDCAN_ERROR_UNSUPPORTED;
@@ -382,6 +394,8 @@ void hal_fdcan_irq_handler(hal_fdcan_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return;
     }
+
+    hal_fdcan_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->irq_handler == NULL) {

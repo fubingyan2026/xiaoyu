@@ -21,24 +21,24 @@
 /* Includes ------------------------------------------------------------------*/
 #include "hal_spi.h"
 
+/* Private variables ---------------------------------------------------------*/
+
+static const hal_spi_ops_t* g_hal_spi_platform_ops = NULL;
+
+/* Private functions ---------------------------------------------------------*/
+
+static inline void hal_spi_ensure_ops(hal_spi_context_t* ctx)
+{
+    if (ctx->ops == NULL && g_hal_spi_platform_ops != NULL) {
+        ctx->ops = g_hal_spi_platform_ops;
+    }
+}
+
 /* Exported functions --------------------------------------------------------*/
 
-hal_spi_error_t hal_spi_set_ops(hal_spi_context_t* ctx,
-    const hal_spi_ops_t* ops)
+void hal_spi_register_platform_ops(const hal_spi_ops_t* ops)
 {
-    if (ctx == NULL || ops == NULL) {
-        return HAL_SPI_ERROR_INVALID_PARAM;
-    }
-
-    if (ops->init == NULL || ops->deinit == NULL || ops->transmit_receive == NULL || ops->transmit_dma == NULL || ops->get_state == NULL || ops->get_dma_state == NULL) {
-        return HAL_SPI_ERROR_INVALID_PARAM;
-    }
-
-    HAL_SPI_ENTER_CRITICAL();
-    ctx->ops = ops;
-    HAL_SPI_EXIT_CRITICAL();
-
-    return HAL_SPI_OK;
+    g_hal_spi_platform_ops = ops;
 }
 
 hal_spi_error_t hal_spi_init(hal_spi_context_t* ctx,
@@ -55,6 +55,8 @@ hal_spi_error_t hal_spi_init(hal_spi_context_t* ctx,
     if (!ctx->initialized) {
         ctx->initialized = 1;
     }
+
+    hal_spi_ensure_ops(ctx);
 
     if (ctx->ops == NULL || ctx->ops->init == NULL) {
         return HAL_SPI_ERROR_UNINITIALIZED;
@@ -74,6 +76,8 @@ hal_spi_error_t hal_spi_deinit(hal_spi_context_t* ctx)
     if (ctx == NULL) {
         return HAL_SPI_ERROR_INVALID_PARAM;
     }
+
+    hal_spi_ensure_ops(ctx);
 
     if (ctx->ops == NULL || ctx->ops->deinit == NULL) {
         return HAL_SPI_ERROR_UNINITIALIZED;
@@ -95,6 +99,8 @@ hal_spi_error_t hal_spi_transmit_receive(hal_spi_context_t* ctx,
         return HAL_SPI_ERROR_INVALID_PARAM;
     }
 
+    hal_spi_ensure_ops(ctx);
+
     if (ctx->ops == NULL || ctx->ops->transmit_receive == NULL) {
         return HAL_SPI_ERROR_UNINITIALIZED;
     }
@@ -113,6 +119,8 @@ hal_spi_error_t hal_spi_transmit_dma(hal_spi_context_t* ctx,
         return HAL_SPI_ERROR_INVALID_PARAM;
     }
 
+    hal_spi_ensure_ops(ctx);
+
     if (ctx->ops == NULL || ctx->ops->transmit_dma == NULL) {
         return HAL_SPI_ERROR_UNINITIALIZED;
     }
@@ -130,6 +138,8 @@ hal_spi_state_t hal_spi_get_state(hal_spi_context_t* ctx)
         return HAL_SPI_ST_ERROR;
     }
 
+    hal_spi_ensure_ops(ctx);
+
     if (ctx->ops == NULL || ctx->ops->get_state == NULL) {
         return HAL_SPI_ST_ERROR;
     }
@@ -142,6 +152,8 @@ hal_spi_dma_state_t hal_spi_get_dma_state(hal_spi_context_t* ctx)
     if (ctx == NULL) {
         return HAL_SPI_DMA_ST_ERROR;
     }
+
+    hal_spi_ensure_ops(ctx);
 
     if (ctx->ops == NULL || ctx->ops->get_dma_state == NULL) {
         return HAL_SPI_DMA_ST_ERROR;

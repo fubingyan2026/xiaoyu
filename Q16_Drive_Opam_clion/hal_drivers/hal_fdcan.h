@@ -245,18 +245,6 @@ typedef struct hal_fdcan_ops {
     } while (0)
 
 /**
- * @brief 设置 FDCAN 操作函数
- * @param ctx FDCAN 上下文指针
- * @param ops FDCAN 操作函数结构体指针
- * @return 操作结果错误码
- *
- * @note 通常不需要直接调用此函数，使用平台特定的初始化函数即可。
- *       此函数主要用于多平台切换或单元测试场景。
- */
-hal_fdcan_error_t hal_fdcan_set_ops(hal_fdcan_context_t* ctx,
-    const hal_fdcan_ops_t* ops);
-
-/**
  * @brief 初始化 FDCAN
  * @param ctx FDCAN 上下文指针
  * @param config FDCAN 配置结构体指针
@@ -391,13 +379,13 @@ hal_fdcan_error_t hal_fdcan_update_config(hal_fdcan_context_t* ctx,
     const hal_fdcan_config_t* config);
 
 /**
- * @brief STM32 平台 FDCAN 上下文初始化函数
- * @param ctx FDCAN 上下文指针
- * @return 操作结果错误码
+ * @brief 注册平台 FDCAN 操作函数
+ * @param ops 平台特定的操作函数结构体指针
  *
- * 使用此函数初始化 STM32 平台的 FDCAN 上下文，会自动设置好平台特定的操作函数。
+ * 由平台实现文件通过 constructor 自动调用，使用者无需手动调用。
+ * 注册后，所有 FDCAN 上下文会在首次使用时自动装配 ops 表。
  */
-hal_fdcan_error_t stm32_fdcan_init_context(hal_fdcan_context_t* ctx);
+void hal_fdcan_register_platform_ops(const hal_fdcan_ops_t* ops);
 
 #ifdef __cplusplus
 }

@@ -66,7 +66,6 @@ static void led_set(const uint8_t state);
 void device_ws2812_init(void)
 {
     /* 初始化 SPI */
-    stm32_spi_init_context(&s_spi_ctx);
     hal_spi_config_t spi_cfg = { .instance = HAL_SPI_INSTANCE_1 };
     hal_spi_init(&s_spi_ctx, &spi_cfg);
 

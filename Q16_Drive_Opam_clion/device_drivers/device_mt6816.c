@@ -62,11 +62,8 @@ void device_mt6816_init(void)
     s_spi_signal.sample_data = 0;
     s_spi_signal.angle = 0;
 
-    stm32_spi_init_context(&mt68xx_spi_ctx);
     hal_spi_config_t spi_cfg = { .instance = HAL_SPI_INSTANCE_3 };
     hal_spi_init(&mt68xx_spi_ctx, &spi_cfg);
-
-    stm32_gpio_init_context(&mt68xx_cs_ctx);
     hal_gpio_config_t cs_cfg = { .port = HAL_GPIO_PORT_A,
         .pin = HAL_GPIO_PIN_15,
         .mode = HAL_GPIO_MODE_OUTPUT_PP,

@@ -95,20 +95,14 @@ static const hal_fdcan_ops_t stm32_fdcan_ops = {
 };
 
 /**
- * @brief STM32 平台 FDCAN 上下文初始化函数
- * @param ctx FDCAN 上下文指针
- * @return 操作结果错误码
+ * @brief 自动注册 STM32 平台 FDCAN 操作函数
+ *
+ * 通过 constructor 在 main() 之前自动注册，
+ * 使用者无需手动调用 stm32_fdcan_init_context()。
  */
-hal_fdcan_error_t stm32_fdcan_init_context(hal_fdcan_context_t* ctx)
+__attribute__((constructor)) static void _stm32_fdcan_auto_register(void)
 {
-    if (ctx == NULL) {
-        return HAL_FDCAN_ERROR_INVALID_PARAM;
-    }
-
-    ctx->ops = &stm32_fdcan_ops;
-    ctx->initialized = 0;
-
-    return HAL_FDCAN_OK;
+    hal_fdcan_register_platform_ops(&stm32_fdcan_ops);
 }
 
 /**

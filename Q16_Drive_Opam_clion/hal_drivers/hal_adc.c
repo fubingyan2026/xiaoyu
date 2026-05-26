@@ -57,36 +57,24 @@ static inline bool is_valid_resolution(hal_adc_resolution_t resolution)
     return resolution <= HAL_ADC_RESOLUTION_6B;
 }
 
+/* Private variables ---------------------------------------------------------*/
+
+static const hal_adc_ops_t* g_hal_adc_platform_ops = NULL;
+
+/* Private functions ---------------------------------------------------------*/
+
+static inline void hal_adc_ensure_ops(hal_adc_context_t* ctx)
+{
+    if (ctx->ops == NULL && g_hal_adc_platform_ops != NULL) {
+        ctx->ops = g_hal_adc_platform_ops;
+    }
+}
+
 /* Exported functions --------------------------------------------------------*/
 
-/**
- * @brief  设置 ADC 操作函数
- * @param  ctx ADC 上下文指针
- * @param  ops ADC 操作函数结构体指针
- * @return 操作结果错误码
- *
- * @note 通常不需要直接调用此函数，使用平台特定的初始化函数即可。
- *       此函数主要用于多平台切换或单元测试场景。
- */
-hal_adc_error_t hal_adc_set_ops(hal_adc_context_t* ctx,
-    const hal_adc_ops_t* ops)
+void hal_adc_register_platform_ops(const hal_adc_ops_t* ops)
 {
-    // 检查参数有效性
-    if (ctx == NULL || ops == NULL) {
-        return HAL_ADC_ERROR_INVALID_PARAM;
-    }
-
-    // 检查必要的函数指针是否为 NULL
-    if (ops->init == NULL || ops->deinit == NULL || ops->start_conversion == NULL || ops->stop_conversion == NULL || ops->get_value == NULL) {
-        return HAL_ADC_ERROR_INVALID_PARAM;
-    }
-
-    // 进入临界区，保护共享资源
-    HAL_ADC_ENTER_CRITICAL();
-    ctx->ops = ops;
-    HAL_ADC_EXIT_CRITICAL();
-
-    return HAL_ADC_OK;
+    g_hal_adc_platform_ops = ops;
 }
 
 /**
@@ -117,6 +105,8 @@ hal_adc_error_t hal_adc_init(hal_adc_context_t* ctx,
     if (!ctx->initialized) {
         ctx->initialized = 1;
     }
+
+    hal_adc_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->init == NULL) {
@@ -153,6 +143,8 @@ hal_adc_error_t hal_adc_deinit(hal_adc_context_t* ctx,
         return HAL_ADC_ERROR_INVALID_PARAM;
     }
 
+    hal_adc_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->deinit == NULL) {
         return HAL_ADC_ERROR_UNINITIALIZED;
@@ -188,6 +180,8 @@ hal_adc_error_t hal_adc_config_channel(
     if (!is_valid_channel(channel_config->channel)) {
         return HAL_ADC_ERROR_INVALID_PARAM;
     }
+
+    hal_adc_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->config_channel == NULL) {
@@ -227,6 +221,8 @@ hal_adc_error_t hal_adc_start_conversion(hal_adc_context_t* ctx,
     if (!ctx->initialized) {
         return HAL_ADC_ERROR_UNINITIALIZED;
     }
+
+    hal_adc_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->start_conversion == NULL) {
@@ -272,6 +268,8 @@ hal_adc_error_t hal_adc_start_conversion_async(hal_adc_context_t* ctx,
         return HAL_ADC_ERROR_UNINITIALIZED;
     }
 
+    hal_adc_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->start_conversion_async == NULL) {
         return HAL_ADC_ERROR_UNINITIALIZED;
@@ -309,6 +307,8 @@ hal_adc_error_t hal_adc_stop_conversion(hal_adc_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return HAL_ADC_ERROR_INVALID_PARAM;
     }
+
+    hal_adc_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->stop_conversion == NULL) {
@@ -355,6 +355,8 @@ hal_adc_error_t hal_adc_start_dma(hal_adc_context_t* ctx,
         return HAL_ADC_ERROR_UNINITIALIZED;
     }
 
+    hal_adc_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->start_dma == NULL) {
         return HAL_ADC_ERROR_UNSUPPORTED;
@@ -393,6 +395,8 @@ hal_adc_error_t hal_adc_stop_dma(hal_adc_context_t* ctx,
         return HAL_ADC_ERROR_INVALID_PARAM;
     }
 
+    hal_adc_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->stop_dma == NULL) {
         return HAL_ADC_ERROR_UNSUPPORTED;
@@ -428,6 +432,8 @@ hal_adc_error_t hal_adc_get_value(hal_adc_context_t* ctx,
         return HAL_ADC_ERROR_INVALID_PARAM;
     }
 
+    hal_adc_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->get_value == NULL) {
         return HAL_ADC_ERROR_UNINITIALIZED;
@@ -461,6 +467,8 @@ hal_adc_error_t hal_adc_calibrate(
     if (!is_valid_instance(instance)) {
         return HAL_ADC_ERROR_INVALID_PARAM;
     }
+
+    hal_adc_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->calibrate == NULL) {
@@ -501,6 +509,8 @@ hal_adc_error_t hal_adc_set_resolution(hal_adc_context_t* ctx,
         return HAL_ADC_ERROR_INVALID_PARAM;
     }
 
+    hal_adc_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->set_resolution == NULL) {
         return HAL_ADC_ERROR_UNSUPPORTED;
@@ -537,6 +547,8 @@ hal_adc_error_t hal_adc_get_resolution(hal_adc_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return HAL_ADC_ERROR_INVALID_PARAM;
     }
+
+    hal_adc_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->get_resolution == NULL) {
@@ -576,6 +588,8 @@ hal_adc_error_t hal_adc_register_callback(hal_adc_context_t* ctx,
         return HAL_ADC_ERROR_INVALID_PARAM;
     }
 
+    hal_adc_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->register_callback == NULL) {
         return HAL_ADC_ERROR_UNSUPPORTED;
@@ -614,6 +628,8 @@ hal_adc_error_t hal_adc_register_dma_callback(hal_adc_context_t* ctx,
         return HAL_ADC_ERROR_INVALID_PARAM;
     }
 
+    hal_adc_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->register_dma_callback == NULL) {
         return HAL_ADC_ERROR_UNSUPPORTED;
@@ -645,6 +661,8 @@ void hal_adc_irq_handler(hal_adc_context_t* ctx, hal_adc_instance_t instance)
     if (!is_valid_instance(instance)) {
         return;
     }
+
+    hal_adc_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->irq_handler == NULL) {

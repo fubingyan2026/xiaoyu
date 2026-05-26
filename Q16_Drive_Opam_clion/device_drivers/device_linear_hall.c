@@ -55,8 +55,6 @@ hall_save_param_t hall_save_param;
 void device_linear_hall_init(void)
 {
     /* 初始化 ADC2 */
-    stm32_adc_init_context(&s_adc_ctx);
-
     hal_adc_config_t adc_cfg = {
         .instance = HAL_ADC_INSTANCE_2,
         .resolution = HAL_ADC_RESOLUTION_12B,

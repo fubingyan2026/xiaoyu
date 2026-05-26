@@ -21,6 +21,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "hal_uart.h"
 
+/* Private variables ---------------------------------------------------------*/
+
+static const hal_uart_ops_t* g_hal_uart_platform_ops = NULL;
+
 /* Private function prototypes -----------------------------------------------*/
 static inline bool is_valid_instance(hal_uart_instance_t instance);
 
@@ -36,36 +40,26 @@ static inline bool is_valid_instance(hal_uart_instance_t instance)
     return instance < HAL_UART_INSTANCE_LEN;
 }
 
+/**
+ * @brief 自动装配 ctx->ops（若尚未装配且有平台已注册）
+ * @param ctx UART 上下文指针
+ */
+static inline void hal_uart_ensure_ops(hal_uart_context_t* ctx)
+{
+    if (ctx->ops == NULL && g_hal_uart_platform_ops != NULL) {
+        ctx->ops = g_hal_uart_platform_ops;
+    }
+}
+
 /* Exported functions --------------------------------------------------------*/
 
 /**
- * @brief  设置 UART 操作函数
- * @param  ctx UART 上下文指针
- * @param  ops UART 操作函数结构体指针
- * @return 操作结果错误码
- *
- * @note 通常不需要直接调用此函数，使用平台特定的初始化函数即可。
- *       此函数主要用于多平台切换或单元测试场景。
+ * @brief 注册平台 UART 操作函数
+ * @param ops 平台特定的操作函数结构体指针
  */
-hal_uart_error_t hal_uart_set_ops(hal_uart_context_t* ctx,
-    const hal_uart_ops_t* ops)
+void hal_uart_register_platform_ops(const hal_uart_ops_t* ops)
 {
-    // 检查参数有效性
-    if (ctx == NULL || ops == NULL) {
-        return HAL_UART_ERROR_INVALID_PARAM;
-    }
-
-    // 检查必要的函数指针是否为 NULL
-    if (ops->init == NULL || ops->deinit == NULL || ops->send == NULL || ops->receive == NULL) {
-        return HAL_UART_ERROR_INVALID_PARAM;
-    }
-
-    // 进入临界区，保护共享资源
-    HAL_UART_ENTER_CRITICAL();
-    ctx->ops = ops;
-    HAL_UART_EXIT_CRITICAL();
-
-    return HAL_UART_OK;
+    g_hal_uart_platform_ops = ops;
 }
 
 /**
@@ -86,6 +80,8 @@ hal_uart_error_t hal_uart_init(hal_uart_context_t* ctx,
     if (!is_valid_instance(config->instance)) {
         return HAL_UART_ERROR_INVALID_PARAM;
     }
+
+    hal_uart_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->init == NULL) {
@@ -123,6 +119,8 @@ hal_uart_error_t hal_uart_deinit(hal_uart_context_t* ctx,
         return HAL_UART_ERROR_INVALID_PARAM;
     }
 
+    hal_uart_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->deinit == NULL) {
         return HAL_UART_ERROR_UNINITIALIZED;
@@ -158,6 +156,8 @@ hal_uart_error_t hal_uart_send(hal_uart_context_t* ctx,
         return HAL_UART_ERROR_INVALID_PARAM;
     }
 
+    hal_uart_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->send == NULL) {
         return HAL_UART_ERROR_UNINITIALIZED;
@@ -192,6 +192,8 @@ hal_uart_error_t hal_uart_receive(hal_uart_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return HAL_UART_ERROR_INVALID_PARAM;
     }
+
+    hal_uart_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->receive == NULL) {
@@ -230,6 +232,8 @@ hal_uart_error_t hal_uart_send_async(hal_uart_context_t* ctx,
         return HAL_UART_ERROR_INVALID_PARAM;
     }
 
+    hal_uart_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->send_async == NULL) {
         return HAL_UART_ERROR_UNSUPPORTED;
@@ -267,6 +271,8 @@ hal_uart_error_t hal_uart_receive_async(hal_uart_context_t* ctx,
         return HAL_UART_ERROR_INVALID_PARAM;
     }
 
+    hal_uart_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->receive_async == NULL) {
         return HAL_UART_ERROR_UNSUPPORTED;
@@ -301,6 +307,8 @@ hal_uart_error_t hal_uart_send_dma(hal_uart_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return HAL_UART_ERROR_INVALID_PARAM;
     }
+
+    hal_uart_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->send_dma == NULL) {
@@ -337,6 +345,8 @@ hal_uart_error_t hal_uart_receive_dma(hal_uart_context_t* ctx,
         return HAL_UART_ERROR_INVALID_PARAM;
     }
 
+    hal_uart_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->receive_dma == NULL) {
         return HAL_UART_ERROR_UNSUPPORTED;
@@ -372,6 +382,8 @@ hal_uart_error_t hal_uart_receive_dma_to_idle(hal_uart_context_t* ctx,
         return HAL_UART_ERROR_INVALID_PARAM;
     }
 
+    hal_uart_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->receive_dma_to_idle == NULL) {
         return HAL_UART_ERROR_UNSUPPORTED;
@@ -403,6 +415,8 @@ hal_uart_error_t hal_uart_abort_send(hal_uart_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return HAL_UART_ERROR_INVALID_PARAM;
     }
+
+    hal_uart_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->abort_send == NULL) {
@@ -436,6 +450,8 @@ hal_uart_error_t hal_uart_abort_receive(hal_uart_context_t* ctx,
         return HAL_UART_ERROR_INVALID_PARAM;
     }
 
+    hal_uart_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->abort_receive == NULL) {
         return HAL_UART_ERROR_UNSUPPORTED;
@@ -468,6 +484,8 @@ hal_uart_error_t hal_uart_abort_send_dma(hal_uart_context_t* ctx,
         return HAL_UART_ERROR_INVALID_PARAM;
     }
 
+    hal_uart_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->abort_send_dma == NULL) {
         return HAL_UART_ERROR_UNSUPPORTED;
@@ -499,6 +517,8 @@ hal_uart_error_t hal_uart_abort_receive_dma(hal_uart_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return HAL_UART_ERROR_INVALID_PARAM;
     }
+
+    hal_uart_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->abort_receive_dma == NULL) {
@@ -534,6 +554,8 @@ hal_uart_error_t hal_uart_get_tx_count(hal_uart_context_t* ctx,
         return HAL_UART_ERROR_INVALID_PARAM;
     }
 
+    hal_uart_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->get_tx_count == NULL) {
         return HAL_UART_ERROR_UNSUPPORTED;
@@ -567,6 +589,8 @@ hal_uart_error_t hal_uart_get_rx_count(hal_uart_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return HAL_UART_ERROR_INVALID_PARAM;
     }
+
+    hal_uart_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->get_rx_count == NULL) {
@@ -602,6 +626,8 @@ hal_uart_error_t hal_uart_get_dma_status(hal_uart_context_t* ctx,
         return HAL_UART_ERROR_INVALID_PARAM;
     }
 
+    hal_uart_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->get_dma_status == NULL) {
         return HAL_UART_ERROR_UNSUPPORTED;
@@ -635,6 +661,8 @@ hal_uart_error_t hal_uart_set_baudrate(hal_uart_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return HAL_UART_ERROR_INVALID_PARAM;
     }
+
+    hal_uart_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->set_baudrate == NULL) {
@@ -670,6 +698,8 @@ hal_uart_error_t hal_uart_set_rx_timeout(hal_uart_context_t* ctx,
         return HAL_UART_ERROR_INVALID_PARAM;
     }
 
+    hal_uart_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->set_rx_timeout == NULL) {
         return HAL_UART_ERROR_UNSUPPORTED;
@@ -701,6 +731,8 @@ void hal_uart_irq_handler(hal_uart_context_t* ctx,
         return;
     }
 
+    hal_uart_ensure_ops(ctx);
+
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->irq_handler == NULL) {
         return;
@@ -727,6 +759,8 @@ void hal_uart_dma_irq_handler(hal_uart_context_t* ctx,
     if (!is_valid_instance(instance)) {
         return;
     }
+
+    hal_uart_ensure_ops(ctx);
 
     // 检查操作函数是否已设置
     if (ctx->ops == NULL || ctx->ops->dma_irq_handler == NULL) {

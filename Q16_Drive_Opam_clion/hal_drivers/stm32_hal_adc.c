@@ -103,25 +103,9 @@ static const hal_adc_ops_t stm32_adc_ops = {
 
 /* Exported functions --------------------------------------------------------*/
 
-/**
- * @brief  初始化ADC上下文并设置操作函数
- * @param  ctx: ADC上下文指针
- * @return HAL_ADC_OK 成功，其他值为错误码
- */
-hal_adc_error_t stm32_adc_init_context(hal_adc_context_t* ctx)
+__attribute__((constructor)) static void _stm32_adc_auto_register(void)
 {
-    if (ctx == NULL) {
-        return HAL_ADC_ERROR_INVALID_PARAM;
-    }
-
-    ctx->ops = &stm32_adc_ops;
-    ctx->initialized = 0;
-    ctx->conv_callback = NULL;
-    ctx->dma_callback = NULL;
-    ctx->user_data = NULL;
-    ctx->busy = 0;
-
-    return HAL_ADC_OK;
+    hal_adc_register_platform_ops(&stm32_adc_ops);
 }
 
 /**

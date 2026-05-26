@@ -77,23 +77,9 @@ static const hal_gpio_ops_t stm32_gpio_ops = {
 
 /* Exported functions --------------------------------------------------------*/
 
-/**
- * @brief  初始化GPIO上下文并设置操作函数
- * @param  ctx: GPIO上下文指针
- * @return HAL_GPIO_OK 成功，其他值为错误码
- */
-hal_gpio_error_t stm32_gpio_init_context(hal_gpio_context_t* ctx)
+__attribute__((constructor)) static void _stm32_gpio_auto_register(void)
 {
-    if (ctx == NULL) {
-        return HAL_GPIO_ERROR_INVALID_PARAM;
-    }
-
-    ctx->ops = &stm32_gpio_ops;
-    ctx->initialized = 0;
-    ctx->callback = NULL;
-    ctx->user_data = NULL;
-
-    return HAL_GPIO_OK;
+    hal_gpio_register_platform_ops(&stm32_gpio_ops);
 }
 
 /* Private functions ---------------------------------------------------------*/

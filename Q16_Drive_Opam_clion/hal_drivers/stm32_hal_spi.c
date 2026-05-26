@@ -57,16 +57,9 @@ static const hal_spi_ops_t stm32_spi_ops = {
 
 /* Exported functions --------------------------------------------------------*/
 
-hal_spi_error_t stm32_spi_init_context(hal_spi_context_t* ctx)
+__attribute__((constructor)) static void _stm32_spi_auto_register(void)
 {
-    if (ctx == NULL) {
-        return HAL_SPI_ERROR_INVALID_PARAM;
-    }
-
-    ctx->ops = &stm32_spi_ops;
-    ctx->initialized = 0;
-
-    return HAL_SPI_OK;
+    hal_spi_register_platform_ops(&stm32_spi_ops);
 }
 
 /* Private functions ---------------------------------------------------------*/

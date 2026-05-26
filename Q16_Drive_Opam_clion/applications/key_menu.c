@@ -344,10 +344,9 @@ static void on_led_state_change(led_handle_t* instance, led_state_t new_state,
     (void)user_data;
 
     if (is_in_state(KEY_FSM_STATE_NONE) && new_state == LED_STATE_OFF) {
-        KEY_FUNC_PRINTF("[LED] GPIO Release (LED wait)");
+        // KEY_FUNC_PRINTF("[LED] GPIO Release (LED wait)");
         configure_led_blink(LED_BLINK_INTERVAL_SLOW_MS, LED_BLINK_WAIT_MS,
             can_save_id);
-        // led_set_state(s_led_instance, LED_STATE_BREATHING);
     }
 }
 
@@ -523,7 +522,6 @@ static const key_base_config_t s_key0_default_config = {
  */
 void key_func_init(void)
 {
-    stm32_gpio_init_context(&gpio_ctx);
     hal_gpio_init(&gpio_ctx, &key0_gpio_cfg);
     /* 注册按键 */
     key_base_register(&s_key0_default_config, &s_key0_instance);

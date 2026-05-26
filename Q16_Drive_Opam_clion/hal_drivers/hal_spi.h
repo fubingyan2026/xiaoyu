@@ -122,10 +122,7 @@ hal_spi_error_t hal_spi_transmit_dma(hal_spi_context_t* ctx,
 hal_spi_state_t hal_spi_get_state(hal_spi_context_t* ctx);
 hal_spi_dma_state_t hal_spi_get_dma_state(hal_spi_context_t* ctx);
 
-hal_spi_error_t hal_spi_set_ops(hal_spi_context_t* ctx,
-    const hal_spi_ops_t* ops);
-
-hal_spi_error_t stm32_spi_init_context(hal_spi_context_t* ctx);
+void hal_spi_register_platform_ops(const hal_spi_ops_t* ops);
 
 #ifdef __cplusplus
 }

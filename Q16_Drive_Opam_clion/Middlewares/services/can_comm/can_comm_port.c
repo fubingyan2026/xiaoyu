@@ -27,23 +27,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 static hal_fdcan_context_t fdcan1_ctx;
-static uint8_t fdcan_initialized = 0;
-
-/* Private function prototypes -----------------------------------------------*/
-
-static void ensure_fdcan_initialized(void);
-
-/* Private functions ---------------------------------------------------------*/
-
-/**
- * @brief 确保FDCAN已初始化
- */
-static void ensure_fdcan_initialized(void) {
-  if (!fdcan_initialized) {
-    stm32_fdcan_init_context(&fdcan1_ctx);
-    fdcan_initialized = 1;
-  }
-}
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -55,7 +38,6 @@ static void ensure_fdcan_initialized(void) {
  */
 uint32_t can_comm_get_receive_level(hal_fdcan_instance_t instance,
                                     uint8_t fifo_address) {
-  ensure_fdcan_initialized();
   uint32_t level = 0;
   hal_fdcan_get_receive_level(&fdcan1_ctx, instance, fifo_address, &level);
   return level;
@@ -67,7 +49,6 @@ uint32_t can_comm_get_receive_level(hal_fdcan_instance_t instance,
  * @return 空闲量
  */
 uint32_t can_comm_get_send_level(hal_fdcan_instance_t instance) {
-  ensure_fdcan_initialized();
   uint32_t level = 0;
   hal_fdcan_get_send_fifo_level(&fdcan1_ctx, instance, &level);
   return level;
@@ -81,7 +62,6 @@ uint32_t can_comm_get_send_level(hal_fdcan_instance_t instance) {
  */
 bool can_comm_receive(hal_fdcan_instance_t instance,
                       hal_fdcan_message_t* message) {
-  ensure_fdcan_initialized();
   hal_fdcan_error_t ret = hal_fdcan_receive(&fdcan1_ctx, instance, message);
   return (ret == HAL_FDCAN_OK);
 }
@@ -94,7 +74,6 @@ bool can_comm_receive(hal_fdcan_instance_t instance,
  */
 bool can_comm_send(hal_fdcan_instance_t instance,
                    const hal_fdcan_message_t* message) {
-  ensure_fdcan_initialized();
   hal_fdcan_error_t ret = hal_fdcan_send(&fdcan1_ctx, instance, message);
   return (ret == HAL_FDCAN_OK);
 }
