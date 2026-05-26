@@ -59,33 +59,33 @@ extern "C" {
  * @brief 电机旋转方向枚举
  */
 typedef enum __attribute__((packed)) {
-  MOTOR_DIR_REVERSE = -1, /**< 逆时针旋转 */
-  MOTOR_DIR_NONE = 0,     /**< 无方向/未初始化 */
-  MOTOR_DIR_FORWARD = 1   /**< 顺时针旋转 */
+    MOTOR_DIR_REVERSE = -1, /**< 逆时针旋转 */
+    MOTOR_DIR_NONE = 0, /**< 无方向/未初始化 */
+    MOTOR_DIR_FORWARD = 1 /**< 顺时针旋转 */
 } motor_direction_t;
 
 /**
  * @brief 存储在Flash中的电机校准数据
  */
 typedef struct {
-  uint16_t angle_map[MAX_MOTOR_STEPS + 1]; /**< 角度校准查找表 */
-  motor_direction_t direction;             /**< 电机旋转方向 */
+    uint16_t angle_map[MAX_MOTOR_STEPS + 1]; /**< 角度校准查找表 */
+    motor_direction_t direction; /**< 电机旋转方向 */
 } motor_flash_config_t;
 
 /**
  * @brief FOC校准运行时数据结构
  */
 typedef struct {
-  float electrical_angle;              /**< 当前电角度 [0, 2π) */
-  motor_direction_t direction;         /**< 编码器安装方向 */
-  int16_t current_sector;              /**< 当前电扇区索引 */
-  int16_t zero_offset;                 /**< 零位偏移（偏置） */
-  int16_t step_delta[MAX_MOTOR_STEPS]; /**< 每个扇区的角度增量 */
-  int16_t current_step_delta;          /**< 当前扇区增量值 */
-  int16_t encoder_lines;               /**< 总编码器线数 */
-  int16_t total_steps;                 /**< 总校准步数 */
-  bool is_valid;                       /**< 校准数据有效性标志 */
-  int16_t invalid_sector_index;        /**< 第一个无效扇区的索引 */
+    float electrical_angle; /**< 当前电角度 [0, 2π) */
+    motor_direction_t direction; /**< 编码器安装方向 */
+    int16_t current_sector; /**< 当前电扇区索引 */
+    int16_t zero_offset; /**< 零位偏移（偏置） */
+    int16_t step_delta[MAX_MOTOR_STEPS]; /**< 每个扇区的角度增量 */
+    int16_t current_step_delta; /**< 当前扇区增量值 */
+    int16_t encoder_lines; /**< 总编码器线数 */
+    int16_t total_steps; /**< 总校准步数 */
+    bool is_valid; /**< 校准数据有效性标志 */
+    int16_t invalid_sector_index; /**< 第一个无效扇区的索引 */
 } encoder_calibration_t;
 
 /*==============================================================================
@@ -125,7 +125,7 @@ bool encoder_alignment_init(void);
  * @note 根据数据验证设置 calib->is_valid 标志
  */
 motor_direction_t encoder_detect_direction(const uint16_t* angle_buffer,
-                                           encoder_calibration_t* calib);
+    encoder_calibration_t* calib);
 
 /**
  * @brief 跟踪当前扇区并计算电角度

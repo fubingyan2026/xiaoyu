@@ -53,14 +53,14 @@
  * @brief 霍尔校准模块内部上下文
  */
 typedef struct {
-    fsm_t fsm;                              /**< FSM 上下文 */
-    pt1Filter_t filter[ADC_CH_NUM];         /**< 校准用 PT1 滤波器 */
-    float adc_max[ADC_CH_NUM];              /**< ADC 采样最大值 */
-    float adc_min[ADC_CH_NUM];              /**< ADC 采样最小值 */
-    float target_current;                   /**< 目标电流（校准对齐阶段用） */
-    float target_elec_angle;                /**< 目标电角度（校准旋转阶段用） */
-    uint16_t filter_init_count;             /**< 滤波器稳定计数器 */
-    uint16_t align_count;                   /**< 对齐保持计数器 */
+    fsm_t fsm; /**< FSM 上下文 */
+    pt1Filter_t filter[ADC_CH_NUM]; /**< 校准用 PT1 滤波器 */
+    float adc_max[ADC_CH_NUM]; /**< ADC 采样最大值 */
+    float adc_min[ADC_CH_NUM]; /**< ADC 采样最小值 */
+    float target_current; /**< 目标电流（校准对齐阶段用） */
+    float target_elec_angle; /**< 目标电角度（校准旋转阶段用） */
+    uint16_t filter_init_count; /**< 滤波器稳定计数器 */
+    uint16_t align_count; /**< 对齐保持计数器 */
 } fsm_linear_hall_ctx_t;
 
 /* Private variables ---------------------------------------------------------*/
@@ -70,12 +70,12 @@ static fsm_linear_hall_ctx_t g_ctx;
 /* Private function prototypes -----------------------------------------------*/
 
 /* FSM 状态处理函数 */
-static fsm_state_t handler_none(fsm_t *fsm);
-static fsm_state_t handler_filter(fsm_t *fsm);
-static fsm_state_t handler_align(fsm_t *fsm);
-static fsm_state_t handler_rotation(fsm_t *fsm);
-static fsm_state_t handler_process(fsm_t *fsm);
-static fsm_state_t handler_done(fsm_t *fsm);
+static fsm_state_t handler_none(fsm_t* fsm);
+static fsm_state_t handler_filter(fsm_t* fsm);
+static fsm_state_t handler_align(fsm_t* fsm);
+static fsm_state_t handler_rotation(fsm_t* fsm);
+static fsm_state_t handler_process(fsm_t* fsm);
+static fsm_state_t handler_done(fsm_t* fsm);
 
 /* Exported functions --------------------------------------------------------*/
 
@@ -90,9 +90,14 @@ void fsm_linear_hall_init(void)
     // 初始化 FSM
     static fsm_handler_t handlers[FSM_LINEAR_HALL_STATE_COUNT];
     static fsm_guard_t transitions[FSM_LINEAR_HALL_STATE_COUNT
-                                   * FSM_LINEAR_HALL_STATE_COUNT];
-    static const char *state_names[] = {
-        "NONE", "FILTER", "ALIGN", "ROTATION", "PROCESS", "DONE",
+        * FSM_LINEAR_HALL_STATE_COUNT];
+    static const char* state_names[] = {
+        "NONE",
+        "FILTER",
+        "ALIGN",
+        "ROTATION",
+        "PROCESS",
+        "DONE",
     };
 
     memset(handlers, 0, sizeof(handlers));
@@ -155,9 +160,9 @@ float fsm_linear_hall_get_elec_angle(void)
 
 /* FSM 状态处理函数 ----------------------------------------------------------*/
 
-static fsm_state_t handler_none(fsm_t *fsm)
+static fsm_state_t handler_none(fsm_t* fsm)
 {
-    fsm_linear_hall_ctx_t *ctx = (fsm_linear_hall_ctx_t *)fsm_user_data(fsm);
+    fsm_linear_hall_ctx_t* ctx = (fsm_linear_hall_ctx_t*)fsm_user_data(fsm);
 
     for (uint8_t i = 0; i < ADC_CH_NUM; i++) {
         ctx->adc_max[i] = 0.0f;
@@ -167,9 +172,9 @@ static fsm_state_t handler_none(fsm_t *fsm)
     return FSM_LINEAR_HALL_STATE_FILTER;
 }
 
-static fsm_state_t handler_filter(fsm_t *fsm)
+static fsm_state_t handler_filter(fsm_t* fsm)
 {
-    fsm_linear_hall_ctx_t *ctx = (fsm_linear_hall_ctx_t *)fsm_user_data(fsm);
+    fsm_linear_hall_ctx_t* ctx = (fsm_linear_hall_ctx_t*)fsm_user_data(fsm);
 
     if (++ctx->filter_init_count >= FILTER_INIT_WAIT) {
         ctx->filter_init_count = 0;
@@ -179,9 +184,9 @@ static fsm_state_t handler_filter(fsm_t *fsm)
     return FSM_LINEAR_HALL_STATE_FILTER;
 }
 
-static fsm_state_t handler_align(fsm_t *fsm)
+static fsm_state_t handler_align(fsm_t* fsm)
 {
-    fsm_linear_hall_ctx_t *ctx = (fsm_linear_hall_ctx_t *)fsm_user_data(fsm);
+    fsm_linear_hall_ctx_t* ctx = (fsm_linear_hall_ctx_t*)fsm_user_data(fsm);
 
     if (ctx->target_current < ALIGN_CURRENT) {
         ctx->target_current += 0.05f;
@@ -197,9 +202,9 @@ static fsm_state_t handler_align(fsm_t *fsm)
     return FSM_LINEAR_HALL_STATE_ALIGN;
 }
 
-static fsm_state_t handler_rotation(fsm_t *fsm)
+static fsm_state_t handler_rotation(fsm_t* fsm)
 {
-    fsm_linear_hall_ctx_t *ctx = (fsm_linear_hall_ctx_t *)fsm_user_data(fsm);
+    fsm_linear_hall_ctx_t* ctx = (fsm_linear_hall_ctx_t*)fsm_user_data(fsm);
 
     // 跟踪 ADC 采样最大值和最小值
     for (uint8_t i = 0; i < ADC_CH_NUM; i++) {
@@ -224,26 +229,24 @@ static fsm_state_t handler_rotation(fsm_t *fsm)
     return FSM_LINEAR_HALL_STATE_ROTATION;
 }
 
-static fsm_state_t handler_process(fsm_t *fsm)
+static fsm_state_t handler_process(fsm_t* fsm)
 {
     (void)fsm;
 
     hall_save_param.calibrated_flag = ADJUST_FLAG_VAL;
 
     for (uint8_t i = 0; i < ADC_CH_NUM; i++) {
-        hall_save_param.adcAmplitudeBias[i] =
-            (int16_t)((g_ctx.adc_max[i] + g_ctx.adc_min[i]) * 0.5f);
-        hall_save_param.adcAmplitudeMax[i] =
-            (int16_t)((g_ctx.adc_max[i] - g_ctx.adc_min[i]) * 0.5f);
+        hall_save_param.adcAmplitudeBias[i] = (int16_t)((g_ctx.adc_max[i] + g_ctx.adc_min[i]) * 0.5f);
+        hall_save_param.adcAmplitudeMax[i] = (int16_t)((g_ctx.adc_max[i] - g_ctx.adc_min[i]) * 0.5f);
     }
 
     flash_task_request(FLASH_TASK_WRITE_HALL, &hall_save_param,
-                       sizeof(hall_save_param));
+        sizeof(hall_save_param));
 
     return FSM_LINEAR_HALL_STATE_DONE;
 }
 
-static fsm_state_t handler_done(fsm_t *fsm)
+static fsm_state_t handler_done(fsm_t* fsm)
 {
     (void)fsm;
 

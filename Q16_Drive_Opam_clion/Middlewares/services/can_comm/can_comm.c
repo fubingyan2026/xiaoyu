@@ -254,7 +254,7 @@ can_comm_rx_t* can_comm_rx_register(const can_comm_rx_config_t* config) {
   if (new_instance->user_data == NULL) {
     CAN_COMM_PRINTF("Failed to allocate user_data for CAN RX instance %s\n",
                     config->name);
-    daemon_unregister(new_instance->daemon->config.name);
+    daemon_unregister(daemon_get_name(new_instance->daemon));
     protocol_parser_deinit(new_instance->parser);
     __free(new_instance->parser);
     __free(new_instance->output_buffer);
@@ -342,7 +342,7 @@ void can_comm_rx_unregister(can_comm_rx_t* instance) {
         __free(instance->parser);
       }
       if (instance->daemon != NULL) {
-        daemon_unregister(instance->daemon->config.name);
+        daemon_unregister(daemon_get_name(instance->daemon));
       }
       if (instance->output_buffer != NULL) {
         __free(instance->output_buffer);

@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "clist.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -21,15 +22,12 @@ extern "C" {
  * @brief 消息中心错误码枚举
  */
 typedef enum {
-  MESSAGE_CENTER_OK = 0,              /**< 操作成功 */
-  MESSAGE_CENTER_OK_EXISTED,          /**< 成功，但对象已存在 */
-  MESSAGE_CENTER_ERROR_NULL_PTR,      /**< 空指针错误 */
-  MESSAGE_CENTER_ERROR_INVALID_PARAM, /**< 无效参数 */
-  MESSAGE_CENTER_ERROR_NO_MEMORY,     /**< 内存分配失败 */
-  MESSAGE_CENTER_ERROR_NOT_FOUND,     /**< 未找到对象 */
-  MESSAGE_CENTER_ERROR_ALREADY_EXIST, /**< 对象已存在 */
-  MESSAGE_CENTER_ERROR_INTERNAL,      /**< 内部错误 */
-  MESSAGE_CENTER_ERROR_UNINITIALIZED, /**< 未初始化 */
+    MESSAGE_CENTER_OK = 0, /**< 操作成功 */
+    MESSAGE_CENTER_ERROR_NULL_PTR, /**< 空指针错误 */
+    MESSAGE_CENTER_ERROR_INVALID_PARAM, /**< 无效参数 */
+    MESSAGE_CENTER_ERROR_NO_MEMORY, /**< 内存分配失败 */
+    MESSAGE_CENTER_ERROR_NOT_FOUND, /**< 未找到对象 */
+    MESSAGE_CENTER_ERROR_ALREADY_EXIST, /**< 对象已存在 */
 } message_center_error_t;
 
 /**
@@ -47,18 +45,11 @@ typedef struct message_center_publisher message_center_publisher_t;
  * @details 每个订阅者维护自己的读取进度，不独立持有数据队列
  */
 struct message_center_subscriber {
-  message_center_publisher_t* topic;            /**< 所属的话题（发布者）引用 */
-  uint32_t read_count;                          /**< 该订阅者已读取的消息总数 */
-  uint16_t data_len;                            /**< 消息数据长度（校验用） */
-  message_center_subscriber_t* next_subs_queue; /**< 指向下一个订阅者 */
+    message_center_publisher_t* topic; /**< 所属的话题（发布者）引用 */
+    uint32_t read_count; /**< 该订阅者已读取的消息总数 */
+    uint16_t data_len; /**< 消息数据长度（校验用） */
+    clist_head_t subs_node; /**< 订阅者链表节点 */
 };
-
-/**
- * @brief 可配置参数：系统支持的最大话题数量
- */
-#ifndef MESSAGE_CENTER_MAX_TOPICS
-#define MESSAGE_CENTER_MAX_TOPICS 32
-#endif
 
 /**
  * @brief 可配置参数：话题名称的最大长度（包含结束符）
@@ -72,18 +63,17 @@ struct message_center_subscriber {
  * @note 建议使用 2 的幂次方（如 4, 8, 16），以便编译器优化取模运算
  */
 #ifndef MESSAGE_CENTER_DEFAULT_QUEUE_SIZE
-#define MESSAGE_CENTER_DEFAULT_QUEUE_SIZE 16
+#define MESSAGE_CENTER_DEFAULT_QUEUE_SIZE 8
 #endif
 
 /**
  * @brief 消息中心配置结构体
  */
 typedef struct {
-  const char* name;            /**< 话题名称 */
-  uint16_t max_topics;         /**< 最大话题数量 */
-  uint16_t queue_size;         /**< 默认队列深度 */
-  uint16_t max_topic_name_len; /**< 话题名称最大长度 */
-  uint16_t data_len;           /**< 消息数据长度 */
+    const char* name; /**< 话题名称 */
+    uint16_t queue_size; /**< 默认队列深度 */
+    uint16_t max_topic_name_len; /**< 话题名称最大长度 */
+    uint16_t data_len; /**< 消息数据长度 */
 } message_center_config_t;
 
 /**
@@ -91,11 +81,11 @@ typedef struct {
  * @details 发布者负责维护物理存储队列，所有订阅者共享该队列
  */
 struct message_center_publisher {
-  void* queue[MESSAGE_CENTER_DEFAULT_QUEUE_SIZE]; /**< 共享的环形 FIFO 队列 */
-  uint32_t write_count;                           /**< 总发布消息计数器 */
-  message_center_subscriber_t* first_subs; /**< 指向第一个订阅者链表的首节点 */
-  message_center_publisher_t* next_topic_node; /**< 指向下一个发布者 */
-  message_center_config_t config;              /**< 配置参数 */
+    message_center_config_t config; /**< 配置参数 */
+    clist_head_t topic_node; /**< 发布者链表节点 */
+    clist_head_t subs_list; /**< 订阅者链表头 */
+    void* queue[MESSAGE_CENTER_DEFAULT_QUEUE_SIZE]; /**< 共享的环形 FIFO 队列 */
+    uint32_t write_count; /**< 总发布消息计数器 */
 };
 
 /* Exported constants --------------------------------------------------------*/
@@ -107,6 +97,24 @@ struct message_center_publisher {
 
 /** @brief 检查操作是否失败 */
 #define MESSAGE_CENTER_IS_ERR(err) ((err) < 0)
+
+/**
+ * @brief 临界区保护宏（RTOS 环境下替换为 mutex / 关中断操作）
+ * @note  裸机默认空实现；RTOS 用户可在编译期重定义：
+ *        #define MESSAGE_CENTER_ENTER_CRITICAL()  xSemaphoreTake(mutex, portMAX_DELAY)
+ *        #define MESSAGE_CENTER_EXIT_CRITICAL()   xSemaphoreGive(mutex)
+ */
+#ifndef MESSAGE_CENTER_ENTER_CRITICAL
+#define MESSAGE_CENTER_ENTER_CRITICAL() \
+    do {                                \
+    } while (0)
+#endif
+
+#ifndef MESSAGE_CENTER_EXIT_CRITICAL
+#define MESSAGE_CENTER_EXIT_CRITICAL() \
+    do {                               \
+    } while (0)
+#endif
 
 /* Exported functions prototypes ---------------------------------------------*/
 

@@ -107,19 +107,17 @@ typedef struct key_base_context key_base_context_t;
  */
 struct key_base_context {
     key_base_config_t config; /**< 配置参数 */
+    clist_head_t list_node; /**< 链表节点（挂载到全局 key 链表） */
 
     key_base_batter_state_t batter_event; /**< 连击状态机状态 */
     key_base_event_t key_event; /**< 当前按键事件 */
     key_base_event_t last_key_event; /**< 上次按键事件 */
-
     uint8_t pin_state; /**< 当前引脚状态 (KEY_BASE_PIN_STATE_xxx) */
     uint8_t last_pin_state; /**< 上次引脚状态 */
     bool long_hold_state; /**< 长按保持状态 */
-
     uint8_t batter_counts; /**< 按键点击计数 */
     uint8_t press_debounce_count; /**< 按键按下消抖计数 */
     uint8_t release_debounce_count; /**< 按键释放消抖计数 */
-
     uint32_t timer; /**< 当前时间戳 */
     uint32_t last_timer; /**< 上次时间戳 */
     uint32_t release_time; /**< 按键释放时间戳 */
@@ -127,10 +125,8 @@ struct key_base_context {
     uint32_t press_start_time; /**< 按键按下时的绝对时间戳 */
     uint32_t diff_timer; /**< 时间差值 */
     uint32_t post_long_release_time; /**< 长按释放时间戳，用于冷却屏蔽 */
-
     bool initialized; /**< 初始化标志 */
     bool is_static; /**< 标记是否为静态注册 */
-    clist_head_t list_node; /**< 链表节点（挂载到全局 key 链表） */
 };
 
 /* Exported constants --------------------------------------------------------*/

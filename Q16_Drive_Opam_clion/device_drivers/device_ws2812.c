@@ -75,7 +75,6 @@ void device_ws2812_init(void)
         .name = "ws2812",
         .data_len = sizeof(device_ws2812_buffer_t),
         .queue_size = 4,
-        .max_topics = MESSAGE_CENTER_MAX_TOPICS,
         .max_topic_name_len = MESSAGE_CENTER_MAX_TOPIC_NAME_LEN,
     };
 

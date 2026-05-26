@@ -14,77 +14,48 @@
 #include "device_ws2812.h"
 #include "key_menu.h"
 
-static daemon_context_t* daemon_warning;
-static led_handle_t* led_instance;
+void warning_Init(void) { }
 
-#define LED_NAME_TAG "LED0"
+void warning_task(void)
+{
+    static uint32_t error_code, last_error_code;
+    error_code = 0;
+    uint8_t err_bits = 0;
 
-/**
- * @brief 初始化警告系统，设置守护进程指针
- *
- * 该函数调用DaemonGetMasterPointer()获取主守护进程的指针，并将其赋值给全局变量daemon_warning。
- * 这是警告系统初始化的一部分，确保后续操作能够访问到正确的守护进程实例。
- *
- * @param None
- * @return None
- */
-void warning_Init(void) {
-  daemon_warning = NULL;
-  led_instance = NULL;
-}
-
-/**
- * @brief  执行警告任务，检查守护进程状态并更新LED显示
- *
- * 该函数首先初始化错误代码和优先级，并在首次调用时获取LED实例。
- * 然后遍历所有守护进程列表，查找离线的守护进程，并根据其优先级和错误代码更新当前的错误代码和优先级。
- * 如果功能键的状态发生变化，则重置错误代码。如果错误代码发生变化，根据是否有错误更新LED的闪烁模式和间隔。
- *
- * @param  None
- * @return None
- */
-void warning_task(void) {
-  static uint32_t error_code, last_error_code;
-  error_code = 0;
-  uint8_t err_bits = 0;
-  // 发现错误
-  if (daemon_warning == NULL) {
-    daemon_warning = daemon_get_master_pointer();
-  }
-
-  if (led_instance == NULL) {
-    led_instance = led_get_instance(LED_NAME_TAG);
-  }
-
-  const daemon_context_t* this = daemon_warning;
-  while (this->next) {
-    this = this->next;
-    if (!daemon_is_online(this)) {
-      if (err_bits > 31) {
-        err_bits = 31;
-      }
-      error_code |= (1 << err_bits);
+    clist_head_t* head = daemon_get_head();
+    if (head == NULL) {
+        return;
     }
-    err_bits++;
-  }
 
-  static key_fsm_state_e last_state = KEY_FSM_STATE_NONE;
-  if (last_state != key_func_get_state()) {
-    last_state = key_func_get_state();
-    if (last_state == KEY_FSM_STATE_NONE) {
-      goto reset_code;
-    }
-  }
-
-  if (last_error_code != error_code) {
-    // 有错误.
-    last_error_code = error_code;
-  reset_code:
-    if (last_error_code) {
-      device_ws2812_mode_set(DEVICE_WS2812_MODE_ERROR_CODE, last_error_code);
-    } else  // 没有错误.
+    daemon_context_t* ctx;
+    clist_for_each_entry(ctx, head, node)
     {
-      device_ws2812_mode_set(DEVICE_WS2812_MODE_FLOW, 0);
+        if (!daemon_is_online(ctx)) {
+            if (err_bits > 31) {
+                err_bits = 31;
+            }
+            error_code |= (1 << err_bits);
+        }
+        err_bits++;
     }
-  }
+
+    static key_fsm_state_e last_state = KEY_FSM_STATE_NONE;
+    if (last_state != key_func_get_state()) {
+        last_state = key_func_get_state();
+        if (last_state == KEY_FSM_STATE_NONE) {
+            goto reset_code;
+        }
+    }
+
+    if (last_error_code != error_code) {
+        // 有错误.
+        last_error_code = error_code;
+    reset_code:
+        if (last_error_code) {
+            device_ws2812_mode_set(DEVICE_WS2812_MODE_ERROR_CODE, last_error_code);
+        } else // 没有错误.
+        {
+            device_ws2812_mode_set(DEVICE_WS2812_MODE_FLOW, 0);
+        }
+    }
 }

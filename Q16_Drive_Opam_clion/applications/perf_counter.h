@@ -40,9 +40,8 @@ extern "C" {
 
 #define __PERF_COUNTER_VER_STR__ ""
 
-#define __PER_COUNTER_VER__                                                    \
-  (__PERF_COUNTER_VER_MAJOR__ * 10000ul + __PERF_COUNTER_VER_MINOR__ * 100ul + \
-   __PERF_COUNTER_VER_REVISE__)
+#define __PER_COUNTER_VER__ \
+    (__PERF_COUNTER_VER_MAJOR__ * 10000ul + __PERF_COUNTER_VER_MINOR__ * 100ul + __PERF_COUNTER_VER_REVISE__)
 
 /*! @} */
 
@@ -70,9 +69,7 @@ extern "C" {
 #define __IS_COMPILER_ARM_COMPILER_6__ 1
 #endif
 #undef __IS_COMPILER_ARM_COMPILER__
-#if defined(__IS_COMPILER_ARM_COMPILER_5__) && \
-        __IS_COMPILER_ARM_COMPILER_5__ ||      \
-    defined(__IS_COMPILER_ARM_COMPILER_6__) && __IS_COMPILER_ARM_COMPILER_6__
+#if defined(__IS_COMPILER_ARM_COMPILER_5__) && __IS_COMPILER_ARM_COMPILER_5__ || defined(__IS_COMPILER_ARM_COMPILER_6__) && __IS_COMPILER_ARM_COMPILER_6__
 #define __IS_COMPILER_ARM_COMPILER__ 1
 #endif
 
@@ -84,9 +81,7 @@ extern "C" {
 
 // for gcc
 #undef __IS_COMPILER_GCC__
-#if defined(__GNUC__) &&                       \
-    !(defined(__IS_COMPILER_ARM_COMPILER__) || \
-      defined(__IS_COMPILER_LLVM__) || defined(__IS_COMPILER_IAR__))
+#if defined(__GNUC__) && !(defined(__IS_COMPILER_ARM_COMPILER__) || defined(__IS_COMPILER_LLVM__) || defined(__IS_COMPILER_IAR__))
 #define __IS_COMPILER_GCC__ 1
 #endif
 
@@ -120,14 +115,14 @@ extern "C" {
 
 #ifndef __PLOOC_VA_NUM_ARGS_IMPL
 #define __PLOOC_VA_NUM_ARGS_IMPL(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, \
-                                 _11, _12, _13, _14, _15, _16, __N, ...)      \
-  __N
+    _11, _12, _13, _14, _15, _16, __N, ...)                                   \
+    __N
 #endif
 
 #ifndef __PLOOC_VA_NUM_ARGS
-#define __PLOOC_VA_NUM_ARGS(...)                                               \
-  __PLOOC_VA_NUM_ARGS_IMPL(0, ##__VA_ARGS__, 16, 15, 14, 13, 12, 11, 10, 9, 8, \
-                           7, 6, 5, 4, 3, 2, 1, 0)
+#define __PLOOC_VA_NUM_ARGS(...)                                                 \
+    __PLOOC_VA_NUM_ARGS_IMPL(0, ##__VA_ARGS__, 16, 15, 14, 13, 12, 11, 10, 9, 8, \
+        7, 6, 5, 4, 3, 2, 1, 0)
 #endif
 
 #ifndef UNUSED_PARAM
@@ -163,11 +158,11 @@ extern "C" {
 #define __CONNECT5(__A, __B, __C, __D, __E) __A##__B##__C##__D##__E
 #define __CONNECT6(__A, __B, __C, __D, __E, __F) __A##__B##__C##__D##__E##__F
 #define __CONNECT7(__A, __B, __C, __D, __E, __F, __G) \
-  __A##__B##__C##__D##__E##__F##__G
+    __A##__B##__C##__D##__E##__F##__G
 #define __CONNECT8(__A, __B, __C, __D, __E, __F, __G, __H) \
-  __A##__B##__C##__D##__E##__F##__G##__H
+    __A##__B##__C##__D##__E##__F##__G##__H
 #define __CONNECT9(__A, __B, __C, __D, __E, __F, __G, __H, __I) \
-  __A##__B##__C##__D##__E##__F##__G##__H##__I
+    __A##__B##__C##__D##__E##__F##__G##__H##__I
 
 #define ALT_CONNECT2(__A, __B) __CONNECT2(__A, __B)
 #define CONNECT2(__A, __B) __CONNECT2(__A, __B)
@@ -175,16 +170,16 @@ extern "C" {
 #define CONNECT4(__A, __B, __C, __D) __CONNECT4(__A, __B, __C, __D)
 #define CONNECT5(__A, __B, __C, __D, __E) __CONNECT5(__A, __B, __C, __D, __E)
 #define CONNECT6(__A, __B, __C, __D, __E, __F) \
-  __CONNECT6(__A, __B, __C, __D, __E, __F)
+    __CONNECT6(__A, __B, __C, __D, __E, __F)
 #define CONNECT7(__A, __B, __C, __D, __E, __F, __G) \
-  __CONNECT7(__A, __B, __C, __D, __E, __F, __G)
+    __CONNECT7(__A, __B, __C, __D, __E, __F, __G)
 #define CONNECT8(__A, __B, __C, __D, __E, __F, __G, __H) \
-  __CONNECT8(__A, __B, __C, __D, __E, __F, __G, __H)
+    __CONNECT8(__A, __B, __C, __D, __E, __F, __G, __H)
 #define CONNECT9(__A, __B, __C, __D, __E, __F, __G, __H, __I) \
-  __CONNECT9(__A, __B, __C, __D, __E, __F, __G, __H, __I)
+    __CONNECT9(__A, __B, __C, __D, __E, __F, __G, __H, __I)
 
 #define CONNECT(...) \
-  ALT_CONNECT2(CONNECT, __PLOOC_VA_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
+    ALT_CONNECT2(CONNECT, __PLOOC_VA_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
 
 #undef __using1
 #undef __using2
@@ -192,28 +187,28 @@ extern "C" {
 #undef __using4
 #undef using
 
-#define __using1(__declare)                                   \
-  for (__declare, *CONNECT3(__using_, __LINE__, _ptr) = NULL; \
-       CONNECT3(__using_, __LINE__, _ptr)++ == NULL;)
+#define __using1(__declare)                                     \
+    for (__declare, *CONNECT3(__using_, __LINE__, _ptr) = NULL; \
+        CONNECT3(__using_, __LINE__, _ptr)++ == NULL;)
 
-#define __using2(__declare, __on_leave_expr)                  \
-  for (__declare, *CONNECT3(__using_, __LINE__, _ptr) = NULL; \
-       CONNECT3(__using_, __LINE__, _ptr)++ == NULL; (__on_leave_expr))
+#define __using2(__declare, __on_leave_expr)                    \
+    for (__declare, *CONNECT3(__using_, __LINE__, _ptr) = NULL; \
+        CONNECT3(__using_, __LINE__, _ptr)++ == NULL; (__on_leave_expr))
 
-#define __using3(__declare, __on_enter_expr, __on_leave_expr)                \
-  for (__declare, *CONNECT3(__using_, __LINE__, _ptr) = NULL;                \
-       CONNECT3(__using_, __LINE__, _ptr)++ == NULL ? ((__on_enter_expr), 1) \
-                                                    : 0;                     \
-       (__on_leave_expr))
+#define __using3(__declare, __on_enter_expr, __on_leave_expr)                 \
+    for (__declare, *CONNECT3(__using_, __LINE__, _ptr) = NULL;               \
+        CONNECT3(__using_, __LINE__, _ptr)++ == NULL ? ((__on_enter_expr), 1) \
+                                                     : 0;                     \
+        (__on_leave_expr))
 
-#define __using4(__dcl1, __dcl2, __on_enter_expr, __on_leave_expr)           \
-  for (__dcl1, __dcl2, *CONNECT3(__using_, __LINE__, _ptr) = NULL;           \
-       CONNECT3(__using_, __LINE__, _ptr)++ == NULL ? ((__on_enter_expr), 1) \
-                                                    : 0;                     \
-       (__on_leave_expr))
+#define __using4(__dcl1, __dcl2, __on_enter_expr, __on_leave_expr)            \
+    for (__dcl1, __dcl2, *CONNECT3(__using_, __LINE__, _ptr) = NULL;          \
+        CONNECT3(__using_, __LINE__, _ptr)++ == NULL ? ((__on_enter_expr), 1) \
+                                                     : 0;                     \
+        (__on_leave_expr))
 
 #define using(...) \
-  CONNECT2(__using, __PLOOC_VA_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
+    CONNECT2(__using, __PLOOC_VA_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
 
 #undef __with2
 #undef __with3
@@ -221,10 +216,10 @@ extern "C" {
 
 #define __with2(__type, __addr) using(__type * _ = (__addr))
 #define __with3(__type, __addr, __item) \
-  using(__type * _ = (__addr), *__item = _, _ = _, _ = _)
+    using(__type * _ = (__addr), *__item = _, _ = _, _ = _)
 
 #define with(...) \
-  CONNECT2(__with, __PLOOC_VA_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
+    CONNECT2(__with, __PLOOC_VA_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
 
 #undef _
 
@@ -238,36 +233,35 @@ extern "C" {
 #undef foreach3
 #undef foreach
 
-#define foreach2(__type, __array)                                          \
-  using(__type * _ =                                                       \
-            __array) for (uint_fast32_t SAFE_NAME(count) = dimof(__array); \
-                          SAFE_NAME(count) > 0; _++, SAFE_NAME(count)--)
+#define foreach2(__type, __array)                                                     \
+    using(__type * _ = __array) for (uint_fast32_t SAFE_NAME(count) = dimof(__array); \
+        SAFE_NAME(count) > 0; _++, SAFE_NAME(count)--)
 
 #define foreach3(__type, __array, __item)                            \
-  using(__type * _ = __array, *__item = _, _ = _,                    \
+    using(__type * _ = __array, *__item = _, _ = _,                  \
         _ = _) for (uint_fast32_t SAFE_NAME(count) = dimof(__array); \
-                    SAFE_NAME(count) > 0; _++, __item = _, SAFE_NAME(count)--)
+        SAFE_NAME(count) > 0; _++, __item = _, SAFE_NAME(count)--)
 
 #define foreach(...) \
-  CONNECT2(foreach, __PLOOC_VA_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
+    CONNECT2(foreach, __PLOOC_VA_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
 
 #ifndef safe_atom_code
-#define safe_atom_code()                               \
-  using(uint32_t SAFE_NAME(temp) = ({                  \
-          uint32_t SAFE_NAME(temp2) = __get_PRIMASK(); \
-          __disable_irq();                             \
-          SAFE_NAME(temp2);                            \
-        }),                                            \
+#define safe_atom_code()                             \
+    using(uint32_t SAFE_NAME(temp) = ({              \
+        uint32_t SAFE_NAME(temp2) = __get_PRIMASK(); \
+        __disable_irq();                             \
+        SAFE_NAME(temp2);                            \
+    }),                                              \
         __set_PRIMASK(SAFE_NAME(temp)))
 #endif
 
 #ifndef __IRQ_SAFE
-#define __IRQ_SAFE                                     \
-  using(uint32_t SAFE_NAME(temp) = ({                  \
-          uint32_t SAFE_NAME(temp2) = __get_PRIMASK(); \
-          __disable_irq();                             \
-          SAFE_NAME(temp2);                            \
-        }),                                            \
+#define __IRQ_SAFE                                   \
+    using(uint32_t SAFE_NAME(temp) = ({              \
+        uint32_t SAFE_NAME(temp2) = __get_PRIMASK(); \
+        __disable_irq();                             \
+        SAFE_NAME(temp2);                            \
+    }),                                              \
         __set_PRIMASK(SAFE_NAME(temp)))
 #endif
 
@@ -283,8 +277,7 @@ __super_loop_monitor__()
 #if defined(__PERF_COUNTER_CFG_USE_SYSTICK_WRAPPER__)
 #if defined(__IS_COMPILER_ARM_COMPILER_5__) && __IS_COMPILER_ARM_COMPILER_5__
 #pragma import(__ensure_systick_wrapper)
-#elif (defined(__GNUC__) || defined(__clang__)) && \
-    (!defined(__IS_COMPILER_IAR__) || !__IS_COMPILER_IAR__)
+#elif (defined(__GNUC__) || defined(__clang__)) && (!defined(__IS_COMPILER_IAR__) || !__IS_COMPILER_IAR__)
 __asm(".global __ensure_systick_wrapper\n\t");
 #endif
 #endif
@@ -310,21 +303,21 @@ __asm(".global __ensure_systick_wrapper\n\t");
         }
     \endcode
  */
-#define __cycleof__(__STR, ...)                                             \
-  using(int64_t _ = get_system_ticks(), __cycle_count__ = _, _ = _, {       \
-    _ = get_system_ticks() - _ - g_nOffset;                                 \
-    __cycle_count__ = _;                                                    \
-    if (__PLOOC_VA_NUM_ARGS(__VA_ARGS__) == 0) {                            \
-      __perf_counter_printf__("\r\n");                                      \
-      __perf_counter_printf__("-[Cycle Report]");                           \
-      __perf_counter_printf__(                                              \
-          "--------------------------------------------\r\n");              \
-      __perf_counter_printf__(__STR " total cycle count: %ld [%016lx]\r\n", \
-                              (long)_, (long)_);                            \
-    } else {                                                                \
-      __VA_ARGS__                                                           \
-    };                                                                      \
-  })
+#define __cycleof__(__STR, ...)                                                   \
+    using(int64_t _ = get_system_ticks(), __cycle_count__ = _, _ = _, {           \
+        _ = get_system_ticks() - _ - g_nOffset;                                   \
+        __cycle_count__ = _;                                                      \
+        if (__PLOOC_VA_NUM_ARGS(__VA_ARGS__) == 0) {                              \
+            __perf_counter_printf__("\r\n");                                      \
+            __perf_counter_printf__("-[Cycle Report]");                           \
+            __perf_counter_printf__(                                              \
+                "--------------------------------------------\r\n");              \
+            __perf_counter_printf__(__STR " total cycle count: %ld [%016lx]\r\n", \
+                (long)_, (long)_);                                                \
+        } else {                                                                  \
+            __VA_ARGS__                                                           \
+        };                                                                        \
+    })
 
 /*!
  * \brief measure the cpu usage for a given code segment and print out the
@@ -343,33 +336,31 @@ __asm(".global __ensure_systick_wrapper\n\t");
         }
     \endcode
  */
-#define __cpu_time__(__CNT, ...)                                       \
-  static int64_t SAFE_NAME(s_lTimestamp) = 0, SAFE_NAME(s_lTotal) = 0; \
-  static uint32_t s_wLoopCounter = (__CNT);                            \
-  using(float __usage__ = 0, ({                                        \
-          if (0 == s_wLoopCounter) {                                   \
-            __usage__ = (float)((double)SAFE_NAME(s_lTotal) /          \
-                                (double)(get_system_ticks() -          \
-                                         SAFE_NAME(s_lTimestamp)));    \
-            __usage__ *= 100.0f;                                       \
-            SAFE_NAME(s_lTimestamp) = 0;                               \
-            SAFE_NAME(s_lTotal) = 0;                                   \
-            if (__PLOOC_VA_NUM_ARGS(__VA_ARGS__) == 0) {               \
-              __perf_counter_printf__("CPU Usage %3.2f%%\r\n",         \
-                                      (double)__usage__);              \
-            } else {                                                   \
-              __VA_ARGS__                                              \
-            }                                                          \
-          }                                                            \
-          if (0 == SAFE_NAME(s_lTimestamp)) {                          \
-            SAFE_NAME(s_lTimestamp) = get_system_ticks();              \
-            s_wLoopCounter = (__CNT);                                  \
-          }                                                            \
-          start_task_cycle_counter();                                  \
-        }),                                                            \
-        ({                                                             \
-          SAFE_NAME(s_lTotal) += stop_task_cycle_counter();            \
-          s_wLoopCounter--;                                            \
+#define __cpu_time__(__CNT, ...)                                                                                       \
+    static int64_t SAFE_NAME(s_lTimestamp) = 0, SAFE_NAME(s_lTotal) = 0;                                               \
+    static uint32_t s_wLoopCounter = (__CNT);                                                                          \
+    using(float __usage__ = 0, ({                                                                                      \
+        if (0 == s_wLoopCounter) {                                                                                     \
+            __usage__ = (float)((double)SAFE_NAME(s_lTotal) / (double)(get_system_ticks() - SAFE_NAME(s_lTimestamp))); \
+            __usage__ *= 100.0f;                                                                                       \
+            SAFE_NAME(s_lTimestamp) = 0;                                                                               \
+            SAFE_NAME(s_lTotal) = 0;                                                                                   \
+            if (__PLOOC_VA_NUM_ARGS(__VA_ARGS__) == 0) {                                                               \
+                __perf_counter_printf__("CPU Usage %3.2f%%\r\n",                                                       \
+                    (double)__usage__);                                                                                \
+            } else {                                                                                                   \
+                __VA_ARGS__                                                                                            \
+            }                                                                                                          \
+        }                                                                                                              \
+        if (0 == SAFE_NAME(s_lTimestamp)) {                                                                            \
+            SAFE_NAME(s_lTimestamp) = get_system_ticks();                                                              \
+            s_wLoopCounter = (__CNT);                                                                                  \
+        }                                                                                                              \
+        start_task_cycle_counter();                                                                                    \
+    }),                                                                                                                \
+        ({                                                                                                             \
+            SAFE_NAME(s_lTotal) += stop_task_cycle_counter();                                                          \
+            s_wLoopCounter--;                                                                                          \
         }))
 
 /*!
@@ -392,13 +383,13 @@ __asm(".global __ensure_systick_wrapper\n\t");
  *
  * \return bool whether it is timeout
  */
-#define perfc_is_time_out_ms3(__ms, __timestamp_ptr, __auto_reload)         \
-  ({                                                                        \
-    static int64_t SAFE_NAME(s_lTimestamp);                                 \
-    (void)SAFE_NAME(s_lTimestamp);                                          \
-    __perfc_is_time_out(perfc_convert_ms_to_ticks(__ms), (__timestamp_ptr), \
-                        (__auto_reload));                                   \
-  })
+#define perfc_is_time_out_ms3(__ms, __timestamp_ptr, __auto_reload)             \
+    ({                                                                          \
+        static int64_t SAFE_NAME(s_lTimestamp);                                 \
+        (void)SAFE_NAME(s_lTimestamp);                                          \
+        __perfc_is_time_out(perfc_convert_ms_to_ticks(__ms), (__timestamp_ptr), \
+            (__auto_reload));                                                   \
+    })
 
 /*!
  * \brief set an alarm with given period in ms and check the status
@@ -409,7 +400,7 @@ __asm(".global __ensure_systick_wrapper\n\t");
  * \return bool whether it is timeout
  */
 #define perfc_is_time_out_ms2(__ms, __timestamp_ptr) \
-  perfc_is_time_out_ms3((__ms), (__timestamp_ptr), true)
+    perfc_is_time_out_ms3((__ms), (__timestamp_ptr), true)
 
 /*!
  * \brief set an alarm with given period in ms and check the status
@@ -420,7 +411,7 @@ __asm(".global __ensure_systick_wrapper\n\t");
  * \return bool whether it is timeout
  */
 #define perfc_is_time_out_ms1(__ms) \
-  perfc_is_time_out_ms3((__ms), &SAFE_NAME(s_lTimestamp), true)
+    perfc_is_time_out_ms3((__ms), &SAFE_NAME(s_lTimestamp), true)
 
 /*!
  * \brief set an alarm with given period in ms and check the status
@@ -432,9 +423,9 @@ __asm(".global __ensure_systick_wrapper\n\t");
  *
  * \return bool whether it is timeout
  */
-#define perfc_is_time_out_ms(...)                                  \
-  CONNECT2(perfc_is_time_out_ms, __PLOOC_VA_NUM_ARGS(__VA_ARGS__)) \
-  (__VA_ARGS__)
+#define perfc_is_time_out_ms(...)                                    \
+    CONNECT2(perfc_is_time_out_ms, __PLOOC_VA_NUM_ARGS(__VA_ARGS__)) \
+    (__VA_ARGS__)
 
 /*!
  * \brief set an alarm with given period in us and check the status
@@ -445,13 +436,13 @@ __asm(".global __ensure_systick_wrapper\n\t");
  *
  * \return bool whether it is timeout
  */
-#define perfc_is_time_out_us3(__us, __timestamp_ptr, __auto_reload)         \
-  ({                                                                        \
-    static int64_t SAFE_NAME(s_lTimestamp);                                 \
-    (void)SAFE_NAME(s_lTimestamp);                                          \
-    __perfc_is_time_out(perfc_convert_us_to_ticks(__us), (__timestamp_ptr), \
-                        (__auto_reload));                                   \
-  })
+#define perfc_is_time_out_us3(__us, __timestamp_ptr, __auto_reload)             \
+    ({                                                                          \
+        static int64_t SAFE_NAME(s_lTimestamp);                                 \
+        (void)SAFE_NAME(s_lTimestamp);                                          \
+        __perfc_is_time_out(perfc_convert_us_to_ticks(__us), (__timestamp_ptr), \
+            (__auto_reload));                                                   \
+    })
 
 /*!
  * \brief set an alarm with given period in us and check the status
@@ -462,7 +453,7 @@ __asm(".global __ensure_systick_wrapper\n\t");
  * \return bool whether it is timeout
  */
 #define perfc_is_time_out_us2(__us, __timestamp_ptr) \
-  perfc_is_time_out_us3((__us), (__timestamp_ptr), true)
+    perfc_is_time_out_us3((__us), (__timestamp_ptr), true)
 
 /*!
  * \brief set an alarm with given period in us and check the status
@@ -473,7 +464,7 @@ __asm(".global __ensure_systick_wrapper\n\t");
  * \return bool whether it is timeout
  */
 #define perfc_is_time_out_us1(__us) \
-  perfc_is_time_out_us3((__us), &SAFE_NAME(s_lTimestamp), true)
+    perfc_is_time_out_us3((__us), &SAFE_NAME(s_lTimestamp), true)
 
 /*!
  * \brief set an alarm with given period in us and check the status
@@ -485,9 +476,9 @@ __asm(".global __ensure_systick_wrapper\n\t");
  *
  * \return bool whether it is timeout
  */
-#define perfc_is_time_out_us(...)                                  \
-  CONNECT2(perfc_is_time_out_us, __PLOOC_VA_NUM_ARGS(__VA_ARGS__)) \
-  (__VA_ARGS__)
+#define perfc_is_time_out_us(...)                                    \
+    CONNECT2(perfc_is_time_out_us, __PLOOC_VA_NUM_ARGS(__VA_ARGS__)) \
+    (__VA_ARGS__)
 
 /*! @} */
 
@@ -497,71 +488,62 @@ __asm(".global __ensure_systick_wrapper\n\t");
  * \addtogroup gRTOS 2 RTOS Support
  * @{
  */
-#define __super_loop_monitor__(__N, ...)                                                                                                      \
-  using(struct                                                                                                                                \
-        {                                                                                                                                     \
-          int64_t lStart;                                                                                                                     \
-          int64_t lTaskUsedCycles;                                                                                                            \
-          int64_t lTimeElapsed;                                                                                                               \
-        } __cpu_usage__ = {.lStart = get_system_ticks()}) using(int SAFE_NAME(cnt) = (__N)) for (start_task_cycle_counter();                  \
-                                                                                                 ;                                            \
-                                                                                                 (                                            \
-                                                                                                     {                                        \
-                                                                                                       if (!(--SAFE_NAME(                     \
-                                                                                                               cnt))) {                       \
-                                                                                                         __cpu_usage__                        \
-                                                                                                             .lTimeElapsed =                  \
-                                                                                                             get_system_ticks() -             \
-                                                                                                             __cpu_usage__                    \
-                                                                                                                 .lStart -                    \
-                                                                                                             g_nOffset;                       \
-                                                                                                         __cpu_usage__                        \
-                                                                                                             .lTaskUsedCycles =               \
-                                                                                                             stop_task_cycle_counter();       \
-                                                                                                                                              \
-                                                                                                         if (__PLOOC_VA_NUM_ARGS(             \
-                                                                                                                 __VA_ARGS__) ==              \
-                                                                                                             0) {                             \
-                                                                                                           __perf_counter_printf__(           \
-                                                                                                               "%s CPU "                      \
-                                                                                                               "Usage "                       \
-                                                                                                               "%2.3f%%"                      \
-                                                                                                               "\r\n",                        \
-                                                                                                               __func__,                      \
-                                                                                                               (float)((double)__cpu_usage__  \
-                                                                                                                           .lTaskUsedCycles * \
-                                                                                                                       100.0 /                \
-                                                                                                                       (double)__cpu_usage__  \
-                                                                                                                           .lTimeElapsed));   \
-                                                                                                         } else {                             \
-                                                                                                           __VA_ARGS__;                       \
-                                                                                                         }                                    \
-                                                                                                         SAFE_NAME(                           \
-                                                                                                             cnt) =                           \
-                                                                                                             (__N);                           \
-                                                                                                         __cpu_usage__                        \
-                                                                                                             .lStart =                        \
-                                                                                                             get_system_ticks();              \
-                                                                                                         start_task_cycle_counter();          \
-                                                                                                       };                                     \
-                                                                                                     }))
+#define __super_loop_monitor__(__N, ...)                                                                                       \
+    using(struct                                                                                                               \
+        {                                                                                                                      \
+            int64_t lStart;                                                                                                    \
+            int64_t lTaskUsedCycles;                                                                                           \
+            int64_t lTimeElapsed;                                                                                              \
+        } __cpu_usage__ = { .lStart = get_system_ticks() }) using(int SAFE_NAME(cnt) = (__N)) for (start_task_cycle_counter(); \
+        ;                                                                                                                      \
+        (                                                                                                                      \
+            {                                                                                                                  \
+                if (!(--SAFE_NAME(                                                                                             \
+                        cnt))) {                                                                                               \
+                    __cpu_usage__                                                                                              \
+                        .lTimeElapsed = get_system_ticks() - __cpu_usage__.lStart - g_nOffset;                                 \
+                    __cpu_usage__                                                                                              \
+                        .lTaskUsedCycles = stop_task_cycle_counter();                                                          \
+                                                                                                                               \
+                    if (__PLOOC_VA_NUM_ARGS(                                                                                   \
+                            __VA_ARGS__)                                                                                       \
+                        == 0) {                                                                                                \
+                        __perf_counter_printf__(                                                                               \
+                            "%s CPU "                                                                                          \
+                            "Usage "                                                                                           \
+                            "%2.3f%%"                                                                                          \
+                            "\r\n",                                                                                            \
+                            __func__,                                                                                          \
+                            (float)((double)__cpu_usage__                                                                      \
+                                        .lTaskUsedCycles                                                                       \
+                                * 100.0 / (double)__cpu_usage__.lTimeElapsed));                                                \
+                    } else {                                                                                                   \
+                        __VA_ARGS__;                                                                                           \
+                    }                                                                                                          \
+                    SAFE_NAME(                                                                                                 \
+                        cnt) = (__N);                                                                                          \
+                    __cpu_usage__                                                                                              \
+                        .lStart = get_system_ticks();                                                                          \
+                    start_task_cycle_counter();                                                                                \
+                };                                                                                                             \
+            }))
 
 /*============================ TYPES =========================================*/
 typedef struct {
-  int64_t lStart;
-  int64_t lUsedTotal;
-  int32_t nUsedRecent;
-  uint16_t hwActiveCount;
-  uint16_t : 15;
-  uint16_t bEnabled : 1;
+    int64_t lStart;
+    int64_t lUsedTotal;
+    int32_t nUsedRecent;
+    uint16_t hwActiveCount;
+    uint16_t : 15;
+    uint16_t bEnabled : 1;
 } task_cycle_info_t;
 
 typedef struct task_cycle_info_agent_t task_cycle_info_agent_t;
 
 struct task_cycle_info_agent_t {
-  task_cycle_info_t* ptInfo;
-  task_cycle_info_agent_t* ptNext;
-  task_cycle_info_agent_t* ptPrev;
+    task_cycle_info_t* ptInfo;
+    task_cycle_info_agent_t* ptNext;
+    task_cycle_info_agent_t* ptPrev;
 };
 
 /*! @} */
@@ -623,10 +605,11 @@ void start_cycle_counter(void) { g_lLastTimeStamp = get_system_ticks(); }
  * \return int32_t the elapsed cycle count
  */
 __STATIC_INLINE
-int64_t stop_cycle_counter(void) {
-  int64_t lTemp = (get_system_ticks() - g_lLastTimeStamp);
+int64_t stop_cycle_counter(void)
+{
+    int64_t lTemp = (get_system_ticks() - g_lLastTimeStamp);
 
-  return lTemp - g_nOffset;
+    return lTemp - g_nOffset;
 }
 
 /*! @} */
@@ -703,7 +686,7 @@ extern int64_t perfc_convert_us_to_ticks(uint32_t wUS);
  * \return bool whether it is timeout or not
  */
 extern bool __perfc_is_time_out(int64_t lPeriod, int64_t* plTimestamp,
-                                bool bAutoReload);
+    bool bAutoReload);
 
 /*! @} */
 
@@ -762,7 +745,7 @@ extern bool disable_task_cycle_info(task_cycle_info_t* ptInfo);
  * \param[in] bEnabledStatus the previous status
  */
 extern void resume_task_cycle_info(task_cycle_info_t* ptInfo,
-                                   bool bEnabledStatus);
+    bool bEnabledStatus);
 
 /*!
  * \brief register a global virtual cycle counter agent to the current task
@@ -809,10 +792,10 @@ __attribute__((noinline)) extern int64_t __stop_task_cycle_counter(
     task_cycle_info_t* ptInfo);
 
 #define start_task_cycle_counter(...) \
-  __start_task_cycle_counter((NULL, ##__VA_ARGS__))
+    __start_task_cycle_counter((NULL, ##__VA_ARGS__))
 
 #define stop_task_cycle_counter(...) \
-  __stop_task_cycle_counter((NULL, ##__VA_ARGS__))
+    __stop_task_cycle_counter((NULL, ##__VA_ARGS__))
 
 #elif !defined(__IMPLEMENT_PERF_COUNTER)
 #define start_task_cycle_counter(...) start_cycle_counter()

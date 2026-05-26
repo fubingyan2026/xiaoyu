@@ -24,12 +24,12 @@ extern "C" {
  */
 typedef enum {
     FSM_LINEAR_HALL_STATE_NONE = 0, /**< 空闲 */
-    FSM_LINEAR_HALL_STATE_FILTER,   /**< 滤波器稳定 */
-    FSM_LINEAR_HALL_STATE_ALIGN,    /**< 电机对齐 */
+    FSM_LINEAR_HALL_STATE_FILTER, /**< 滤波器稳定 */
+    FSM_LINEAR_HALL_STATE_ALIGN, /**< 电机对齐 */
     FSM_LINEAR_HALL_STATE_ROTATION, /**< 旋转采样 */
-    FSM_LINEAR_HALL_STATE_PROCESS,  /**< 参数计算并保存 */
-    FSM_LINEAR_HALL_STATE_DONE,     /**< 校准完成 */
-    FSM_LINEAR_HALL_STATE_COUNT     /**< 状态总数（FSM 哨兵） */
+    FSM_LINEAR_HALL_STATE_PROCESS, /**< 参数计算并保存 */
+    FSM_LINEAR_HALL_STATE_DONE, /**< 校准完成 */
+    FSM_LINEAR_HALL_STATE_COUNT /**< 状态总数（FSM 哨兵） */
 } fsm_linear_hall_state_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

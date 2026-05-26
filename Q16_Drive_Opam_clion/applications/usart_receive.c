@@ -73,7 +73,8 @@ static hal_uart_config_t s_uart1_config = {
         .rx_dma_buffer_size = UART_RX_FIFO_SIZE,
         .rx_idle_timeout = 10U,
         .circular_mode_rx = true,
-    }};
+    }
+};
 
 const daemon_config_t daemon_config_rx = {
     .offline_cb = NULL,
@@ -103,43 +104,44 @@ daemon_context_t* uart1_tx_ctx = NULL;
  * @note ASIL-B | Reentrant: NO | ISR-Safe: NO
  * @note 使用静态FIFO缓冲区,避免动态内存分配
  */
-void uart_it_init(void) {
-  kfifo_init(&s_fifo_usart1_rx, s_uart1_rx_buffer, UART_RX_FIFO_SIZE,
-             &s_uart1_rx_lock);
-  fifo_usart1_rx = &s_fifo_usart1_rx;
+void uart_it_init(void)
+{
+    kfifo_init(&s_fifo_usart1_rx, s_uart1_rx_buffer, UART_RX_FIFO_SIZE,
+        &s_uart1_rx_lock);
+    fifo_usart1_rx = &s_fifo_usart1_rx;
 
-  kfifo_init(&s_fifo_usart1_tx, s_uart1_tx_buffer, UART_TX_FIFO_SIZE,
-             &s_uart1_tx_lock);
-  fifo_usart1_tx = &s_fifo_usart1_tx;
+    kfifo_init(&s_fifo_usart1_tx, s_uart1_tx_buffer, UART_TX_FIFO_SIZE,
+        &s_uart1_tx_lock);
+    fifo_usart1_tx = &s_fifo_usart1_tx;
 
-  uart1_rx_ctx = daemon_register(&daemon_config_rx);
-  uart1_tx_ctx = daemon_register(&daemon_config_tx);
-  if (uart1_rx_ctx == NULL || uart1_tx_ctx == NULL) {
-    return;
-  }
+    uart1_rx_ctx = daemon_register(&daemon_config_rx);
+    uart1_tx_ctx = daemon_register(&daemon_config_tx);
+    if (uart1_rx_ctx == NULL || uart1_tx_ctx == NULL) {
+        return;
+    }
 
-  /* 初始化UART上下文 */
-  if (stm32_uart_init_context(&uart1_ctx) != HAL_UART_OK) {
-    return;
-  }
+    /* 初始化UART上下文 */
+    if (stm32_uart_init_context(&uart1_ctx) != HAL_UART_OK) {
+        return;
+    }
 
-  if (hal_uart_init(&uart1_ctx, &s_uart1_config) != HAL_UART_OK) {
-    return;
-  }
+    if (hal_uart_init(&uart1_ctx, &s_uart1_config) != HAL_UART_OK) {
+        return;
+    }
 
-  if (fifo_usart1_rx != NULL) {
-    (void)hal_uart_receive_dma_to_idle(&uart1_ctx, HAL_UART_INSTANCE_1,
-                                       fifo_usart1_rx->buffer,
-                                       fifo_usart1_rx->size);
-  }
+    if (fifo_usart1_rx != NULL) {
+        (void)hal_uart_receive_dma_to_idle(&uart1_ctx, HAL_UART_INSTANCE_1,
+            fifo_usart1_rx->buffer,
+            fifo_usart1_rx->size);
+    }
 
-  // 初始化协议模块
-  usart_protocol_config_t protocol_cfg = {
-      .name = "s7_uart_protocol",
-      .uart_ctx = &uart1_ctx,
-      .uart_instance = HAL_UART_INSTANCE_1,
-  };
-  (void)usart_protocol_init(&uart1_protocol_ctx, &protocol_cfg);
+    // 初始化协议模块
+    usart_protocol_config_t protocol_cfg = {
+        .name = "s7_uart_protocol",
+        .uart_ctx = &uart1_ctx,
+        .uart_instance = HAL_UART_INSTANCE_1,
+    };
+    (void)usart_protocol_init(&uart1_protocol_ctx, &protocol_cfg);
 }
 
 /**
@@ -147,38 +149,37 @@ void uart_it_init(void) {
  * @note ASIL-B | Reentrant: NO | ISR-Safe: NO
  * @note 须在主循环中周期性调用
  */
-void uart_process_task(void) {
-  static uint8_t rx_data[UART_RX_FIFO_SIZE];
+void uart_process_task(void)
+{
+    static uint8_t rx_data[UART_RX_FIFO_SIZE];
 
-  if (fifo_usart1_rx == NULL) {
-    return;
-  }
+    if (fifo_usart1_rx == NULL) {
+        return;
+    }
 
-  const uint16_t rx_len =
-      kfifo_get(fifo_usart1_rx, rx_data, (uint16_t)sizeof(rx_data));
-  if (rx_len > 0U) {
-    usart_protocol_feed(&uart1_protocol_ctx, rx_data, rx_len);
-  }
-  usart_protocol_stream_task(&uart1_protocol_ctx);
-  usart_protocol_parse_task(&uart1_protocol_ctx);
+    const uint16_t rx_len = kfifo_get(fifo_usart1_rx, rx_data, (uint16_t)sizeof(rx_data));
+    if (rx_len > 0U) {
+        usart_protocol_feed(&uart1_protocol_ctx, rx_data, rx_len);
+    }
+    usart_protocol_stream_task(&uart1_protocol_ctx);
+    usart_protocol_parse_task(&uart1_protocol_ctx);
 
-  daemon_reload(uart1_rx_ctx);
-  daemon_reload(uart1_tx_ctx);
+    daemon_reload(uart1_rx_ctx);
+    daemon_reload(uart1_tx_ctx);
 }
 
 /**
  * @brief UART1空闲中断回调函数
  * @note ASIL-B | Reentrant: NO | ISR-Safe: YES
  */
-void uart1_idle_callback(void) {
-  if (RESET != __HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE)) {
-    (void)__HAL_UART_CLEAR_IDLEFLAG(&huart1);
+void uart1_idle_callback(void)
+{
+    if (RESET != __HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE)) {
+        (void)__HAL_UART_CLEAR_IDLEFLAG(&huart1);
 
-    if ((fifo_usart1_rx != NULL) && (fifo_usart1_rx->size > 0U)) {
-      const uint32_t rx_dataDMALength =
-          (uint32_t)(fifo_usart1_rx->size -
-                     __HAL_DMA_GET_COUNTER(&hdma_usart1_rx));
-      (void)kfifo_move_in(fifo_usart1_rx, rx_dataDMALength);
+        if ((fifo_usart1_rx != NULL) && (fifo_usart1_rx->size > 0U)) {
+            const uint32_t rx_dataDMALength = (uint32_t)(fifo_usart1_rx->size - __HAL_DMA_GET_COUNTER(&hdma_usart1_rx));
+            (void)kfifo_move_in(fifo_usart1_rx, rx_dataDMALength);
+        }
     }
-  }
 }

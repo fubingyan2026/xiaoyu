@@ -1,20 +1,13 @@
 //
 // Created by fubingyan on 25-9-20.
 //
+
 /**
  * @file    led.c
- * @author  fubingyan
- * @version V2.0.0
- * @date    2025-09-20
  * @brief   LED 控制模块实现
- * @attention
- *
- * Copyright (c) 2025 fubingyan.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- *
+ * @note    通过 FSM 管理 ON/OFF/BLINK_CODE 三种工作状态。
+ *          命令通过 kfifo 异步队列传递，支持闪烁参数热更新。
+ *          引脚操作通过 config 回调解耦。
  */
 
 /* Includes ------------------------------------------------------------------*/
@@ -23,23 +16,18 @@
 #include <string.h>
 
 #include "public.h"
-#include "stm32g4xx_hal.h"
 
 /* Private macros ------------------------------------------------------------*/
-#define LED_PRINTF(...) DEBUG_LOGI("led", __VA_ARGS__)
-#define LED_CMD_FIFO_SIZE 8            /* 异步命令队列深度，必须为2的幂 */
-#define LED_BREATH_MAX_RESOLUTION 1000 /* 呼吸灯最大分辨率 */
-#define LED_GAMMA_CORRECTION 2         /* Gamma 校正值 */
+#define LED_CMD_FIFO_SIZE 8 /**< 异步命令队列深度（必须为2的幂） */
 
 /* Private variables ---------------------------------------------------------*/
-static led_handle_t* led_master = NULL;
-static led_get_time_func_t led_get_time = NULL;
-static uint8_t led_system_initialized = 0;
-static uint16_t led_count = 0;
-static hal_gpio_context_t gpio_ctx;
-static hal_tim_pwm_context_t tim_pwm_ctx;
+
+static clist_head_t s_led_head; /**< LED 实例链表头 */
+static led_get_time_cb_t s_led_get_time; /**< 系统时间获取回调 */
+static bool s_led_initialized; /**< 子系统初始化标志 */
 
 /* Private function prototypes -----------------------------------------------*/
+
 static inline uint32_t led_time_diff(uint32_t new_time, uint32_t old_time);
 static inline uint32_t led_get_time_now(void);
 static void led_phys_write(led_handle_t* handle, bool on);
@@ -48,7 +36,6 @@ static fsm_state_t led_fsm_none_handler(fsm_t* ctx);
 static fsm_state_t led_fsm_off_handler(fsm_t* ctx);
 static fsm_state_t led_fsm_on_handler(fsm_t* ctx);
 static fsm_state_t led_fsm_blink_handler(fsm_t* ctx);
-static fsm_state_t led_fsm_breathing_handler(fsm_t* ctx);
 static void led_fsm_on_entry(fsm_t* ctx, fsm_state_t state);
 static void led_fsm_on_exit(fsm_t* ctx, fsm_state_t state);
 static void led_process_cmds(led_handle_t* handle);
@@ -57,676 +44,457 @@ static void led_check_blink_phase_change(led_handle_t* handle);
 /* Private functions ---------------------------------------------------------*/
 
 /**
- * @brief  安全时间差计算
+ * @brief 安全计算32位时间差（处理溢出回绕）
  */
-static inline uint32_t led_time_diff(uint32_t new_time, uint32_t old_time) {
-  return (new_time >= old_time) ? (new_time - old_time)
-                                : (0xFFFFFFFF - old_time + new_time + 1);
+static inline uint32_t led_time_diff(uint32_t new_time, uint32_t old_time)
+{
+    return (new_time >= old_time) ? (new_time - old_time)
+                                  : (0xFFFFFFFF - old_time + new_time + 1);
 }
 
 /**
- * @brief  获取系统时间
+ * @brief 获取系统时间
  */
-static inline uint32_t led_get_time_now(void) {
-  if (led_get_time) return led_get_time();
-  return 0;
+static inline uint32_t led_get_time_now(void)
+{
+    return s_led_get_time ? s_led_get_time() : 0;
 }
 
 /**
- * @brief  物理写电平
+ * @brief 物理写引脚电平
+ * @param handle LED 实例
+ * @param on true=逻辑亮，false=逻辑灭
+ * @note 写之前读取当前状态，检测边沿变化并触发 edge_cb
  */
-static void led_phys_write(led_handle_t* handle, bool on) {
-  hal_gpio_pin_state_t state =
-      on ? handle->config.active_level
-         : (hal_gpio_pin_state_t)!handle->config.active_level;
-  hal_gpio_pin_state_t old_state;
-  hal_gpio_read(&gpio_ctx, handle->config.port, handle->config.pin, &old_state);
+static void led_phys_write(led_handle_t* handle, bool on)
+{
+    bool old_on = handle->config.read_pin();
+    handle->config.write_pin(on);
 
-  hal_gpio_write(&gpio_ctx, handle->config.port, handle->config.pin, state);
-
-  // 检测边沿变化并触发回调
-  if (handle->gpio_edge_cb && old_state != state) {
-    // 检测上升沿或下降沿
-    if ((old_state == HAL_GPIO_PIN_RESET && state == HAL_GPIO_PIN_SET) ||
-        (old_state == HAL_GPIO_PIN_SET && state == HAL_GPIO_PIN_RESET)) {
-      ((led_gpio_edge_callback_t)handle->gpio_edge_cb)(
-          handle, state, handle->callback_user_data);
+    if (handle->edge_cb && old_on != on) {
+        ((led_edge_cb_t)handle->edge_cb)(handle, on, handle->callback_user_data);
     }
-  }
 }
 
 /**
- * @brief  物理读逻辑电平 (返回 true 表示逻辑开启)
+ * @brief 物理读引脚电平
+ * @return true=逻辑亮，false=逻辑灭
  */
-static bool led_phys_read(led_handle_t* handle) {
-  hal_gpio_pin_state_t state;
-  hal_gpio_read(&gpio_ctx, handle->config.port, handle->config.pin, &state);
-  return (state == handle->config.active_level);
+static bool led_phys_read(led_handle_t* handle)
+{
+    return handle->config.read_pin();
+}
+
+/* FSM handlers --------------------------------------------------------------*/
+
+/**
+ * @brief FSM NONE 状态处理：保持空闲
+ */
+static fsm_state_t led_fsm_none_handler(fsm_t* ctx)
+{
+    (void)ctx;
+    return LED_STATE_NONE;
 }
 
 /**
- * @brief  FSM NONE 状态处理器
+ * @brief FSM OFF 状态处理：输出低电平
  */
-static fsm_state_t led_fsm_none_handler(fsm_t* ctx) {
-  (void)ctx;
-  return LED_STATE_NONE;
+static fsm_state_t led_fsm_off_handler(fsm_t* ctx)
+{
+    led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
+    led_phys_write(handle, false);
+    return LED_STATE_OFF;
 }
 
 /**
- * @brief  FSM OFF 状态处理器
+ * @brief FSM ON 状态处理：输出高电平
  */
-static fsm_state_t led_fsm_off_handler(fsm_t* ctx) {
-  led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
-  led_phys_write(handle, false);
-  return LED_STATE_OFF;
+static fsm_state_t led_fsm_on_handler(fsm_t* ctx)
+{
+    led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
+    led_phys_write(handle, true);
+    return LED_STATE_ON;
 }
 
 /**
- * @brief  FSM ON 状态处理器
+ * @brief FSM BLINK_CODE 状态处理：编码闪烁
+ * @note  闪烁由两个阶段循环组成：
+ *        BLINKING — 按 led_blink_cycle_ms 间隔翻转引脚
+ *        INTERVAL — 保持熄灭 led_blink_wait_ms
+ *        当 led_blink_code_counts==0 时无限循环，
+ *        否则达到指定次数后自动切换到 OFF 状态。
  */
-static fsm_state_t led_fsm_on_handler(fsm_t* ctx) {
-  led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
-  led_phys_write(handle, true);
-  return LED_STATE_ON;
-}
+static fsm_state_t led_fsm_blink_handler(fsm_t* ctx)
+{
+    led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
+    uint32_t now = led_get_time_now();
 
-/**
- * @brief  FSM BLINK 状态处理器
- */
-static fsm_state_t led_fsm_blink_handler(fsm_t* ctx) {
-  led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
-  uint32_t now = led_get_time_now();
-
-  if (handle->blink_code_phase == LED_BLINK_PHASE_BLINKING) {
-    if (led_time_diff(now, handle->last_toggle_time) >=
-        handle->current_cmd.led_blink_cycle_ms) {
-      handle->last_toggle_time = now;
-      bool is_on = led_phys_read(handle);
-      led_phys_write(handle, !is_on);
-      if (!led_phys_read(handle)) {
-        handle->current_led_blink_code_counts++;
-        // 当 counts=0 时，每次闪烁后进入间隔；或者达到指定次数后进入间隔
-        if (handle->current_cmd.led_blink_code_counts == 0 ||
-            handle->current_led_blink_code_counts >=
-                handle->current_cmd.led_blink_code_counts) {
-          handle->blink_code_phase_last = handle->blink_code_phase;
-          handle->blink_code_phase = LED_BLINK_PHASE_INTERVAL;
-          handle->interval_start_time = now;
-          handle->current_led_blink_code_counts = 0;
-          // 如果 led_blink_code_counts > 0，表示单次闪烁模式，完成后自动关闭
-          if (handle->current_cmd.led_blink_code_counts > 0) {
-            return LED_STATE_OFF;  // 单次闪烁完成，自动关闭
-          }
+    if (handle->blink_code_phase == LED_BLINK_PHASE_BLINKING) {
+        /* 闪烁阶段：按 cycle_ms 翻转 */
+        if (led_time_diff(now, handle->last_toggle_time) >= handle->current_cmd.led_blink_cycle_ms) {
+            handle->last_toggle_time = now;
+            bool is_on = led_phys_read(handle);
+            led_phys_write(handle, !is_on);
+            /* 下降沿（从亮到灭）计数一次 */
+            if (!led_phys_read(handle)) {
+                handle->current_led_blink_code_counts++;
+                if (handle->current_cmd.led_blink_code_counts == 0 || handle->current_led_blink_code_counts >= handle->current_cmd.led_blink_code_counts) {
+                    /* 进入间隔阶段 */
+                    handle->blink_code_phase_last = handle->blink_code_phase;
+                    handle->blink_code_phase = LED_BLINK_PHASE_INTERVAL;
+                    handle->interval_start_time = now;
+                    handle->current_led_blink_code_counts = 0;
+                    /* 指定次数模式：完成后自动关闭 */
+                    if (handle->current_cmd.led_blink_code_counts > 0) {
+                        return LED_STATE_OFF;
+                    }
+                }
+            }
         }
-      }
+    } else {
+        /* 间隔阶段：等待 wait_ms 后继续闪烁 */
+        if (led_time_diff(now, handle->interval_start_time) >= handle->current_cmd.led_blink_wait_ms) {
+            handle->blink_code_phase = LED_BLINK_PHASE_BLINKING;
+            handle->last_toggle_time = now;
+        }
     }
-  } else {
-    // INTERVAL 阶段：检查是否完成单次闪烁模式
-    if (led_time_diff(now, handle->interval_start_time) >=
-        handle->current_cmd.led_blink_wait_ms) {
-      // 否则是连续闪烁模式，继续闪烁
-      handle->blink_code_phase = LED_BLINK_PHASE_BLINKING;
-      handle->last_toggle_time = now;
-    }
-  }
-  return LED_STATE_BLINK_CODE;
+    return LED_STATE_BLINK_CODE;
 }
 
-/**
- * @brief  FSM BREATHING 状态处理器
- */
-static fsm_state_t led_fsm_breathing_handler(fsm_t* ctx) {
-  led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
-  uint32_t now = led_get_time_now();
-
-  if (led_time_diff(now, handle->last_breath_time) >=
-      handle->config.led_refresh_time_ms) {
-    handle->last_breath_time = now;
-    uint16_t led_breath_steps =
-        LED_BREATH_MAX_RESOLUTION / (handle->config.led_refresh_cycle_ms /
-                                     handle->config.led_refresh_time_ms);
-    handle->breath_cycle += led_breath_steps;
-
-    if (handle->breath_cycle >= LED_BREATH_MAX_RESOLUTION) {
-      handle->breath_cycle = 0;
-    }
-    // 使用正弦函数实现非线性亮度变化，使呼吸效果更加自然
-    // 计算呼吸周期的相位（0-2π）
-    float phase = (float)handle->breath_cycle * 0.001f * 2.0f * M_PIf;
-
-    // 计算亮度值，使用正弦函数使变化更加平滑
-    float brightness_ratio = (sin_approx(phase) + 1.0f) * 0.5f;
-    // 添加gamma校正，使亮度变化更加自然
-    float gamma_corrected = powerf(brightness_ratio, LED_GAMMA_CORRECTION);
-    // 计算最终的PWM值
-    handle->breath_value =
-        (uint16_t)(handle->config.led_refresh_min_duty +
-                   (uint16_t)((handle->config.led_refresh_max_duty -
-                               handle->config.led_refresh_min_duty) *
-                              gamma_corrected));
-
-    if (handle->pwm_init_flag) {
-      hal_tim_pwm_error_t err_set = hal_tim_pwm_set_duty_cycle(
-          &tim_pwm_ctx, handle->config.pwm_cfg.timer_instance,
-          handle->config.pwm_cfg.channel, handle->breath_value);
-      if (err_set != HAL_TIM_PWM_OK) {
-        LED_PRINTF("PWM 设置占空比失败: %d", err_set);
-      }
-    }
-  }
-  return LED_STATE_BREATHING;
-}
+/* FSM entry / exit ----------------------------------------------------------*/
 
 /**
- * @brief  FSM 进入状态回调
+ * @brief FSM 进入状态回调
+ * @note  根据不同状态执行初始化操作：
+ *        ON — 立即输出高电平
+ *        OFF — 立即输出低电平
+ *        BLINK_CODE — 重置计数，进入间隔阶段
  */
-static void led_fsm_on_entry(fsm_t* ctx, fsm_state_t state) {
-  led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
-  uint32_t now = led_get_time_now();
-  // LED_PRINTF("LED STATE ENTRY %s: %s\n", handle->config.led_name,
-  // fsm_get_state_name(ctx,state)); 触发状态变化回调
-  if (handle->state_change_cb) {
-    ((led_state_change_callback_t)handle->state_change_cb)(
-        handle, state, handle->callback_user_data);
-  }
+static void led_fsm_on_entry(fsm_t* ctx, fsm_state_t state)
+{
+    led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
+    uint32_t now = led_get_time_now();
 
-  switch (state) {
+    if (handle->state_change_cb) {
+        ((led_state_change_cb_t)handle->state_change_cb)(handle, state,
+            handle->callback_user_data);
+    }
+
+    switch (state) {
     case LED_STATE_ON:
-      led_phys_write(handle, true);
-      break;
+        led_phys_write(handle, true);
+        break;
     case LED_STATE_OFF:
-      led_phys_write(handle, false);
-      break;
+        led_phys_write(handle, false);
+        break;
     case LED_STATE_BLINK_CODE:
-      handle->current_led_blink_code_counts = 0;
-      handle->blink_code_phase_last = handle->blink_code_phase;
-      handle->blink_code_phase = LED_BLINK_PHASE_INTERVAL;
-      handle->interval_start_time = now;
-      led_phys_write(handle, false);
-      break;
-    case LED_STATE_BREATHING:
-      handle->breath_value = handle->config.led_refresh_min_duty;
-      handle->breath_cycle = 0;
-      handle->last_breath_time = now;
-      if (handle->pwm_init_flag) {
-        hal_tim_pwm_error_t err_stop = hal_tim_pwm_stop(
-            &tim_pwm_ctx, handle->config.pwm_cfg.timer_instance,
-            handle->config.pwm_cfg.channel);
-        if (err_stop != HAL_TIM_PWM_OK) {
-          LED_PRINTF("PWM 停止失败: %d", err_stop);
-        }
-        hal_tim_pwm_error_t err_duty = hal_tim_pwm_set_duty_cycle(
-            &tim_pwm_ctx, handle->config.pwm_cfg.timer_instance,
-            handle->config.pwm_cfg.channel, handle->breath_value);
-        if (err_duty != HAL_TIM_PWM_OK) {
-          LED_PRINTF("PWM 设置初始占空比失败: %d", err_duty);
-        }
-        hal_tim_pwm_error_t err_alternate = hal_tim_pwm_gpio_alternate(
-            &tim_pwm_ctx, &handle->config.pwm_cfg.gpio);
-        if (err_alternate != HAL_TIM_PWM_OK) {
-          LED_PRINTF("PWM 配置复用失败: %d", err_alternate);
-        } else {
-          LED_PRINTF("PWM GPIO配置复用成功");
-        }
-        hal_tim_pwm_error_t err_start = hal_tim_pwm_start(
-            &tim_pwm_ctx, handle->config.pwm_cfg.timer_instance,
-            handle->config.pwm_cfg.channel);
-        if (err_start != HAL_TIM_PWM_OK) {
-          LED_PRINTF("PWM 启动失败: %d", err_start);
-        } else {
-          LED_PRINTF("PWM 启动成功");
-        }
-      }
-      break;
-    default:
-      break;
-  }
-}
-
-/**
- * @brief  FSM 退出状态回调
- */
-static void led_fsm_on_exit(fsm_t* ctx, fsm_state_t state) {
-  led_handle_t* handle = (led_handle_t*)fsm_user_data(ctx);
-  switch (state) {
-    case LED_STATE_BREATHING:
-      if (handle->pwm_init_flag) {
-        hal_gpio_pin_state_t target_state =
-            (hal_gpio_pin_state_t)!handle->config.active_level;
-        hal_gpio_write(&gpio_ctx, handle->config.port, handle->config.pin,
-                       target_state);
-        hal_gpio_config_t gpio_cfg = {.port = handle->config.port,
-                                      .pin = handle->config.pin,
-                                      .mode = HAL_GPIO_MODE_OUTPUT_PP,
-                                      .pull = HAL_GPIO_PULL_NONE,
-                                      .speed = HAL_GPIO_SPEED_FREQ_LOW,
-                                      .default_state = target_state};
-        hal_gpio_init(&gpio_ctx, &gpio_cfg);
-      }
-      break;
-    default:
-      break;
-  }
-}
-
-/**
- * @brief  处理单个 LED 的命令队列
- */
-static void led_process_cmds(led_handle_t* handle) {
-  led_cmd_t cmd;
-  while (kfifo_get(handle->cmd_fifo, (unsigned char*)&cmd, sizeof(led_cmd_t)) ==
-         sizeof(led_cmd_t)) {
-    if (cmd.led_set_state != LED_STATE_NONE) {
-      fsm_goto(&handle->fsm, cmd.led_set_state);
-    }
-
-    if (cmd.led_set_state == LED_STATE_BLINK_CODE) {
-      // 如果有待处理的更新且 LED 正在闪烁，检查是否需要等待熄灭
-      if (handle->pending_blink_update &&
-          fsm_current_state(&handle->fsm) == LED_STATE_BLINK_CODE) {
-        // 读取当前 LED 状态（true 表示亮，false 表示灭）
-        bool is_led_on = led_phys_read(handle);
-
-        if (is_led_on) {
-          // LED 还亮着，将命令重新放回队列，等待下次处理
-          kfifo_put(handle->cmd_fifo, (unsigned char*)&cmd, sizeof(led_cmd_t));
-          break;  // 跳出循环，等待 LED 熄灭
-        }
-
-        // LED 已熄灭，清除等待标志
-        handle->pending_blink_update = false;
-      }
-
-      // 应用新参数
-      if (cmd.led_blink_cycle_ms > 0)
-        handle->current_cmd.led_blink_cycle_ms = cmd.led_blink_cycle_ms;
-      if (cmd.led_blink_wait_ms > 0)
-        handle->current_cmd.led_blink_wait_ms = cmd.led_blink_wait_ms;
-      if (cmd.led_blink_code_counts > 0)
-        handle->current_cmd.led_blink_code_counts = cmd.led_blink_code_counts;
-
-      // 如果已经在闪烁模式，则强制进入间隔阶段，等待间隔结束后再开始闪烁
-      if (fsm_current_state(&handle->fsm) == LED_STATE_BLINK_CODE) {
         handle->current_led_blink_code_counts = 0;
+        handle->blink_code_phase_last = handle->blink_code_phase;
         handle->blink_code_phase = LED_BLINK_PHASE_INTERVAL;
-        handle->interval_start_time = led_get_time_now();
-        led_phys_write(handle, false);  // 确保保持熄灭状态
-      }
+        handle->interval_start_time = now;
+        led_phys_write(handle, false);
+        break;
+    default:
+        break;
     }
-  }
 }
 
 /**
- * @brief  检测并触发闪烁阶段变化回调（轮询检测变化）
+ * @brief FSM 退出状态回调（当前无操作）
  */
-static void led_check_blink_phase_change(led_handle_t* handle) {
-  if (!handle || !handle->blink_phase_cb) return;
+static void led_fsm_on_exit(fsm_t* ctx, fsm_state_t state)
+{
+    (void)ctx;
+    (void)state;
+}
 
-  if (handle->blink_code_phase != handle->blink_code_phase_last) {
-    // 检测到阶段变化，触发回调
-    ((led_blink_phase_callback_t)handle->blink_phase_cb)(
-        handle, handle->blink_code_phase, handle->callback_user_data);
-    handle->blink_code_phase_last = handle->blink_code_phase;
-  }
+/* Command processing --------------------------------------------------------*/
+
+/**
+ * @brief 处理 LED 异步命令队列
+ * @note  从 kfifo 中取出命令并执行：
+ *        - 状态切换命令直接触发 fsm_goto
+ *        - BLINK_CODE 命令支持热更新：如果 LED 当前亮着，延迟到熄灭后更新
+ */
+static void led_process_cmds(led_handle_t* handle)
+{
+    led_cmd_t cmd;
+    while (kfifo_get(handle->cmd_fifo, (unsigned char*)&cmd, sizeof(led_cmd_t)) == sizeof(led_cmd_t)) {
+        if (cmd.led_set_state != LED_STATE_NONE) {
+            fsm_goto(&handle->fsm, cmd.led_set_state);
+        }
+
+        if (cmd.led_set_state == LED_STATE_BLINK_CODE) {
+            /* 热更新：LED 亮着时暂不修改参数 */
+            if (handle->pending_blink_update && fsm_current_state(&handle->fsm) == LED_STATE_BLINK_CODE) {
+                if (led_phys_read(handle)) {
+                    kfifo_put(handle->cmd_fifo, (unsigned char*)&cmd, sizeof(led_cmd_t));
+                    break;
+                }
+                handle->pending_blink_update = false;
+            }
+
+            if (cmd.led_blink_cycle_ms > 0)
+                handle->current_cmd.led_blink_cycle_ms = cmd.led_blink_cycle_ms;
+            if (cmd.led_blink_wait_ms > 0)
+                handle->current_cmd.led_blink_wait_ms = cmd.led_blink_wait_ms;
+            if (cmd.led_blink_code_counts > 0)
+                handle->current_cmd.led_blink_code_counts = cmd.led_blink_code_counts;
+
+            /* 已经在闪烁模式则重置到间隔阶段 */
+            if (fsm_current_state(&handle->fsm) == LED_STATE_BLINK_CODE) {
+                handle->current_led_blink_code_counts = 0;
+                handle->blink_code_phase = LED_BLINK_PHASE_INTERVAL;
+                handle->interval_start_time = led_get_time_now();
+                led_phys_write(handle, false);
+            }
+        }
+    }
+}
+
+/**
+ * @brief 检测闪烁阶段变化并触发回调
+ */
+static void led_check_blink_phase_change(led_handle_t* handle)
+{
+    if (!handle || !handle->blink_phase_cb)
+        return;
+
+    if (handle->blink_code_phase != handle->blink_code_phase_last) {
+        ((led_blink_phase_cb_t)handle->blink_phase_cb)(
+            handle, handle->blink_code_phase, handle->callback_user_data);
+        handle->blink_code_phase_last = handle->blink_code_phase;
+    }
 }
 
 /* Exported functions --------------------------------------------------------*/
 
-/**
- * @brief  初始化 LED 子系统
- * @param  get_time_cb 毫秒级时间获取回调函数
- * @return 操作结果错误码
- */
-led_error_t led_init(led_get_time_func_t get_time_cb) {
-  // 检查参数有效性
-  if (get_time_cb == NULL) {
-    return LED_ERROR_INVALID_PARAM;
-  }
+led_error_t led_init(led_get_time_cb_t get_time_cb)
+{
+    if (get_time_cb == NULL)
+        return LED_ERROR_INVALID_PARAM;
+    if (s_led_initialized)
+        return LED_OK_EXISTED;
 
-  // 检查是否已初始化
-  if (led_system_initialized) {
-    return LED_OK_EXISTED;
-  }
-
-  led_get_time = get_time_cb;
-  led_master = NULL;
-  led_count = 0;
-  led_system_initialized = 1;
-
-  stm32_gpio_init_context(&gpio_ctx);
-  stm32_tim_pwm_init_context(&tim_pwm_ctx);
-
-  LED_PRINTF("LED system initialized");
-  return LED_OK;
+    s_led_get_time = get_time_cb;
+    clist_init(&s_led_head);
+    s_led_initialized = true;
+    return LED_OK;
 }
 
-/**
- * @brief  反初始化 LED 子系统
- */
-void led_deinit(void) {
-  if (!led_system_initialized) return;
+void led_deinit(void)
+{
+    if (!s_led_initialized)
+        return;
 
-  led_handle_t* curr = led_master;
-  while (curr) {
-    led_handle_t* next = curr->next;
-    led_unregister(curr->config.led_name);
-    curr = next;
-  }
-
-  led_system_initialized = 0;
-  led_master = NULL;
-  led_count = 0;
-}
-
-/**
- * @brief  获取 LED 实例
- * @param  name 名称
- * @return LED 实例指针，未找到返回 NULL
- */
-led_handle_t* led_get_instance(const char* name) {
-  // 检查参数有效性
-  if (name == NULL || !led_system_initialized) {
-    return NULL;
-  }
-
-  led_handle_t* curr = led_master;
-  while (curr) {
-    if (strcmp(curr->config.led_name, name) == 0) {
-      return curr;
+    /* 安全遍历释放所有实例 */
+    clist_head_t *pos, *tmp;
+    clist_for_each_safe(pos, tmp, &s_led_head)
+    {
+        led_handle_t* h = clist_entry(pos, led_handle_t, node);
+        clist_del(pos);
+        if (h->cmd_fifo)
+            kfifo_free((kfifo_t*)h->cmd_fifo);
+        if (!h->is_static)
+            __free(h);
     }
-    curr = curr->next;
-  }
-  return NULL;
+
+    clist_init(&s_led_head);
+    s_led_initialized = false;
 }
 
-/**
- * @brief  静态注册 LED 实例
- * @param  config 配置指针
- * @param  instance 用户提供的句柄空间
- * @return 操作结果错误码
- */
+led_handle_t* led_get_instance(const char* name)
+{
+    if (name == NULL || !s_led_initialized)
+        return NULL;
+
+    led_handle_t* h;
+    clist_for_each_entry(h, &s_led_head, node)
+    {
+        if (strcmp(h->config.name, name) == 0)
+            return h;
+    }
+    return NULL;
+}
+
+clist_head_t* led_get_head(void)
+{
+    return s_led_initialized ? &s_led_head : NULL;
+}
+
 led_error_t led_register_static(const led_config_t* config,
-                                led_handle_t* instance) {
-  // 检查参数有效性
-  if (config == NULL || instance == NULL || config->led_name == NULL) {
-    return LED_ERROR_INVALID_PARAM;
-  }
-
-  if (!led_system_initialized) {
-    return LED_ERROR_INTERNAL;
-  }
-
-  if (led_get_instance(config->led_name)) {
-    return LED_ERROR_ALREADY_EXIST;
-  }
-
-  memset(instance, 0, sizeof(led_handle_t));
-  memcpy(&instance->config, config, sizeof(led_config_t));
-
-  // 初始化 FSM
-  static const char* led_state_names[] = {"NONE", "OFF", "ON", "BLINK",
-                                          "BREATHING"};
-  static fsm_handler_t handlers[LED_STATE_MAX];
-  static fsm_guard_t transitions[LED_STATE_MAX * LED_STATE_MAX];
-  memset(handlers, 0, sizeof(handlers));
-  memset(transitions, 0, sizeof(transitions));
-
-  handlers[LED_STATE_NONE] = led_fsm_none_handler;
-  handlers[LED_STATE_OFF] = led_fsm_off_handler;
-  handlers[LED_STATE_ON] = led_fsm_on_handler;
-  handlers[LED_STATE_BLINK_CODE] = led_fsm_blink_handler;
-  handlers[LED_STATE_BREATHING] = led_fsm_breathing_handler;
-
-  fsm_config_t fsm_cfg = {
-      .handlers = handlers,
-      .transitions = transitions,
-      .state_count = LED_STATE_MAX,
-      .entry_cb = led_fsm_on_entry,
-      .exit_cb = led_fsm_on_exit,
-      .state_names = led_state_names,
-      .user_data = instance,
-  };
-  fsm_fill(&fsm_cfg, fsm_always_true);
-  fsm_init(&instance->fsm, config->init_state, &fsm_cfg);
-
-  // 初始化命令队列
-  instance->cmd_fifo = kfifo_alloc(LED_CMD_FIFO_SIZE * sizeof(led_cmd_t), NULL);
-  if (!instance->cmd_fifo) return LED_ERROR_NO_MEMORY;
-
-  // 如果是呼吸灯，且配置了PWM信息，则初始化PWM
-
-  if (instance->config.pwm_cfg.timer_instance) {
-    hal_tim_pwm_error_t err_init =
-        hal_tim_pwm_init(&tim_pwm_ctx, &instance->config.pwm_cfg);
-    if (err_init != HAL_TIM_PWM_OK) {
-      LED_PRINTF("PWM 初始化失败: %d", err_init);
-      return LED_ERROR_INTERNAL;
+    led_handle_t* instance)
+{
+    if (config == NULL || instance == NULL || config->name == NULL || config->write_pin == NULL || config->read_pin == NULL) {
+        return LED_ERROR_INVALID_PARAM;
     }
-    hal_tim_pwm_error_t err_start =
-        hal_tim_pwm_start(&tim_pwm_ctx, instance->config.pwm_cfg.timer_instance,
-                          instance->config.pwm_cfg.channel);
-    if (err_start != HAL_TIM_PWM_OK) {
-      LED_PRINTF("PWM 启动失败: %d", err_start);
-      return LED_ERROR_INTERNAL;
+    if (!s_led_initialized)
+        return LED_ERROR_INTERNAL;
+    if (led_get_instance(config->name))
+        return LED_ERROR_ALREADY_EXIST;
+
+    memset(instance, 0, sizeof(led_handle_t));
+    memcpy(&instance->config, config, sizeof(led_config_t));
+
+    /* 初始化 FSM */
+    static const char* names[] = { "NONE", "OFF", "ON", "BLINK" };
+    static fsm_handler_t handlers[LED_STATE_MAX];
+    static fsm_guard_t transitions[LED_STATE_MAX * LED_STATE_MAX];
+    memset(handlers, 0, sizeof(handlers));
+    memset(transitions, 0, sizeof(transitions));
+
+    handlers[LED_STATE_NONE] = led_fsm_none_handler;
+    handlers[LED_STATE_OFF] = led_fsm_off_handler;
+    handlers[LED_STATE_ON] = led_fsm_on_handler;
+    handlers[LED_STATE_BLINK_CODE] = led_fsm_blink_handler;
+
+    fsm_config_t fsm_cfg = {
+        .handlers = handlers,
+        .transitions = transitions,
+        .state_count = LED_STATE_MAX,
+        .entry_cb = led_fsm_on_entry,
+        .exit_cb = led_fsm_on_exit,
+        .state_names = names,
+        .user_data = instance,
+    };
+    fsm_fill(&fsm_cfg, fsm_always_true);
+    fsm_init(&instance->fsm, config->init_state, &fsm_cfg);
+
+    /* 分配命令队列 */
+    instance->cmd_fifo = kfifo_alloc(LED_CMD_FIFO_SIZE * sizeof(led_cmd_t), NULL);
+    if (!instance->cmd_fifo)
+        return LED_ERROR_NO_MEMORY;
+
+    instance->is_static = true;
+    instance->initialized = true;
+
+    clist_add_tail(&s_led_head, &instance->node);
+    return LED_OK;
+}
+
+led_handle_t* led_register(const led_config_t* config)
+{
+    if (config == NULL || config->name == NULL)
+        return NULL;
+
+    led_handle_t* instance = (led_handle_t*)__malloc(sizeof(led_handle_t));
+    if (!instance)
+        return NULL;
+
+    led_error_t err = led_register_static(config, instance);
+    if (LED_IS_ERR(err)) {
+        __free(instance);
+        return NULL;
     }
-    LED_PRINTF("PWM 启动成功 (timer=%d, ch=%d)",
-               instance->config.pwm_cfg.timer_instance,
-               instance->config.pwm_cfg.channel);
-    instance->pwm_init_flag = true;
-  }
-
-  instance->is_static = true;
-  instance->initialized = true;
-
-  // 硬件底层初始化
-  // 如果没有配置 GPIO 初始化回调，默认配置为输出模式
-  hal_gpio_config_t gpio_cfg = {.port = config->port,
-                                .pin = config->pin,
-                                .mode = HAL_GPIO_MODE_OUTPUT_PP,
-                                .pull = HAL_GPIO_PULL_NONE,
-                                .speed = HAL_GPIO_SPEED_FREQ_LOW,
-                                .default_state = !config->active_level};
-  hal_gpio_init(&gpio_ctx, &gpio_cfg);
-
-  // 加入链表 (头插法)
-  instance->next = led_master;
-  led_master = instance;
-  led_count++;
-
-  LED_PRINTF("LED static registered: %s", config->led_name);
-  return LED_OK;
+    instance->is_static = false;
+    return instance;
 }
 
-/**
- * @brief  动态注册 LED 实例
- * @param  config 配置指针
- * @return 实例指针，失败返回 NULL
- */
-led_handle_t* led_register(const led_config_t* config) {
-  // 检查参数有效性
-  if (config == NULL || config->led_name == NULL) {
-    return NULL;
-  }
+led_error_t led_unregister(const char* name)
+{
+    if (name == NULL || !s_led_initialized)
+        return LED_ERROR_INVALID_PARAM;
 
-  led_handle_t* instance = (led_handle_t*)__malloc(sizeof(led_handle_t));
-  if (!instance) return NULL;
-
-  led_error_t err = led_register_static(config, instance);
-  if (LED_IS_ERR(err)) {
-    __free(instance);
-    return NULL;
-  }
-  instance->is_static = false;  // 标记为动态分配
-  return instance;
-}
-
-/**
- * @brief  注销 LED 实例
- * @param  name LED 名称
- * @return 操作结果错误码
- */
-led_error_t led_unregister(const char* name) {
-  // 检查参数有效性
-  if (name == NULL || !led_system_initialized) {
-    return LED_ERROR_INVALID_PARAM;
-  }
-
-  led_handle_t** ptr = &led_master;
-  while (*ptr) {
-    if (strcmp((*ptr)->config.led_name, name) == 0) {
-      led_handle_t* to_remove = *ptr;
-      *ptr = to_remove->next;
-
-      // 释放命令队列
-      if (to_remove->cmd_fifo) {
-        kfifo_free((kfifo_t*)to_remove->cmd_fifo);
-      }
-
-      if (!to_remove->is_static) {
-        __free(to_remove);
-      }
-      led_count--;
-      return LED_OK;
+    led_handle_t *h, *tmp;
+    clist_for_each_entry_safe(h, tmp, &s_led_head, node)
+    {
+        if (strcmp(h->config.name, name) == 0) {
+            clist_del(&h->node);
+            if (h->cmd_fifo)
+                kfifo_free((kfifo_t*)h->cmd_fifo);
+            if (!h->is_static)
+                __free(h);
+            return LED_OK;
+        }
     }
-    ptr = &(*ptr)->next;
-  }
-  return LED_ERROR_NOT_FOUND;
+    return LED_ERROR_NOT_FOUND;
 }
 
-/**
- * @brief  设置 LED 状态 (异步)
- * @param  instance 句柄
- * @param  state 目标状态
- */
-void led_set_state(led_handle_t* instance, led_state_t state) {
-  // 检查参数有效性
-  if (instance == NULL) return;
+void led_set_state(led_handle_t* instance, led_state_t state)
+{
+    if (instance == NULL)
+        return;
 
-  led_cmd_t cmd = {.led_set_state = state};
-  kfifo_put((kfifo_t*)instance->cmd_fifo, (unsigned char*)&cmd,
-            sizeof(led_cmd_t));
+    led_cmd_t cmd = { .led_set_state = state };
+    kfifo_put((kfifo_t*)instance->cmd_fifo, (unsigned char*)&cmd,
+        sizeof(led_cmd_t));
 }
 
-/**
- * @brief  设置 LED 闪烁参数 (通过事件/命令触发)
- * @param  instance 句柄
- * @param  cmd 闪烁参数结构体指针
- * @return 操作结果错误码
- */
 led_error_t led_set_blink_interval(led_handle_t* instance,
-                                   const led_cmd_t* cmd) {
-  // 检查参数有效性
-  if (instance == NULL || cmd == NULL) {
-    return LED_ERROR_INVALID_PARAM;
-  }
+    const led_cmd_t* cmd)
+{
+    if (instance == NULL || cmd == NULL)
+        return LED_ERROR_INVALID_PARAM;
 
-  // 检查参数是否真的变化
-  bool param_changed =
-      (instance->current_cmd.led_set_state != LED_STATE_BLINK_CODE) ||
-      (instance->current_cmd.led_blink_cycle_ms != cmd->led_blink_cycle_ms) ||
-      (instance->current_cmd.led_blink_wait_ms != cmd->led_blink_wait_ms) ||
-      (instance->current_cmd.led_blink_code_counts !=
-       cmd->led_blink_code_counts);
+    /* 参数未变化则跳过 */
+    bool changed = (instance->current_cmd.led_set_state != LED_STATE_BLINK_CODE) || (instance->current_cmd.led_blink_cycle_ms != cmd->led_blink_cycle_ms) || (instance->current_cmd.led_blink_wait_ms != cmd->led_blink_wait_ms) || (instance->current_cmd.led_blink_code_counts != cmd->led_blink_code_counts);
+    if (!changed)
+        return LED_OK;
 
-  if (!param_changed) {
-    return LED_OK;  // 参数未变化，直接返回
-  }
-
-  // 如果 LED 正在编码闪烁模式
-  if (fsm_current_state(&instance->fsm) == LED_STATE_BLINK_CODE) {
-    // 读取当前 LED 状态（true 表示亮，false 表示灭）
-    bool is_led_on = led_phys_read(instance);
-
-    if (is_led_on) {
-      // LED 亮着，标记需要等待熄灭后更新，将参数暂存到 cmd_fifo
-      memcpy(&instance->current_cmd, cmd, sizeof(led_cmd_t));
-      instance->current_cmd.led_set_state = LED_STATE_BLINK_CODE;
-      return kfifo_put(instance->cmd_fifo,
+    /* 如果在闪烁中且 LED 亮着，延迟更新 */
+    if (fsm_current_state(&instance->fsm) == LED_STATE_BLINK_CODE) {
+        if (led_phys_read(instance)) {
+            memcpy(&instance->current_cmd, cmd, sizeof(led_cmd_t));
+            instance->current_cmd.led_set_state = LED_STATE_BLINK_CODE;
+            instance->pending_blink_update = true;
+            return kfifo_put(instance->cmd_fifo,
                        (unsigned char*)&instance->current_cmd,
-                       sizeof(led_cmd_t)) == sizeof(led_cmd_t)
-                 ? LED_OK
-                 : LED_ERROR_INTERNAL;
-      instance->pending_blink_update = true;
-
-    } else {
-      // LED 已熄灭，立即切换参数
-      memcpy(&instance->current_cmd, cmd, sizeof(led_cmd_t));
-      instance->pending_blink_update = false;
-
-      // 重置闪烁进度，强制进入间隔阶段，等待间隔结束后再开始闪烁
-      instance->current_led_blink_code_counts = 0;
-      instance->blink_code_phase = LED_BLINK_PHASE_INTERVAL;
-      instance->interval_start_time = led_get_time_now();
-      led_phys_write(instance, false);  // 确保保持熄灭状态
-      return LED_OK;
+                       sizeof(led_cmd_t))
+                    == sizeof(led_cmd_t)
+                ? LED_OK
+                : LED_ERROR_INTERNAL;
+        }
+        /* LED 已熄灭，立即更新参数 */
+        memcpy(&instance->current_cmd, cmd, sizeof(led_cmd_t));
+        instance->pending_blink_update = false;
+        instance->current_led_blink_code_counts = 0;
+        instance->blink_code_phase = LED_BLINK_PHASE_INTERVAL;
+        instance->interval_start_time = led_get_time_now();
+        led_phys_write(instance, false);
+        return LED_OK;
     }
-  } else {
-    // 不在闪烁模式，直接更新参数
+
+    /* 不在闪烁状态，直接更新参数 */
     memcpy(&instance->current_cmd, cmd, sizeof(led_cmd_t));
     instance->pending_blink_update = false;
     return LED_OK;
-  }
+}
+
+led_blink_phase_t led_get_blink_phase(led_handle_t* instance)
+{
+    return instance ? (led_blink_phase_t)instance->blink_code_phase
+                    : LED_BLINK_PHASE_INTERVAL;
+}
+
+void led_set_callbacks(led_handle_t* instance, led_state_change_cb_t state_cb,
+    led_blink_phase_cb_t blink_phase_cb,
+    led_edge_cb_t edge_cb, void* user_data)
+{
+    if (instance == NULL)
+        return;
+    instance->state_change_cb = (void*)state_cb;
+    instance->blink_phase_cb = (void*)blink_phase_cb;
+    instance->edge_cb = (void*)edge_cb;
+    instance->callback_user_data = user_data;
 }
 
 /**
- * @brief  获取 LED 闪烁阶段
- * @param  instance 句柄
- * @return 闪烁阶段
+ * @brief LED 刷新任务
+ * @note 遍历所有 LED 实例，依次处理命令队列、执行 FSM 步进、检测阶段变化。
+ *       需在主循环或定时器中以固定周期调用。
  */
-led_blink_phase_t led_get_blink_phase(led_handle_t* instance) {
-  // 检查参数有效性
-  if (instance == NULL) {
-    return LED_BLINK_PHASE_INTERVAL;
-  }
-  return (led_blink_phase_t)instance->blink_code_phase;
-}
+void led_task_refresh(void)
+{
+    if (!s_led_initialized || clist_empty(&s_led_head))
+        return;
 
-/**
- * @brief  设置 LED 状态变化回调函数
- * @param  instance 句柄
- * @param  state_cb 状态变化回调
- * @param  blink_phase_cb 闪烁阶段变化回调
- * @param  gpio_edge_cb GPIO 边沿变化回调
- * @param  user_data 用户数据，将传递给回调函数
- */
-void led_set_state_change_callback(led_handle_t* instance,
-                                   led_state_change_callback_t state_cb,
-                                   led_blink_phase_callback_t blink_phase_cb,
-                                   led_gpio_edge_callback_t gpio_edge_cb,
-                                   void* user_data) {
-  // 检查参数有效性
-  if (instance == NULL) return;
-
-  instance->state_change_cb = (void*)state_cb;
-  instance->blink_phase_cb = (void*)blink_phase_cb;
-  instance->gpio_edge_cb = (void*)gpio_edge_cb;
-  instance->callback_user_data = user_data;
-}
-
-/**
- * @brief  刷新任务，需在主循环周期调用
- */
-void led_task_refresh(void) {
-  // 检查系统是否已初始化
-  if (!led_system_initialized || !led_master) return;
-
-  led_handle_t* curr = led_master;
-
-  while (curr) {
-    if (!curr->initialized) {
-      curr = curr->next;
-      continue;
+    led_handle_t* h;
+    clist_for_each_entry(h, &s_led_head, node)
+    {
+        if (!h->initialized)
+            continue;
+        led_process_cmds(h);
+        fsm_step(&h->fsm);
+        led_check_blink_phase_change(h);
     }
-
-    // 处理异步命令
-    led_process_cmds(curr);
-
-    // 执行 FSM 步进 (驱动状态机运行)
-    fsm_step(&curr->fsm);
-
-    // 检测闪烁阶段变化并触发回调
-    led_check_blink_phase_change(curr);
-
-    curr = curr->next;
-  }
 }

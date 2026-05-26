@@ -28,71 +28,71 @@ typedef int32_t q16_16_t;
  * @brief 串口协议模块错误码枚举
  */
 typedef enum __attribute__((packed)) {
-  USART_PROTOCOL_OK = 0,              /**< 操作成功 */
-  USART_PROTOCOL_ERROR_GENERAL,       /**< 通用错误 */
-  USART_PROTOCOL_ERROR_INVALID_CMD,   /**< 无效命令 */
-  USART_PROTOCOL_ERROR_INVALID_PARAM, /**< 无效参数 */
-  USART_PROTOCOL_ERROR_DATA_LEN,      /**< 数据长度错误 */
-  USART_PROTOCOL_ERROR_CHECKSUM,      /**< 校验和错误 */
-  USART_PROTOCOL_ERROR_TIMEOUT,       /**< 超时错误 */
-  USART_PROTOCOL_ERROR_STATE,         /**< 状态错误 */
-  USART_PROTOCOL_ERROR_OVERCURRENT,   /**< 过流错误 */
-  USART_PROTOCOL_ERROR_OVERTEMP,      /**< 过温错误 */
-  USART_PROTOCOL_ERROR_OVERVOLTAGE,   /**< 过压错误 */
-  USART_PROTOCOL_ERROR_UNDERVOLTAGE,  /**< 欠压错误 */
-  USART_PROTOCOL_ERROR_ENCODER,       /**< 编码器错误 */
-  USART_PROTOCOL_ERROR_CALIB,         /**< 校准错误 */
-  USART_PROTOCOL_ERROR_NOT_READY,     /**< 未就绪 */
-  USART_PROTOCOL_ERROR_BUSY,          /**< 忙 */
-  USART_PROTOCOL_ERROR_NULL_PTR,      /**< 空指针错误 */
-  USART_PROTOCOL_ERROR_UNINITIALIZED, /**< 未初始化 */
+    USART_PROTOCOL_OK = 0, /**< 操作成功 */
+    USART_PROTOCOL_ERROR_GENERAL, /**< 通用错误 */
+    USART_PROTOCOL_ERROR_INVALID_CMD, /**< 无效命令 */
+    USART_PROTOCOL_ERROR_INVALID_PARAM, /**< 无效参数 */
+    USART_PROTOCOL_ERROR_DATA_LEN, /**< 数据长度错误 */
+    USART_PROTOCOL_ERROR_CHECKSUM, /**< 校验和错误 */
+    USART_PROTOCOL_ERROR_TIMEOUT, /**< 超时错误 */
+    USART_PROTOCOL_ERROR_STATE, /**< 状态错误 */
+    USART_PROTOCOL_ERROR_OVERCURRENT, /**< 过流错误 */
+    USART_PROTOCOL_ERROR_OVERTEMP, /**< 过温错误 */
+    USART_PROTOCOL_ERROR_OVERVOLTAGE, /**< 过压错误 */
+    USART_PROTOCOL_ERROR_UNDERVOLTAGE, /**< 欠压错误 */
+    USART_PROTOCOL_ERROR_ENCODER, /**< 编码器错误 */
+    USART_PROTOCOL_ERROR_CALIB, /**< 校准错误 */
+    USART_PROTOCOL_ERROR_NOT_READY, /**< 未就绪 */
+    USART_PROTOCOL_ERROR_BUSY, /**< 忙 */
+    USART_PROTOCOL_ERROR_NULL_PTR, /**< 空指针错误 */
+    USART_PROTOCOL_ERROR_UNINITIALIZED, /**< 未初始化 */
 } usart_protocol_error_t;
 
 /**
  * @brief 错误类枚举
  */
 typedef enum __attribute__((packed)) {
-  USART_PROTOCOL_ERR_CLASS_NONE = 0x00U,     /**< 无错误类 */
-  USART_PROTOCOL_ERR_CLASS_COMM = 0x10U,     /**< 通信错误类 */
-  USART_PROTOCOL_ERR_CLASS_PROTOCOL = 0x20U, /**< 协议错误类 */
-  USART_PROTOCOL_ERR_CLASS_DEVICE = 0x30U,   /**< 设备错误类 */
-  USART_PROTOCOL_ERR_CLASS_APP = 0x40U       /**< 应用错误类 */
+    USART_PROTOCOL_ERR_CLASS_NONE = 0x00U, /**< 无错误类 */
+    USART_PROTOCOL_ERR_CLASS_COMM = 0x10U, /**< 通信错误类 */
+    USART_PROTOCOL_ERR_CLASS_PROTOCOL = 0x20U, /**< 协议错误类 */
+    USART_PROTOCOL_ERR_CLASS_DEVICE = 0x30U, /**< 设备错误类 */
+    USART_PROTOCOL_ERR_CLASS_APP = 0x40U /**< 应用错误类 */
 } usart_protocol_error_class_t;
 
 /**
  * @brief 校准状态枚举
  */
 typedef enum __attribute__((packed)) {
-  USART_PROTOCOL_CALIB_STATUS_IDLE = 0x00U,     /**< 空闲 */
-  USART_PROTOCOL_CALIB_STATUS_RUNNING = 0x01U,  /**< 校准中 */
-  USART_PROTOCOL_CALIB_STATUS_FORWARD = 0x02U,  /**< 正向校准 */
-  USART_PROTOCOL_CALIB_STATUS_REVERSE = 0x03U,  /**< 反向校准 */
-  USART_PROTOCOL_CALIB_STATUS_COMPLETE = 0x04U, /**< 校准完成 */
-  USART_PROTOCOL_CALIB_STATUS_FAILED = 0x05U    /**< 校准失败 */
+    USART_PROTOCOL_CALIB_STATUS_IDLE = 0x00U, /**< 空闲 */
+    USART_PROTOCOL_CALIB_STATUS_RUNNING = 0x01U, /**< 校准中 */
+    USART_PROTOCOL_CALIB_STATUS_FORWARD = 0x02U, /**< 正向校准 */
+    USART_PROTOCOL_CALIB_STATUS_REVERSE = 0x03U, /**< 反向校准 */
+    USART_PROTOCOL_CALIB_STATUS_COMPLETE = 0x04U, /**< 校准完成 */
+    USART_PROTOCOL_CALIB_STATUS_FAILED = 0x05U /**< 校准失败 */
 } usart_protocol_calib_status_t;
 
 /**
  * @brief 参数类型枚举
  */
 typedef enum __attribute__((packed)) {
-  USART_PROTOCOL_PARAM_PID_CURRENT = 0x01U,       /**< 电流环PID */
-  USART_PROTOCOL_PARAM_PID_VELOCITY = 0x02U,      /**< 速度环PID */
-  USART_PROTOCOL_PARAM_PID_POSITION = 0x03U,      /**< 位置环PID */
-  USART_PROTOCOL_PARAM_MOTOR_CONFIG = 0x04U,      /**< 电机配置 */
-  USART_PROTOCOL_PARAM_ENCODER_CONFIG = 0x05U,    /**< 编码器配置 */
-  USART_PROTOCOL_PARAM_PROTECTION_CONFIG = 0x06U, /**< 保护配置 */
-  USART_PROTOCOL_PARAM_STREAM_CONFIG = 0x07U      /**< 流配置 */
+    USART_PROTOCOL_PARAM_PID_CURRENT = 0x01U, /**< 电流环PID */
+    USART_PROTOCOL_PARAM_PID_VELOCITY = 0x02U, /**< 速度环PID */
+    USART_PROTOCOL_PARAM_PID_POSITION = 0x03U, /**< 位置环PID */
+    USART_PROTOCOL_PARAM_MOTOR_CONFIG = 0x04U, /**< 电机配置 */
+    USART_PROTOCOL_PARAM_ENCODER_CONFIG = 0x05U, /**< 编码器配置 */
+    USART_PROTOCOL_PARAM_PROTECTION_CONFIG = 0x06U, /**< 保护配置 */
+    USART_PROTOCOL_PARAM_STREAM_CONFIG = 0x07U /**< 流配置 */
 } usart_protocol_param_type_t;
 
 /**
  * @brief 数据流类型枚举
  */
 typedef enum __attribute__((packed)) {
-  USART_PROTOCOL_STREAM_ALL = 0x00U,      /**< 全部数据 */
-  USART_PROTOCOL_STREAM_CURRENT = 0x01U,  /**< 电流数据 */
-  USART_PROTOCOL_STREAM_VELOCITY = 0x02U, /**< 速度数据 */
-  USART_PROTOCOL_STREAM_POSITION = 0x03U, /**< 位置数据 */
-  USART_PROTOCOL_STREAM_ERROR = 0x04U     /**< 错误数据 */
+    USART_PROTOCOL_STREAM_ALL = 0x00U, /**< 全部数据 */
+    USART_PROTOCOL_STREAM_CURRENT = 0x01U, /**< 电流数据 */
+    USART_PROTOCOL_STREAM_VELOCITY = 0x02U, /**< 速度数据 */
+    USART_PROTOCOL_STREAM_POSITION = 0x03U, /**< 位置数据 */
+    USART_PROTOCOL_STREAM_ERROR = 0x04U /**< 错误数据 */
 } usart_protocol_stream_type_t;
 
 /**
@@ -100,12 +100,12 @@ typedef enum __attribute__((packed)) {
  * @note 使用packed对齐,禁止优化对齐导致的大小变化
  */
 typedef struct __attribute__((packed)) {
-  uint8_t protocol_ver; /**< 协议版本 */
-  uint8_t major_ver;    /**< 主版本号 */
-  uint8_t minor_ver;    /**< 次版本号 */
-  uint8_t patch_ver;    /**< 补丁版本号 */
-  uint8_t hardware_ver; /**< 硬件版本 */
-  uint8_t reserve;      /**< 保留 */
+    uint8_t protocol_ver; /**< 协议版本 */
+    uint8_t major_ver; /**< 主版本号 */
+    uint8_t minor_ver; /**< 次版本号 */
+    uint8_t patch_ver; /**< 补丁版本号 */
+    uint8_t hardware_ver; /**< 硬件版本 */
+    uint8_t reserve; /**< 保留 */
 } usart_protocol_version_info_t;
 
 /**
@@ -113,15 +113,15 @@ typedef struct __attribute__((packed)) {
  * @note 使用packed对齐
  */
 typedef struct __attribute__((packed)) {
-  uint8_t state;      /**< 状态 */
-  uint8_t error_code; /**< 错误码 */
-  int16_t id_current; /**< D轴电流 */
-  int16_t iq_current; /**< Q轴电流 */
-  int16_t velocity;   /**< 速度 */
-  int32_t position;   /**< 位置 */
-  uint16_t voltage;   /**< 电压 */
-  int8_t temperature; /**< 温度 */
-  uint8_t reserve;    /**< 保留(对齐) */
+    uint8_t state; /**< 状态 */
+    uint8_t error_code; /**< 错误码 */
+    int16_t id_current; /**< D轴电流 */
+    int16_t iq_current; /**< Q轴电流 */
+    int16_t velocity; /**< 速度 */
+    int32_t position; /**< 位置 */
+    uint16_t voltage; /**< 电压 */
+    int8_t temperature; /**< 温度 */
+    uint8_t reserve; /**< 保留(对齐) */
 } usart_protocol_status_data_t;
 
 /**
@@ -129,9 +129,9 @@ typedef struct __attribute__((packed)) {
  * @note 使用packed对齐
  */
 typedef struct __attribute__((packed)) {
-  uint8_t status;   /**< 校准状态 */
-  uint8_t progress; /**< 进度 */
-  int8_t direction; /**< 方向 */
+    uint8_t status; /**< 校准状态 */
+    uint8_t progress; /**< 进度 */
+    int8_t direction; /**< 方向 */
 } usart_protocol_calib_status_data_t;
 
 /**
@@ -140,10 +140,10 @@ typedef struct __attribute__((packed)) {
  * @note 使用packed对齐
  */
 typedef struct __attribute__((packed)) {
-  q16_16_t kp;           /**< 比例增益 Q16格式 */
-  q16_16_t ki;           /**< 积分增益 Q16格式 */
-  q16_16_t kd;           /**< 微分增益 Q16格式 */
-  q16_16_t output_limit; /**< 输出限幅 Q16格式 */
+    q16_16_t kp; /**< 比例增益 Q16格式 */
+    q16_16_t ki; /**< 积分增益 Q16格式 */
+    q16_16_t kd; /**< 微分增益 Q16格式 */
+    q16_16_t output_limit; /**< 输出限幅 Q16格式 */
 } usart_protocol_pid_param_t;
 
 /**
@@ -151,13 +151,13 @@ typedef struct __attribute__((packed)) {
  * @note 使用packed对齐
  */
 typedef struct __attribute__((packed)) {
-  uint32_t timestamp;  /**< 时间戳 */
-  int16_t id_current;  /**< D轴电流 */
-  int16_t iq_current;  /**< Q轴电流 */
-  int16_t velocity;    /**< 速度 */
-  int32_t position;    /**< 位置 */
-  uint16_t elec_angle; /**< 电角度 */
-  uint16_t reserve;    /**< 保留(对齐) */
+    uint32_t timestamp; /**< 时间戳 */
+    int16_t id_current; /**< D轴电流 */
+    int16_t iq_current; /**< Q轴电流 */
+    int16_t velocity; /**< 速度 */
+    int32_t position; /**< 位置 */
+    uint16_t elec_angle; /**< 电角度 */
+    uint16_t reserve; /**< 保留(对齐) */
 } usart_protocol_stream_data_t;
 
 /**
@@ -165,18 +165,18 @@ typedef struct __attribute__((packed)) {
  * @note 使用packed对齐,与协议其他结构体保持一致
  */
 typedef struct __attribute__((packed)) {
-  uint8_t enable;       /**< 使能标志 */
-  uint8_t stream_type;  /**< 流类型 */
-  uint16_t interval_ms; /**< 间隔时间(毫秒) */
+    uint8_t enable; /**< 使能标志 */
+    uint8_t stream_type; /**< 流类型 */
+    uint16_t interval_ms; /**< 间隔时间(毫秒) */
 } usart_protocol_stream_config_t;
 
 /**
  * @brief 串口协议模块配置结构体
  */
 typedef struct __attribute__((packed)) {
-  const char* name;      /**< 模块名称 */
-  void* uart_ctx;        /**< UART上下文指针 */
-  uint8_t uart_instance; /**< UART实例号 */
+    const char* name; /**< 模块名称 */
+    void* uart_ctx; /**< UART上下文指针 */
+    uint8_t uart_instance; /**< UART实例号 */
 } usart_protocol_config_t;
 
 /**
@@ -189,29 +189,29 @@ typedef struct usart_protocol_context usart_protocol_context_t;
  * @note 包含所有运行时状态和缓冲区，支持多实例
  */
 struct usart_protocol_context {
-  usart_protocol_config_t config;            /**< 配置参数 */
-  usart_protocol_stream_config_t stream_cfg; /**< 流配置 */
-  protocol_parser_context_t parser_ctx;      /**< 协议解析器上下文 */
-  uint8_t output_buffer[280U];               /**< 输出缓冲区 */
-  uint8_t parser_output_buffer[128U];        /**< 解析器输出缓冲区 */
-  uint8_t response_buffer[256U];             /**< 响应数据缓冲区 */
-  uint32_t stream_last_tick;                 /**< 流上次发送时间 */
-  bool initialized;                          /**< 初始化标志 */
+    usart_protocol_config_t config; /**< 配置参数 */
+    usart_protocol_stream_config_t stream_cfg; /**< 流配置 */
+    protocol_parser_context_t parser_ctx; /**< 协议解析器上下文 */
+    uint8_t output_buffer[280U]; /**< 输出缓冲区 */
+    uint8_t parser_output_buffer[128U]; /**< 解析器输出缓冲区 */
+    uint8_t response_buffer[256U]; /**< 响应数据缓冲区 */
+    uint32_t stream_last_tick; /**< 流上次发送时间 */
+    bool initialized; /**< 初始化标志 */
 };
 
 // 命令处理表
 typedef usart_protocol_error_t (*protocol_cmd_handler_t)(uint8_t func_code,
-                                                         uint8_t* data,
-                                                         uint16_t len,
-                                                         uint8_t* response,
-                                                         uint16_t* resp_len);
+    uint8_t* data,
+    uint16_t len,
+    uint8_t* response,
+    uint16_t* resp_len);
 
 /**
  * @brief 命令处理表结构体
  */
 typedef struct {
-  uint8_t func_code;
-  protocol_cmd_handler_t handler;
+    uint8_t func_code;
+    protocol_cmd_handler_t handler;
 } protocol_cmd_entry_t;
 
 /* Exported constants --------------------------------------------------------*/
@@ -334,8 +334,8 @@ void usart_protocol_stream_task(usart_protocol_context_t* ctx);
  * @param len 数据长度
  */
 void usart_protocol_send_response(usart_protocol_context_t* ctx,
-                                  uint8_t msg_type, uint8_t func_code,
-                                  const uint8_t* data, uint16_t len);
+    uint8_t msg_type, uint8_t func_code,
+    const uint8_t* data, uint16_t len);
 
 /**
  * @brief 发送OK响应
@@ -352,7 +352,7 @@ void usart_protocol_send_ok(usart_protocol_context_t* ctx, uint8_t func_code);
  * @param error_class 错误类
  */
 void usart_protocol_send_error(usart_protocol_context_t* ctx, uint8_t func_code,
-                               uint8_t error_code, uint8_t error_class);
+    uint8_t error_code, uint8_t error_class);
 
 /**
  * @brief 发送ACK响应
@@ -368,7 +368,7 @@ void usart_protocol_send_ack(usart_protocol_context_t* ctx, uint8_t func_code);
  * @param len 数据长度
  */
 void usart_protocol_feed(usart_protocol_context_t* ctx, const uint8_t* data,
-                         uint16_t len);
+    uint16_t len);
 
 /**
  * @brief 协议解析任务处理函数

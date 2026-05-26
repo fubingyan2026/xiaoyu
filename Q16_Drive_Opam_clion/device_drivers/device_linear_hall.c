@@ -116,8 +116,7 @@ void device_linear_hall_init(void)
         .offline_cb = NULL,
     };
 
-    daemon_error_t err =
-        daemon_register_static(&encoder_cfg, &s_daemon_encoder);
+    daemon_error_t err = daemon_register_static(&encoder_cfg, &s_daemon_encoder);
     DEBUG_ASSERT(err == DAEMON_OK);
 }
 
@@ -142,10 +141,10 @@ float device_linear_hall_get_angle_rad(void)
     /* 归一化到 [-1, 1] 范围 */
     float y = (float)((int32_t)s_filter_normal[1].state
                   - hall_save_param.adcAmplitudeBias[1])
-              / (float)hall_save_param.adcAmplitudeMax[1];
+        / (float)hall_save_param.adcAmplitudeMax[1];
     float x = (float)((int32_t)s_filter_normal[0].state
                   - hall_save_param.adcAmplitudeBias[0])
-              / (float)hall_save_param.adcAmplitudeMax[0];
+        / (float)hall_save_param.adcAmplitudeMax[0];
 
     /* 未校准时使用极小值防止除零 */
     if (hall_save_param.calibrated_flag != ADJUST_FLAG_VAL) {
@@ -176,5 +175,5 @@ uint16_t device_linear_hall_get_angle(void)
     device_linear_hall_get_angle_rad();
 
     /* 转换为 14 位角度 (0-16383) */
-    return (uint16_t)((s_angle + M_PI) / (M_2PI)*16384.0f);
+    return (uint16_t)((s_angle + M_PI) / (M_2PI) * 16384.0f);
 }
