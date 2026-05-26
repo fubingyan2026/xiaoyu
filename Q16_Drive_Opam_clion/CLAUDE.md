@@ -54,17 +54,19 @@ bool module_is_initialized(const module_context_t* ctx);
 - `init()` checks `ctx->initialized`, calls `deinit()` first if already init'd, copies config with `ctx->config = *config`.
 - Error enum values: `MODULE_OK = 0`, negative values are errors.
 
-## Critical: __malloc → __memset
+## Critical: __malloc → memset
 
-The project uses `__malloc`/`__free` (`Middlewares/utils/memory_pool.h`). **Every `__malloc` must be immediately zeroed:**
+The project uses `__malloc`/`__free` (`Middlewares/utils/memory_pool.h`) for dynamic memory. **Every `__malloc` must be immediately zeroed** with standard `memset`:
 
 ```c
 ctx = (context_t*)__malloc(sizeof(context_t));
 if (ctx == NULL) return ERROR;
-__memset(ctx, 0, sizeof(context_t));  // MANDATORY
+memset(ctx, 0, sizeof(context_t));  // MANDATORY
 ```
 
 Without this, `ctx->initialized` may be garbage-true, causing `init()` to call `deinit()` on garbage pointers → hard fault.
+
+`__malloc`/`__free` 之外的其他函数使用 C 标准库（`memset`, `memcpy` 等）。
 
 ## Key Frameworks
 

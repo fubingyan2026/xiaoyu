@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "clist.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -26,13 +27,12 @@ typedef enum {
     KEY_BASE_ERROR_NO_MEMORY = -2, /**< 内存不足 */
     KEY_BASE_ERROR_NOT_FOUND = -3, /**< 未找到 */
     KEY_BASE_ERROR_ALREADY_EXIST = -4, /**< 已存在 */
-    KEY_BASE_ERROR_INTERNAL = -5, /**< 内部错误 */
 } key_base_error_t;
 
 /**
  * @brief 按键事件枚举
  */
-typedef enum __attribute__((packed)) {
+typedef enum {
     KEY_BASE_EVENT_DOWN = 0, /**< 按下 */
     KEY_BASE_EVENT_CLICK, /**< 点击 */
     KEY_BASE_EVENT_ONE_CLICK, /**< 单击 */
@@ -42,8 +42,6 @@ typedef enum __attribute__((packed)) {
     KEY_BASE_EVENT_LONG_WAIT_PRESS, /**< 长按等待 */
     KEY_BASE_EVENT_LONG_HOLD, /**< 长按保持 */
     KEY_BASE_EVENT_LONG_HOLD_RELEASE, /**< 长按释放 */
-    KEY_BASE_EVENT_COMBINATION, /**< 组合事件 */
-    KEY_BASE_EVENT_COMBINATION_LONG, /**< 组合长按事件 */
     KEY_BASE_EVENT_MAX, /**< 守卫值，必须放在最后 */
 } key_base_event_t;
 
@@ -58,7 +56,7 @@ typedef enum {
 /**
  * @brief 按键连击状态机枚举
  */
-typedef enum __attribute__((packed)) {
+typedef enum {
     KEY_BASE_BATTER_STATE_IDLE = 0, /**< 空闲状态 */
     KEY_BASE_BATTER_STATE_WAIT = 1, /**< 等待按键点击 */
 } key_base_batter_state_t;
@@ -69,7 +67,7 @@ typedef enum __attribute__((packed)) {
  * @param context 按键上下文指针
  * @return 处理后的按键事件类型
  */
-typedef key_base_event_t (*key_base_event_cb_t)(key_base_event_t event,
+typedef void (*key_base_event_cb_t)(key_base_event_t event,
     const void* context);
 
 /**
@@ -110,46 +108,34 @@ typedef struct key_base_context key_base_context_t;
 struct key_base_context {
     key_base_config_t config; /**< 配置参数 */
 
-    struct {
-        key_base_batter_state_t batter_event; /**< 连击状态机状态 */
-        key_base_event_t key_event; /**< 当前按键事件 */
-        key_base_event_t last_key_event; /**< 上次按键事件 */
+    key_base_batter_state_t batter_event; /**< 连击状态机状态 */
+    key_base_event_t key_event; /**< 当前按键事件 */
+    key_base_event_t last_key_event; /**< 上次按键事件 */
 
-        bool pin_state; /**< 当前引脚状态 */
-        bool last_pin_state; /**< 上次引脚状态 */
-        bool long_hold_state; /**< 长按保持状态 */
-        bool combination_active; /**< 标记当前按键是否在组合按键中 */
-        bool combination_handled; /**< 标记组合事件已处理 */
-        bool combination_long_handled; /**< 标记组合长按事件已处理 */
+    uint8_t pin_state; /**< 当前引脚状态 (KEY_BASE_PIN_STATE_xxx) */
+    uint8_t last_pin_state; /**< 上次引脚状态 */
+    bool long_hold_state; /**< 长按保持状态 */
 
-        uint8_t batter_counts; /**< 按键点击计数 */
-        uint8_t press_debounce_count; /**< 按键按下消抖计数 */
-        uint8_t release_debounce_count; /**< 按键释放消抖计数 */
+    uint8_t batter_counts; /**< 按键点击计数 */
+    uint8_t press_debounce_count; /**< 按键按下消抖计数 */
+    uint8_t release_debounce_count; /**< 按键释放消抖计数 */
 
-        uint32_t timer; /**< 当前时间戳 */
-        uint32_t last_timer; /**< 上次时间戳 */
-        uint32_t press_time; /**< 按键释放时间戳 */
-        uint32_t batter_reset_time; /**< 连击重置时间戳 */
-        uint32_t press_start_time; /**< 按键按下时的绝对时间戳 */
-        uint32_t diff_timer; /**< 时间差值 */
-        uint32_t post_long_release_time; /**< 长按释放时间戳，用于冷却屏蔽 */
-        uint32_t press_debounce_start; /**< 消抖开始时间（按下） */
-        uint32_t release_debounce_start; /**< 消抖开始时间（释放） */
+    uint32_t timer; /**< 当前时间戳 */
+    uint32_t last_timer; /**< 上次时间戳 */
+    uint32_t release_time; /**< 按键释放时间戳 */
+    uint32_t batter_reset_time; /**< 连击重置时间戳 */
+    uint32_t press_start_time; /**< 按键按下时的绝对时间戳 */
+    uint32_t diff_timer; /**< 时间差值 */
+    uint32_t post_long_release_time; /**< 长按释放时间戳，用于冷却屏蔽 */
 
-    } data;
-
+    bool initialized; /**< 初始化标志 */
     bool is_static; /**< 标记是否为静态注册 */
-    key_base_context_t* combination_partner; /**< 组合按键伙伴 */
-    key_base_context_t* next; /**< 链表下一个节点 */
+    clist_head_t list_node; /**< 链表节点（挂载到全局 key 链表） */
 };
 
 /* Exported constants --------------------------------------------------------*/
 
 /* Exported macro ------------------------------------------------------------*/
-
-/** @brief 按键错误码检查宏 */
-#define KEY_BASE_IS_OK(err) ((err) == KEY_BASE_OK)
-#define KEY_BASE_IS_ERR(err) ((err) < 0)
 
 /** @brief 按键事件名称表 */
 #define KEY_BASE_EVENT_NAME_TABLE                                 \
@@ -163,8 +149,6 @@ struct key_base_context {
         [KEY_BASE_EVENT_LONG_WAIT_PRESS] = "LONG_WAIT_PRESS",     \
         [KEY_BASE_EVENT_LONG_HOLD] = "LONG_HOLD",                 \
         [KEY_BASE_EVENT_LONG_HOLD_RELEASE] = "LONG_HOLD_RELEASE", \
-        [KEY_BASE_EVENT_COMBINATION] = "COMBINATION",             \
-        [KEY_BASE_EVENT_COMBINATION_LONG] = "COMBINATION_LONG",   \
     }
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -205,15 +189,6 @@ key_base_error_t key_base_register_static(const key_base_config_t* config,
  * @return 错误码
  */
 key_base_error_t key_base_unregister(const char* name);
-
-/**
- * @brief 注册组合按键
- * @param control_key_name 控制按键名称
- * @param command_key_name 命令按键名称
- * @return 错误码
- */
-key_base_error_t key_base_combination_register(const char* control_key_name,
-    const char* command_key_name);
 
 /**
  * @brief 获取按键实例

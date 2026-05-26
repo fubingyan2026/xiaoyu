@@ -92,7 +92,7 @@ static void handle_motor_control(uint8_t value);
 static void handle_save_can_id(uint8_t value);
 static void handle_erase_flash(uint8_t value);
 static uint8_t read_key_pin_level(void);
-static key_base_event_t on_key_event_callback(key_base_event_t event,
+static void on_key_event_callback(key_base_event_t event,
                                               const void* context);
 static inline void configure_led_blink(uint16_t interval_ms, uint16_t wait_ms,
                                        uint16_t counts);
@@ -239,16 +239,16 @@ static void handle_long_hold(void) {
  * @param context 指向按键上下文的指针
  * @return 返回处理后的按键事件类型
  */
-static key_base_event_t on_key_event_callback(key_base_event_t event,
+static void on_key_event_callback(key_base_event_t event,
                                               const void* context) {
   const key_base_context_t* key_ptr = context;
 
   KEY_FUNC_PRINTF("%s:%s,%d!", key_ptr->config.name,
-                  s_key_event_names[key_ptr->data.key_event],
-                  key_ptr->data.batter_counts);
+                  s_key_event_names[key_ptr->key_event],
+                  key_ptr->batter_counts);
 
   if (key_ptr != s_key0_instance) {
-    return key_ptr->data.key_event;
+    return;
   }
 
   switch (event) {
@@ -278,12 +278,11 @@ static key_base_event_t on_key_event_callback(key_base_event_t event,
     case KEY_BASE_EVENT_DOWN:
     case KEY_BASE_EVENT_LONG_HOLD_RELEASE:
     case KEY_BASE_EVENT_REPEAT_CLICK:
-    case KEY_BASE_EVENT_COMBINATION:
     default:
       break;
   }
 
-  return key_ptr->data.key_event;
+  return;
 }
 
 /* ==================== LED回调函数 ==================== */

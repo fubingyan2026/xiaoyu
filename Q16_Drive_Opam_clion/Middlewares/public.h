@@ -39,6 +39,7 @@ extern "C" {
 #include "services/led/led.h"
 
 /* ===== Utils ===== */
+#include "utils/clist.h"
 #include "utils/kfifo.h"
 #include "utils/memory_pool.h"
 #include "utils/toolkit/toolkit.h"
