@@ -195,6 +195,7 @@ void foc_task_init(void)
         .iq_integ_sat = CURRENT_IQ_INTEG_SAT,
         .pll_kp = PLL_ELE_KP,
         .pll_ki = PLL_ELE_KI,
+        .pll_speed_limit = PLL_SPEED_LIMIT,
         .v_bus = V_BUS,
         .max_duty_ratio = 0.95f,
         .port_config = port_cfg,

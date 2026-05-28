@@ -72,7 +72,6 @@ void foc_svpwm_init(foc_svpwm_context_t* ctx, const foc_svpwm_config_t* config)
     ctx->tb = 0;
     ctx->tc = 0;
     ctx->td = 0;
-    ctx->sector = 0;
 }
 
 /**

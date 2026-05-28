@@ -33,8 +33,6 @@ typedef struct {
     /* 输出变量 */
     q16_16_t ta, tb, tc; /**< 三相占空比 */
     q16_16_t td; /**< 最大占空比（用于ADC同步采样触发） */
-    /* 状态变量 */
-    int32_t sector; /**< 当前扇区 */
 } foc_svpwm_context_t;
 
 /**

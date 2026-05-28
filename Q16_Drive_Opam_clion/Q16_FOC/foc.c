@@ -55,7 +55,9 @@ foc_error_t foc_init(foc_context_t* ctx, const foc_config_t* config)
     q16_16_t id_out_min_q = -id_out_max_q;
     q16_16_t id_integ_sat_q = FLOAT_TO_Q16_16(ctx->config.id_integ_sat);
 
-    foc_pi_init(&ctx->pi_id, id_kp_q, id_ki_q, id_out_max_q, id_out_min_q, id_integ_sat_q);
+    const q16_16_t pwm_dt_q = FLOAT_TO_Q16_16(ctx->config.pwm_period_s);
+
+    foc_pi_init(&ctx->pi_id, id_kp_q, id_ki_q, id_out_max_q, id_out_min_q, id_integ_sat_q, pwm_dt_q);
 
     q16_16_t iq_kp_q = FLOAT_TO_Q16_16(ctx->config.iq_kp);
     q16_16_t iq_ki_q = FLOAT_TO_Q16_16(ctx->config.iq_ki);
@@ -63,7 +65,7 @@ foc_error_t foc_init(foc_context_t* ctx, const foc_config_t* config)
     q16_16_t iq_out_min_q = -iq_out_max_q;
     q16_16_t iq_integ_sat_q = FLOAT_TO_Q16_16(ctx->config.iq_integ_sat);
 
-    foc_pi_init(&ctx->pi_iq, iq_kp_q, iq_ki_q, iq_out_max_q, iq_out_min_q, iq_integ_sat_q);
+    foc_pi_init(&ctx->pi_iq, iq_kp_q, iq_ki_q, iq_out_max_q, iq_out_min_q, iq_integ_sat_q, pwm_dt_q);
 
     // 初始化SVPWM
     foc_svpwm_config_t svpwm_config = {
@@ -135,10 +137,11 @@ void foc_irq_handler(foc_context_t* ctx)
         float electrical_angle = encoder_track_sector(ctx->raw_angle_q, &g_encoder_calib);
         ctx->electrical_angle_q = FLOAT_TO_Q16_16(electrical_angle);
 
-        q16_16_t pll_kp_q = INT_TO_Q16_16((int32_t)ctx->config.pll_kp);
-        q16_16_t pll_ki_q = INT_TO_Q16_16((int32_t)ctx->config.pll_ki);
+        q16_16_t pll_kp_q = FLOAT_TO_Q16_16(ctx->config.pll_kp);
+        q16_16_t pll_ki_q = FLOAT_TO_Q16_16(ctx->config.pll_ki);
+        q16_16_t pll_speed_limit_q = FLOAT_TO_Q16_16(ctx->config.pll_speed_limit);
         foc_core_pll_run(ctx->electrical_angle_q, FOC_PWM_PERIOD_Q, &ctx->pll_phase_q,
-            &ctx->pll_velocity_q, pll_kp_q, pll_ki_q);
+            &ctx->pll_velocity_q, pll_kp_q, pll_ki_q, pll_speed_limit_q);
         ctx->pll_velocity_rpm = Q16_16_TO_FLOAT(ctx->pll_velocity_q) * 60.0f / M_2PI / ctx->config.motor_poles;
     }
 

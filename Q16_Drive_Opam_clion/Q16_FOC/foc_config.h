@@ -37,6 +37,7 @@
 /* ============= PLL 参数 ============= */
 #define PLL_ELE_KP 6000 ///< PLL比例增益
 #define PLL_ELE_KI 12000 ///< PLL积分增益
+#define PLL_SPEED_LIMIT 1000.0f ///< PLL速度输出限制（rad/s，绝对值）
 
 /* ============= 对齐参数 ============= */
 #define ALIGN_THETA_Q FLOAT_TO_Q16_16(0.25f * M_2PI) ///< 对齐角度（Q16.16格式）
@@ -67,18 +68,5 @@
 #define CURRENT_ID_OUT_MIN (-CURRENT_ID_OUT_MAX) ///< ID电流环最小输出
 #define CURRENT_ID_INTEG_SAT CURRENT_IQ_INTEG_SAT ///< ID电流环积分饱和限制
 
-/* ============= FOC 错误码枚举 ============= */
-
-/**
- * @brief FOC模块错误码枚举
- */
-typedef enum {
-  FOC_OK = 0,                       /**< 操作成功 */
-  FOC_ERROR_NULL_PTR,               /**< 空指针错误 */
-  FOC_ERROR_UNINITIALIZED,          /**< 未初始化 */
-  FOC_ERROR_PORT_INIT_FAILED,       /**< 端口初始化失败 */
-  FOC_ERROR_FSM_INIT_FAILED,        /**< 状态机初始化失败 */
-  FOC_ERROR_GENERIC,                /**< 通用错误 */
-} foc_error_t;
 
 #endif /* FOC_CONFIG_H */

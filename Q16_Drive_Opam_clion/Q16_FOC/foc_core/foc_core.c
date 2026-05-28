@@ -43,19 +43,17 @@ void foc_core_current_loop(foc_context_t* ctx, q16_16_t electrical_angle_q)
 
     // 低通滤波
     const q16_16_t lpf_beta_q = FLOAT_TO_Q16_16(0.33f);
-    static q16_16_t id_out_q = 0;
-    static q16_16_t iq_out_q = 0;
-    id_out_q = foc_lpf_update(id_out_q, id_raw_q, lpf_beta_q);
-    iq_out_q = foc_lpf_update(iq_out_q, iq_raw_q, lpf_beta_q);
+    ctx->lpf_id_q = foc_lpf_update(ctx->lpf_id_q, id_raw_q, lpf_beta_q);
+    ctx->lpf_iq_q = foc_lpf_update(ctx->lpf_iq_q, iq_raw_q, lpf_beta_q);
 
     // PI电流控制器
     ctx->pi_id.target = ctx->target_id_q;
-    ctx->pi_id.real = id_out_q;
+    ctx->pi_id.real = ctx->lpf_id_q;
     ctx->pi_iq.target = ctx->target_iq_q;
-    ctx->pi_iq.real = iq_out_q;
+    ctx->pi_iq.real = ctx->lpf_iq_q;
 
-    foc_pi_calc(&ctx->pi_iq, FOC_PWM_PERIOD_Q);
-    foc_pi_calc(&ctx->pi_id, FOC_PWM_PERIOD_Q);
+    foc_pi_calc(&ctx->pi_iq);
+    foc_pi_calc(&ctx->pi_id);
 
     // 设置SVPWM输入
     ctx->svpwm.vd = ctx->pi_id.out;
@@ -76,7 +74,7 @@ void foc_core_current_loop(foc_context_t* ctx, q16_16_t electrical_angle_q)
  * @brief FOC锁相环（PLL）运行函数
  */
 void foc_core_pll_run(q16_16_t phase_q, q16_16_t dt_q, q16_16_t* phase_var_q, q16_16_t* speed_var_q, q16_16_t kp_q,
-    q16_16_t ki_q)
+    q16_16_t ki_q, q16_16_t speed_limit_q)
 {
     // 计算相位误差并归一化到 [-π, π)
     q16_16_t delta_theta_q = q16_16_sub(phase_q, *phase_var_q);
@@ -103,15 +101,7 @@ void foc_core_pll_run(q16_16_t phase_q, q16_16_t dt_q, q16_16_t* phase_var_q, q1
     int64_t speed_inc_64 = (ki_delta_64 * (int64_t)dt_q) >> 16;
     q16_16_t speed_inc = (q16_16_t)speed_inc_64;
 
-    // 更新速度变量，添加饱和限制
+    // 更新速度变量，添加可配置的饱和限制
     *speed_var_q = q16_16_add(*speed_var_q, speed_inc);
-
-    // 速度饱和限制
-    const q16_16_t MAX_SPEED_Q = FLOAT_TO_Q16_16(1000.0f);
-    const q16_16_t MIN_SPEED_Q = FLOAT_TO_Q16_16(-1000.0f);
-
-    if (*speed_var_q > MAX_SPEED_Q)
-        *speed_var_q = MAX_SPEED_Q;
-    else if (*speed_var_q < MIN_SPEED_Q)
-        *speed_var_q = MIN_SPEED_Q;
+    *speed_var_q = q16_16_clip(*speed_var_q, q16_16_sub(0, speed_limit_q), speed_limit_q);
 }

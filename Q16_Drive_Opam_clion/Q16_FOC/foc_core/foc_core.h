@@ -50,8 +50,9 @@ void foc_core_current_loop(foc_context_t* ctx, q16_16_t electrical_angle_q);
  * @param speed_var_q 输出速度变量指针（Q16.16格式）
  * @param kp_q 比例增益（Q16.16格式）
  * @param ki_q 积分增益（Q16.16格式）
+ * @param speed_limit_q 速度输出饱和限制（Q16.16格式，绝对值）
  */
 void foc_core_pll_run(q16_16_t phase_q, q16_16_t dt_q, q16_16_t* phase_var_q, q16_16_t* speed_var_q, q16_16_t kp_q,
-    q16_16_t ki_q);
+    q16_16_t ki_q, q16_16_t speed_limit_q);
 
 #endif /* FOC_CORE_H */

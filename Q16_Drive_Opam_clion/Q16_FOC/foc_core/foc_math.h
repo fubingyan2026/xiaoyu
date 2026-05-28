@@ -33,13 +33,15 @@ typedef int32_t q16_16_t;
 #define Q16_16_SCALE 65536 ///< 缩放因子：65536
 #define Q16_16_SCALE_INV 0.0000152587890625f ///< 逆缩放因子：1/65536
 
-/* ============= 浮点与Q16.16互转 ============= */
 /**
- * @brief 浮点数转Q16.16定点数（带四舍五入）
+ * @brief 浮点数转Q16.16定点数（内联安全版，无重复求值副作用）
  * @param x 浮点数输入
  * @return Q16.16定点数
  */
-#define FLOAT_TO_Q16_16(x) ((q16_16_t)((x) * 65536.0f + ((x) >= 0.0f ? 0.5f : -0.5f)))
+static inline q16_16_t FLOAT_TO_Q16_16(float x)
+{
+    return (q16_16_t)(x * 65536.0f + (x >= 0.0f ? 0.5f : -0.5f));
+}
 
 /**
  * @brief Q16.16定点数转浮点数
@@ -272,9 +274,9 @@ q16_16_t foc_atan2(q16_16_t y, q16_16_t x);
 /**
  * @brief Clarke变换（三相→两相静止坐标系）
  * 将三相电流Ia、Ib、Ic转换为两相静止坐标系下的Iα、Iβ
- * 变换公式：
+ * 变换公式（等幅值）：
  *   Iα = Ia
- *   Iβ = (2/√3)·Ib - (1/√3)·(Ia + Ic)
+ *   Iβ = (Ib - Ic) / √3  （等价于 (Ia + 2·Ib) / √3）
  * @param ia A相电流
  * @param ib B相电流
  * @param ic C相电流
@@ -350,22 +352,24 @@ typedef struct {
 
 /**
  * @brief 初始化PI控制器
+ * Ki 在内部预乘 dt，calc() 中无需再乘 dt
  * @param pi PI控制器指针
  * @param kp 比例增益
- * @param ki 积分增益
+ * @param ki 积分增益（原始值，内部会预乘 dt）
  * @param max_val 最大输出值
  * @param min_val 最小输出值
  * @param integ_sat 积分饱和限制
+ * @param dt_q 采样周期（Q16.16格式）
  */
-void foc_pi_init(foc_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val, q16_16_t min_val, q16_16_t integ_sat);
+void foc_pi_init(foc_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val, q16_16_t min_val, q16_16_t integ_sat,
+    q16_16_t dt_q);
 
 /**
  * @brief 执行PI控制器计算
- * 计算公式：out = Kp·err + Ki·∫err·dt
+ * 计算公式：out = Kp·err + (Ki·dt)·∫err
  * @param pi PI控制器指针
- * @param dt_q 采样周期（Q16.16格式）
  */
-void foc_pi_calc(foc_pi_t* pi, q16_16_t dt_q);
+void foc_pi_calc(foc_pi_t* pi);
 
 /**
  * @brief 重置PI控制器状态
@@ -383,16 +387,28 @@ void foc_pi_reset(foc_pi_t* pi);
  */
 q16_16_t foc_lpf_update(q16_16_t old_val, q16_16_t new_val, q16_16_t lpf_k);
 
+/**
+ * @brief 一阶低通滤波器更新（移位版，无需乘法）
+ * 当滤波系数为 2 的负幂次时使用，比 foc_lpf_update 节省一次 32x32 乘法
+ * @param old_val 上一次滤波值
+ * @param new_val 新采样值
+ * @param shift 右移位数（等效滤波系数 = 1/(2^shift)）
+ * @return 滤波后的值
+ */
+q16_16_t foc_lpf_update_shift(q16_16_t old_val, q16_16_t new_val, uint8_t shift);
+
 /* ============= 滑动平均滤波器 ============= */
 
 /**
  * @brief 滑动平均滤波器结构体
+ * 长度必须是 2 的幂，使用移位代替除法
  */
 typedef struct {
     q16_16_t* buffer; ///< 数据缓冲区
-    uint16_t length; ///< 缓冲区长度
+    uint16_t length; ///< 缓冲区长度（必须为2的幂）
     uint16_t idx; ///< 当前索引
-    q16_16_t sum; ///< 累加和
+    uint8_t shift; ///< log2(length)，用于移位除法
+    int64_t sum; ///< 累加和（64位防止溢出）
 } foc_ma_filter_t;
 
 /**
@@ -415,6 +431,7 @@ q16_16_t foc_ma_filter_update(foc_ma_filter_t* filter, q16_16_t new_val);
 
 /**
  * @brief 角度归一化到 [-π, π)
+ * 使用64位精确整数除法，无精度损失，支持任意大角度输入
  * @param angle_q 输入角度（Q16.16格式）
  * @return 归一化后的角度
  */

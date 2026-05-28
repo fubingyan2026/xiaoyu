@@ -27,6 +27,20 @@
 extern "C" {
 #endif
 
+/* ============= FOC 错误码枚举 ============= */
+
+/**
+ * @brief FOC模块错误码枚举
+ */
+typedef enum {
+    FOC_OK = 0, /**< 操作成功 */
+    FOC_ERROR_NULL_PTR, /**< 空指针错误 */
+    FOC_ERROR_UNINITIALIZED, /**< 未初始化 */
+    FOC_ERROR_PORT_INIT_FAILED, /**< 端口初始化失败 */
+    FOC_ERROR_FSM_INIT_FAILED, /**< 状态机初始化失败 */
+    FOC_ERROR_GENERIC, /**< 通用错误 */
+} foc_error_t;
+
 /* ==================== 前置声明 ==================== */
 
 typedef struct foc_context foc_context_t;
@@ -62,6 +76,7 @@ typedef struct {
   // PLL
   float pll_kp;                    /**< PLL比例增益 */
   float pll_ki;                    /**< PLL积分增益 */
+  float pll_speed_limit;           /**< PLL速度输出限制（rad/s，绝对值） */
 
   // SVPWM
   float v_bus;                     /**< 母线电压 */
@@ -105,6 +120,10 @@ struct foc_context {
   foc_port_t port;                 /**< 端口管理器 */
   foc_fsm_context_t fsm;           /**< FSM状态机 */
   angle_sensor_context_t sensor;   /**< 角度传感器上下文 */
+
+  // 滤波器状态
+  q16_16_t lpf_id_q;               /**< D轴电流低通滤波状态（Q16.16格式） */
+  q16_16_t lpf_iq_q;               /**< Q轴电流低通滤波状态（Q16.16格式） */
 
   // 采样数据
   q16_16_t current_sample[3];      /**< 三相电流采样值（Q16.16格式） */
