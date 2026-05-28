@@ -19,7 +19,7 @@
 
 #include "easyflash.h"
 #include "flash_task.h"
-#include "foc_config_q16.h"
+#include "foc_config.h"
 #include "hal_adc.h"
 #include "public.h"
 

@@ -18,8 +18,7 @@
 #include "bsp_delay.h"
 #include "easyflash.h"
 #include "flash_task.h"
-#include "foc_ctrl_q16.h"
-#include "foc_fsm.h"
+#include "foc_task.h"
 #include "hal_gpio.h"
 
 /* ==================== 配置常量 ==================== */
@@ -120,19 +119,19 @@ static void handle_motor_control(uint8_t value)
 {
     switch (value) {
     case MOTOR_SUBCMD_STOP:
-        foc_ctrl.target_iq_q = FLOAT_TO_Q16_16(0.0f);
+        foc_set_target_iq(&g_foc_ctx, FLOAT_TO_Q16_16(0.0f));
         KEY_FUNC_PRINTF("Motor: STOP");
         break;
     case MOTOR_SUBCMD_CURRENT_25:
-        foc_ctrl.target_iq_q = FLOAT_TO_Q16_16(0.25f);
+        foc_set_target_iq(&g_foc_ctx, FLOAT_TO_Q16_16(0.25f));
         KEY_FUNC_PRINTF("Motor: 25%% current");
         break;
     case MOTOR_SUBCMD_ALIGN:
-        foc_fsm_request_state(foc_fsm_get_instance(), FOC_FSM_STATE_ALIGN);
+        foc_request_state(&g_foc_ctx, FOC_FSM_STATE_ALIGN);
         KEY_FUNC_PRINTF("Motor: ALIGN mode");
         break;
     case MOTOR_SUBCMD_HALL:
-        foc_fsm_request_state(foc_fsm_get_instance(), FOC_FSM_STATE_HALL);
+        foc_request_state(&g_foc_ctx, FOC_FSM_STATE_HALL);
         KEY_FUNC_PRINTF("Motor: HALL mode");
         break;
     case MOTOR_SUBCMD_RESET_DEFAULT:

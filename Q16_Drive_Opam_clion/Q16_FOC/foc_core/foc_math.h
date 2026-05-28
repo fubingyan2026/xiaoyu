@@ -4,19 +4,19 @@
  *            Q16.16格式：高16位为整数部分，低16位为小数部分
  *            表示范围：-32768.0 ~ +32767.99998
  *            精度：约0.000015（1/65536）
- * @FilePath: q16_16_math.h
+ * @FilePath: foc_math.h
  * @author:  fubingyan qq: 3245784484
  * @Date:  2026-01-11
  * @version: V1.0.0
  * @copyright (c) 2026 by fubingyan, All Rights Reserved.
  */
 
-#ifndef Q16_16_MATH_H
-#define Q16_16_MATH_H
+#ifndef FOC_MATH_H
+#define FOC_MATH_H
 
 #include <stdint.h>
 /* 统一四舍五入，使用 copysign 避免分支 */
-#include <math.h>
+#include "maths.h"
 
 /* ============= Q16.16 定点数类型定义 ============= */
 /**
@@ -241,7 +241,7 @@ static inline q16_16_t q16_16_min(q16_16_t a, q16_16_t b)
  * @param sin_out 输出正弦值指针
  * @param cos_out 输出余弦值指针
  */
-void q16_16_sin_cos(q16_16_t angle_q, q16_16_t* sin_out, q16_16_t* cos_out);
+void foc_sin_cos(q16_16_t angle_q, q16_16_t* sin_out, q16_16_t* cos_out);
 
 /**
  * @brief Q16.16定点数平方根
@@ -249,14 +249,14 @@ void q16_16_sin_cos(q16_16_t angle_q, q16_16_t* sin_out, q16_16_t* cos_out);
  * @param x 输入值（非负）
  * @return 平方根
  */
-q16_16_t q16_16_sqrt(q16_16_t x);
+q16_16_t foc_sqrt(q16_16_t x);
 
 /**
  * @brief Q16.16格式的平方根倒数函数
  * @param x 输入值（Q16.16格式）
  * @return 平方根倒数（Q16.16格式）
  */
-q16_16_t q16_16_inv_sqrt(q16_16_t x);
+q16_16_t foc_inv_sqrt(q16_16_t x);
 
 /**
  * @brief Q16.16定点数反正切函数（两参数版本）
@@ -265,7 +265,7 @@ q16_16_t q16_16_inv_sqrt(q16_16_t x);
  * @param x X坐标
  * @return 角度（弧度）
  */
-q16_16_t q16_16_atan2(q16_16_t y, q16_16_t x);
+q16_16_t foc_atan2(q16_16_t y, q16_16_t x);
 
 /* ============= FOC 特定运算 ============= */
 
@@ -281,7 +281,7 @@ q16_16_t q16_16_atan2(q16_16_t y, q16_16_t x);
  * @param alpha 输出α轴电流指针
  * @param beta 输出β轴电流指针
  */
-void q16_16_clarke_transform(q16_16_t ia, q16_16_t ib, q16_16_t ic, q16_16_t* alpha, q16_16_t* beta);
+void foc_clarke_transform(q16_16_t ia, q16_16_t ib, q16_16_t ic, q16_16_t* alpha, q16_16_t* beta);
 
 /**
  * @brief Park变换（两相静止→两相旋转坐标系）
@@ -296,7 +296,7 @@ void q16_16_clarke_transform(q16_16_t ia, q16_16_t ib, q16_16_t ic, q16_16_t* al
  * @param d 输出d轴分量指针
  * @param q 输出q轴分量指针
  */
-void q16_16_park_transform(q16_16_t alpha, q16_16_t beta, q16_16_t sin_theta, q16_16_t cos_theta, q16_16_t* d,
+void foc_park_transform(q16_16_t alpha, q16_16_t beta, q16_16_t sin_theta, q16_16_t cos_theta, q16_16_t* d,
     q16_16_t* q);
 
 /**
@@ -312,7 +312,7 @@ void q16_16_park_transform(q16_16_t alpha, q16_16_t beta, q16_16_t sin_theta, q1
  * @param alpha 输出α轴分量指针
  * @param beta 输出β轴分量指针
  */
-void q16_16_ipark_transform(q16_16_t d, q16_16_t q, q16_16_t sin_theta, q16_16_t cos_theta, q16_16_t* alpha,
+void foc_ipark_transform(q16_16_t d, q16_16_t q, q16_16_t sin_theta, q16_16_t cos_theta, q16_16_t* alpha,
     q16_16_t* beta);
 
 /**
@@ -322,7 +322,7 @@ void q16_16_ipark_transform(q16_16_t d, q16_16_t q, q16_16_t sin_theta, q16_16_t
  * @param beta β轴分量
  * @return 矢量幅值
  */
-q16_16_t q16_16_vector_magnitude(q16_16_t alpha, q16_16_t beta);
+q16_16_t foc_vector_magnitude(q16_16_t alpha, q16_16_t beta);
 
 /**
  * @brief 计算二维矢量幅值的平方
@@ -331,7 +331,7 @@ q16_16_t q16_16_vector_magnitude(q16_16_t alpha, q16_16_t beta);
  * @param beta β轴分量
  * @return 矢量幅值的平方
  */
-q16_16_t q16_16_vector_magnitude_sq(q16_16_t alpha, q16_16_t beta);
+q16_16_t foc_vector_magnitude_sq(q16_16_t alpha, q16_16_t beta);
 
 /* ============= Q16.16 PI 控制器 ============= */
 
@@ -339,15 +339,14 @@ q16_16_t q16_16_vector_magnitude_sq(q16_16_t alpha, q16_16_t beta);
  * @brief Q16.16 PI控制器结构体
  * 实现比例积分控制算法，适用于电流环、速度环等控制
  */
-typedef struct
-{
+typedef struct {
     q16_16_t kp, ki; ///< 比例增益和积分增益
     q16_16_t max_value, min_value; ///< 输出限幅值
     q16_16_t integ_sat; ///< 积分饱和限制
     q16_16_t integral; ///< 积分累积值
     q16_16_t target, real, err; ///< 目标值、实际值、误差
     q16_16_t out; ///< 控制器输出
-} q16_16_pi_t;
+} foc_pi_t;
 
 /**
  * @brief 初始化PI控制器
@@ -358,7 +357,7 @@ typedef struct
  * @param min_val 最小输出值
  * @param integ_sat 积分饱和限制
  */
-void q16_16_pi_init(q16_16_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val, q16_16_t min_val, q16_16_t integ_sat);
+void foc_pi_init(foc_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val, q16_16_t min_val, q16_16_t integ_sat);
 
 /**
  * @brief 执行PI控制器计算
@@ -366,31 +365,74 @@ void q16_16_pi_init(q16_16_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val,
  * @param pi PI控制器指针
  * @param dt_q 采样周期（Q16.16格式）
  */
-void q16_16_pi_calc(q16_16_pi_t* pi, q16_16_t dt_q);
-
-void q16_16_pi_reset(q16_16_pi_t* pi);
+void foc_pi_calc(foc_pi_t* pi, q16_16_t dt_q);
 
 /**
  * @brief 重置PI控制器状态
- * 清零积分项和误
+ * 清零积分项和误差
+ * @param pi PI控制器指针
  */
+void foc_pi_reset(foc_pi_t* pi);
 
-q16_16_t q16_16_lpf_update(q16_16_t old_val, q16_16_t new_val, q16_16_t lpf_k);
+/**
+ * @brief 一阶低通滤波器更新
+ * @param old_val 上一次滤波值
+ * @param new_val 新采样值
+ * @param lpf_k 滤波系数
+ * @return 滤波后的值
+ */
+q16_16_t foc_lpf_update(q16_16_t old_val, q16_16_t new_val, q16_16_t lpf_k);
 
-typedef struct
-{
-    q16_16_t* buffer;
-    uint16_t length;
-    uint16_t idx;
-    q16_16_t sum;
-} q16_16_ma_filter_t;
+/* ============= 滑动平均滤波器 ============= */
 
-void q16_16_ma_filter_init(q16_16_ma_filter_t* filter, q16_16_t* buf, uint16_t len);
-q16_16_t q16_16_ma_filter_update(q16_16_ma_filter_t* filter, q16_16_t new_val);
+/**
+ * @brief 滑动平均滤波器结构体
+ */
+typedef struct {
+    q16_16_t* buffer; ///< 数据缓冲区
+    uint16_t length; ///< 缓冲区长度
+    uint16_t idx; ///< 当前索引
+    q16_16_t sum; ///< 累加和
+} foc_ma_filter_t;
+
+/**
+ * @brief 初始化滑动平均滤波器
+ * @param filter 滤波器指针
+ * @param buf 数据缓冲区
+ * @param len 缓冲区长度
+ */
+void foc_ma_filter_init(foc_ma_filter_t* filter, q16_16_t* buf, uint16_t len);
+
+/**
+ * @brief 更新滑动平均滤波器
+ * @param filter 滤波器指针
+ * @param new_val 新采样值
+ * @return 滤波后的值
+ */
+q16_16_t foc_ma_filter_update(foc_ma_filter_t* filter, q16_16_t new_val);
 
 /* ============= Q16.16 角度处理 ============= */
-q16_16_t q16_16_normalize_angle(q16_16_t angle_q);
-q16_16_t q16_16_normalize_angle_0_2pi(q16_16_t angle_q);
-q16_16_t q16_16_angle_diff(q16_16_t target, q16_16_t current);
 
-#endif
+/**
+ * @brief 角度归一化到 [-π, π)
+ * @param angle_q 输入角度（Q16.16格式）
+ * @return 归一化后的角度
+ */
+q16_16_t foc_normalize_angle(q16_16_t angle_q);
+
+/**
+ * @brief 角度归一化到 [0, 2π)
+ * @param angle_q 输入角度（Q16.16格式）
+ * @return 归一化后的角度
+ */
+q16_16_t foc_normalize_angle_0_2pi(q16_16_t angle_q);
+
+/**
+ * @brief 计算两个角度的最小差值
+ * @param target 目标角度
+ * @param current 当前角度
+ * @return 最小角度差（[-π, π)）
+ */
+q16_16_t foc_angle_diff(q16_16_t target, q16_16_t current);
+
+#endif /* FOC_MATH_H */

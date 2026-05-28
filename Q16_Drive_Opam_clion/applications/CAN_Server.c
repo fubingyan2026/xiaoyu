@@ -13,10 +13,11 @@
 
 #include "app.h"
 
-#include "foc_ctrl_q16.h"
+#include "foc_task.h"
 #include "key_menu.h"
 #include "perf_counter.h"
 #include "stm32g4xx_hal_fdcan.h"
+
 #define CAN_SERVER_INFO(...) // DEBUG_LOGW("can_srv", __VA_ARGS__)
 
 #define FIRMWARE_UPDATE_MAGIC_WORD \
@@ -207,7 +208,7 @@ void FDCAN_Server_Task(void)
             can_send_counts = 0;
             ((can_send_sliver_data_t*)can_comm_tx_bind_data(
                  can_comm_tx_sliver_instance))
-                ->velocity_rpm = foc_ctrl.pll_velocity_rpm;
+                ->velocity_rpm = foc_get_velocity_rpm(&g_foc_ctx);
         }
         set_velocity = ((can_get_master_data_t*)can_comm_rx_bind_data(
                             can_comm_rx_master_instance))

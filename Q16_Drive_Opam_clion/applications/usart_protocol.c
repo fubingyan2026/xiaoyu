@@ -26,8 +26,7 @@
 #include "app.h"
 #include "crc16.h"
 #include "encoder_alignment.h"
-#include "foc_ctrl_q16.h"
-#include "foc_fsm.h"
+#include "foc_task.h"
 #include "hal_uart.h"
 #include "stm32g4xx_hal.h"
 
@@ -37,7 +36,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-extern foc_ctrl_t foc_ctrl;
 extern encoder_calibration_t g_encoder_calib;
 extern motor_flash_config_t g_motor_flash_cfg;
 
@@ -460,11 +458,11 @@ void usart_protocol_stream_task(usart_protocol_context_t* ctx)
     usart_protocol_stream_data_t stream = { 0U };
 
     stream.timestamp = current_tick * 1000U;
-    stream.id_current = (int16_t)(foc_ctrl.target_id_q / 65536);
-    stream.iq_current = (int16_t)(foc_ctrl.target_iq_q / 65536);
-    stream.velocity = (int16_t)(foc_ctrl.omega_q / 65536);
-    stream.position = (int32_t)(foc_ctrl.pll_phase_q / 655);
-    stream.elec_angle = (uint16_t)((foc_ctrl.electrical_angle_q >> 16U) & 0xFFFFU);
+    stream.id_current = (int16_t)(foc_get_target_id(&g_foc_ctx) / 65536);
+    stream.iq_current = (int16_t)(foc_get_target_iq(&g_foc_ctx) / 65536);
+    stream.velocity = (int16_t)(foc_get_omega(&g_foc_ctx) / 65536);
+    stream.position = (int32_t)(foc_get_pll_phase(&g_foc_ctx) / 655);
+    stream.elec_angle = (uint16_t)((foc_get_electrical_angle(&g_foc_ctx) >> 16U) & 0xFFFFU);
 
     (void)usart_protocol_send_response(ctx, MSG_RESPONSE, FUNC_GET_STATUS,
         (uint8_t*)&stream,
@@ -593,13 +591,13 @@ static usart_protocol_error_t cmd_get_status_handler(uint8_t func_code,
 
     usart_protocol_status_data_t status = { 0U };
 
-    status.state = (uint8_t)foc_fsm_current_state();
+    status.state = (uint8_t)foc_current_state(&g_foc_ctx);
     status.error_code = 0U;
 
-    status.id_current = (int16_t)(foc_ctrl.target_id_q / 65536);
-    status.iq_current = (int16_t)(foc_ctrl.target_iq_q / 65536);
-    status.velocity = (int16_t)(foc_ctrl.omega_q / 65536);
-    status.position = (int32_t)(foc_ctrl.pll_phase_q / 655);
+    status.id_current = (int16_t)(foc_get_target_id(&g_foc_ctx) / 65536);
+    status.iq_current = (int16_t)(foc_get_target_iq(&g_foc_ctx) / 65536);
+    status.velocity = (int16_t)(foc_get_omega(&g_foc_ctx) / 65536);
+    status.position = (int32_t)(foc_get_pll_phase(&g_foc_ctx) / 65536);
     status.voltage = 2400U;
     status.temperature = 65;
 
@@ -621,7 +619,7 @@ static usart_protocol_error_t cmd_get_state_handler(uint8_t func_code,
     (void)data;
     (void)len;
 
-    uint8_t state = (uint8_t)foc_fsm_current_state();
+    uint8_t state = (uint8_t)foc_current_state(&g_foc_ctx);
     (void)memcpy(response, &state, 1U);
     *resp_len = 1U;
     return USART_PROTOCOL_OK;
@@ -648,8 +646,8 @@ static usart_protocol_error_t cmd_set_current_handler(uint8_t func_code,
     int16_t id = (int16_t)((uint16_t)data[0U] | ((uint16_t)data[1U] << 8));
     int16_t iq = (int16_t)((uint16_t)data[2U] | ((uint16_t)data[3U] << 8));
 
-    foc_ctrl.target_id_q = (q16_16_t)id;
-    foc_ctrl.target_iq_q = (q16_16_t)iq;
+    foc_set_target_id(&g_foc_ctx, (q16_16_t)id);
+    foc_set_target_iq(&g_foc_ctx, (q16_16_t)iq);
 
     return USART_PROTOCOL_OK;
 }
@@ -673,7 +671,7 @@ static usart_protocol_error_t cmd_set_velocity_handler(uint8_t func_code,
     }
 
     int16_t velocity = (int16_t)((uint16_t)data[0U] | ((uint16_t)data[1U] << 8));
-    foc_ctrl.omega_q = (q16_16_t)velocity;
+    foc_set_omega(&g_foc_ctx, (q16_16_t)velocity);
 
     return USART_PROTOCOL_OK;
 }
@@ -697,7 +695,7 @@ static usart_protocol_error_t cmd_set_position_handler(uint8_t func_code,
     }
 
     int32_t position = (int32_t)((uint32_t)data[0U] | ((uint32_t)data[1U] << 8) | ((uint32_t)data[2U] << 16) | ((uint32_t)data[3U] << 24));
-    foc_ctrl.pll_phase_q = (q16_16_t)position;
+    foc_set_pll_phase(&g_foc_ctx, (q16_16_t)position);
 
     return USART_PROTOCOL_OK;
 }
@@ -716,9 +714,9 @@ static usart_protocol_error_t cmd_stop_handler(uint8_t func_code, uint8_t* data,
     (void)response;
     *resp_len = 0U;
 
-    foc_ctrl.target_id_q = (q16_16_t)0;
-    foc_ctrl.target_iq_q = (q16_16_t)0;
-    foc_ctrl.sw = 0U;
+    foc_set_target_id(&g_foc_ctx, (q16_16_t)0);
+    foc_set_target_iq(&g_foc_ctx, (q16_16_t)0);
+    foc_set_sw(&g_foc_ctx, false);
 
     return USART_PROTOCOL_OK;
 }
@@ -738,7 +736,7 @@ static usart_protocol_error_t cmd_start_handler(uint8_t func_code,
     (void)response;
     *resp_len = 0U;
 
-    foc_ctrl.sw = 1U;
+    foc_set_sw(&g_foc_ctx, true);
 
     return USART_PROTOCOL_OK;
 }
@@ -759,7 +757,7 @@ static usart_protocol_error_t cmd_start_calib_handler(uint8_t func_code,
     (void)response;
     *resp_len = 0U;
 
-    (void)foc_fsm_request_state(foc_fsm_get_instance(), FOC_FSM_STATE_ALIGNMENT);
+    (void)foc_request_state(&g_foc_ctx, FOC_FSM_STATE_ALIGNMENT);
 
     return USART_PROTOCOL_OK;
 }
@@ -780,7 +778,7 @@ static usart_protocol_error_t cmd_get_calib_status_handler(uint8_t func_code,
 
     usart_protocol_calib_status_data_t calib_status = { 0U };
 
-    uint8_t state = (uint8_t)foc_fsm_current_state();
+    uint8_t state = (uint8_t)foc_current_state(&g_foc_ctx);
 
     if ((state == (uint8_t)FOC_FSM_STATE_ALIGN) || (state == (uint8_t)FOC_FSM_STATE_ALIGNMENT)) {
         calib_status.status = USART_PROTOCOL_CALIB_STATUS_RUNNING;
@@ -1049,9 +1047,9 @@ static usart_protocol_error_t cmd_brake_handler(uint8_t func_code,
     (void)response;
     *resp_len = 0U;
 
-    foc_ctrl.target_id_q = (q16_16_t)0;
-    foc_ctrl.target_iq_q = (q16_16_t)0;
-    foc_ctrl.sw = 0U;
+    foc_set_target_id(&g_foc_ctx, (q16_16_t)0);
+    foc_set_target_iq(&g_foc_ctx, (q16_16_t)0);
+    foc_set_sw(&g_foc_ctx, false);
 
     return USART_PROTOCOL_OK;
 }

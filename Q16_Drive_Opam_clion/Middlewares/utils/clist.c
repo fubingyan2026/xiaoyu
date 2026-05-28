@@ -19,14 +19,14 @@
  */
 
 #include "clist.h"
+#include "public.h"
 
 /* --------------------------------------------------------------------------
- * 若目标平台无 printf，可将下面的宏替换为平台专有的串口打印函数，
- * 或定义 CLIST_NO_PRINTF 来完全禁用 clist_dump()。
+ * 使用项目 debug 模块输出，通过 DEBUG_LOGD("clist", ...) 路由到 UART DMA FIFO。
+ * 定义 CLIST_NO_PRINTF 可完全禁用 clist_dump()。
  * -------------------------------------------------------------------------- */
 #ifndef CLIST_NO_PRINTF
-#include <stdio.h>
-#define CLIST_PRINTF(fmt, ...) printf((fmt), ##__VA_ARGS__)
+#define CLIST_PRINTF(fmt, ...) DEBUG_LOGI("", fmt, ##__VA_ARGS__)
 #else
 #define CLIST_PRINTF(fmt, ...) /* 空实现：平台无标准输出时屏蔽 */
 #endif

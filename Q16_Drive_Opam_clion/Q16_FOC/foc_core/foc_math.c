@@ -1,13 +1,14 @@
 /**
  * @brief:   Q16.16 定点数学库实现
- * @FilePath:  q16_16_math.c
+ * @FilePath:  foc_math.c
  * @author:  fubingyan qq:3245784484
  * @date:  2026-01-11
  * @version: V1.0.0
  * @copyright (c) 2026 by fubingyan, All Rights Reserved.
  */
 
-#include "q16_16_math.h"
+#include "foc_math.h"
+#include "maths.h"
 /* ============= Q16.16 三角函数（LUT + 线性插值实现） ============= */
 
 #define SIN_TABLE_SIZE 512
@@ -54,9 +55,9 @@ static const q16_16_t sin_table[SIN_TABLE_SIZE] = {
 
 #define SIN_LUT_INDEX_MULTIPLIER 5340351ULL // 预计算魔数：(512ULL << 32) / 411775 ≈ 5340351
 
-void q16_16_sin_cos(q16_16_t angle_q, q16_16_t* sin_out, q16_16_t* cos_out)
+void foc_sin_cos(q16_16_t angle_q, q16_16_t* sin_out, q16_16_t* cos_out)
 {
-    angle_q = q16_16_normalize_angle_0_2pi(angle_q);
+    angle_q = foc_normalize_angle_0_2pi(angle_q);
 
     // scaled = angle_q * (512 / 2π)
     // 结果 64 位：[高32位=索引, 低32位=小数]
@@ -88,7 +89,7 @@ void q16_16_sin_cos(q16_16_t angle_q, q16_16_t* sin_out, q16_16_t* cos_out)
 /**
  * @brief Q16.16 快速平方根
  */
-q16_16_t q16_16_sqrt(q16_16_t x)
+q16_16_t foc_sqrt(q16_16_t x)
 {
     if (x <= 0)
         return 0;
@@ -96,7 +97,7 @@ q16_16_t q16_16_sqrt(q16_16_t x)
         return Q16_16_ONE;
 
     // sqrt(x) = x * (1/sqrt(x))
-    q16_16_t inv = q16_16_inv_sqrt(x);
+    q16_16_t inv = foc_inv_sqrt(x);
     return q16_16_mul(x, inv);
 }
 
@@ -105,7 +106,7 @@ q16_16_t q16_16_sqrt(q16_16_t x)
  * @param x 输入值（Q16.16格式）
  * @return 平方根倒数（Q16.16格式）
  */
-q16_16_t q16_16_inv_sqrt(q16_16_t x)
+q16_16_t foc_inv_sqrt(q16_16_t x)
 {
     if (x <= 0)
         return INT32_MAX;
@@ -116,7 +117,7 @@ q16_16_t q16_16_inv_sqrt(q16_16_t x)
     float x_float = Q16_16_TO_FLOAT(x);
 
     // 计算平方根倒数
-    float inv_sqrt_float = 1.0f / sqrtf(x_float);
+    float inv_sqrt_float = inv_sqrt_approx(x_float);
 
     // 将结果转换回Q16.16格式
     return FLOAT_TO_Q16_16(inv_sqrt_float);
@@ -125,7 +126,7 @@ q16_16_t q16_16_inv_sqrt(q16_16_t x)
 /**
  * @brief Q16.16 反正切
  */
-q16_16_t q16_16_atan2(q16_16_t y, q16_16_t x)
+q16_16_t foc_atan2(q16_16_t y, q16_16_t x)
 {
     if (x == 0 && y == 0)
         return 0;
@@ -167,7 +168,7 @@ q16_16_t q16_16_atan2(q16_16_t y, q16_16_t x)
  * @param[out] alpha 输出α轴电流
  * @param[out] beta 输出β轴电流
  */
-void q16_16_clarke_transform(q16_16_t ia, q16_16_t ib, q16_16_t ic, q16_16_t* alpha, q16_16_t* beta)
+void foc_clarke_transform(q16_16_t ia, q16_16_t ib, q16_16_t ic, q16_16_t* alpha, q16_16_t* beta)
 {
     /* 等幅值 Clarke 变换
      * I_alpha = I_a
@@ -190,7 +191,7 @@ void q16_16_clarke_transform(q16_16_t ia, q16_16_t ib, q16_16_t ic, q16_16_t* al
  * @param[out] d 输出d轴电流
  * @param[out] q 输出q轴电流
  */
-void q16_16_park_transform(q16_16_t alpha, q16_16_t beta, q16_16_t sin_theta, q16_16_t cos_theta, q16_16_t* d,
+void foc_park_transform(q16_16_t alpha, q16_16_t beta, q16_16_t sin_theta, q16_16_t cos_theta, q16_16_t* d,
     q16_16_t* q)
 {
     /* 变换公式
@@ -210,7 +211,7 @@ void q16_16_park_transform(q16_16_t alpha, q16_16_t beta, q16_16_t sin_theta, q1
  * @param[out] alpha 输出α轴电压
  * @param[out] beta 输出β轴电压
  */
-void q16_16_ipark_transform(q16_16_t d, q16_16_t q, q16_16_t sin_theta, q16_16_t cos_theta, q16_16_t* alpha,
+void foc_ipark_transform(q16_16_t d, q16_16_t q, q16_16_t sin_theta, q16_16_t cos_theta, q16_16_t* alpha,
     q16_16_t* beta)
 {
     /* 逆变换公式
@@ -221,21 +222,21 @@ void q16_16_ipark_transform(q16_16_t d, q16_16_t q, q16_16_t sin_theta, q16_16_t
     *beta = q16_16_add(q16_16_mul(sin_theta, d), q16_16_mul(cos_theta, q));
 }
 
-q16_16_t q16_16_vector_magnitude(q16_16_t alpha, q16_16_t beta)
+q16_16_t foc_vector_magnitude(q16_16_t alpha, q16_16_t beta)
 {
     q16_16_t alpha_sq = q16_16_mul(alpha, alpha);
     q16_16_t beta_sq = q16_16_mul(beta, beta);
     q16_16_t sum_sq = q16_16_add(alpha_sq, beta_sq);
 
-    return q16_16_sqrt(sum_sq);
+    return foc_sqrt(sum_sq);
 }
 
-q16_16_t q16_16_vector_magnitude_sq(q16_16_t alpha, q16_16_t beta)
+q16_16_t foc_vector_magnitude_sq(q16_16_t alpha, q16_16_t beta)
 {
     return q16_16_add(q16_16_mul(alpha, alpha), q16_16_mul(beta, beta));
 }
 
-void q16_16_pi_init(q16_16_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val, q16_16_t min_val, q16_16_t integ_sat)
+void foc_pi_init(foc_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val, q16_16_t min_val, q16_16_t integ_sat)
 {
     pi->kp = kp;
     pi->ki = ki;
@@ -249,7 +250,7 @@ void q16_16_pi_init(q16_16_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val,
     pi->out = 0;
 }
 
-void q16_16_pi_calc(q16_16_pi_t* pi, q16_16_t dt_q)
+void foc_pi_calc(foc_pi_t* pi, q16_16_t dt_q)
 {
     // 步骤1: 计算误差
     pi->err = q16_16_sub(pi->target, pi->real);
@@ -269,7 +270,7 @@ void q16_16_pi_calc(q16_16_pi_t* pi, q16_16_t dt_q)
     pi->out = q16_16_clip(pi->out, pi->min_value, pi->max_value);
 }
 
-void q16_16_pi_reset(q16_16_pi_t* pi)
+void foc_pi_reset(foc_pi_t* pi)
 {
     pi->integral = 0;
     pi->err = 0;
@@ -278,13 +279,13 @@ void q16_16_pi_reset(q16_16_pi_t* pi)
 
 /* ============= 低通滤波实现 ============= */
 
-q16_16_t q16_16_lpf_update(q16_16_t old_val, q16_16_t new_val, q16_16_t lpf_k)
+q16_16_t foc_lpf_update(q16_16_t old_val, q16_16_t new_val, q16_16_t lpf_k)
 {
     q16_16_t delta = q16_16_sub(new_val, old_val);
     return q16_16_add(old_val, q16_16_mul(lpf_k, delta));
 }
 
-void q16_16_ma_filter_init(q16_16_ma_filter_t* filter, q16_16_t* buf, uint16_t len)
+void foc_ma_filter_init(foc_ma_filter_t* filter, q16_16_t* buf, uint16_t len)
 {
     filter->buffer = buf;
     filter->length = len;
@@ -292,7 +293,7 @@ void q16_16_ma_filter_init(q16_16_ma_filter_t* filter, q16_16_t* buf, uint16_t l
     filter->sum = 0;
 }
 
-q16_16_t q16_16_ma_filter_update(q16_16_ma_filter_t* filter, q16_16_t new_val)
+q16_16_t foc_ma_filter_update(foc_ma_filter_t* filter, q16_16_t new_val)
 {
     filter->sum = q16_16_sub(filter->sum, filter->buffer[filter->idx]);
     filter->sum = q16_16_add(filter->sum, new_val);
@@ -313,7 +314,7 @@ q16_16_t q16_16_ma_filter_update(q16_16_ma_filter_t* filter, q16_16_t new_val)
  * @return 归一化后的角度（Q16.16格式）
  * @note 优化后使用魔数法，时间复杂度 O(1)，仅需 ~1us
  */
-q16_16_t q16_16_normalize_angle(q16_16_t angle_q)
+q16_16_t foc_normalize_angle(q16_16_t angle_q)
 {
     // 【第一步】快速模运算：将 angle 转换到 (-2π, 2π) 范围
     // 原理：angle % 2π = angle - k*(2π)，其中 k = round(angle / 2π)
@@ -345,14 +346,14 @@ q16_16_t q16_16_normalize_angle(q16_16_t angle_q)
 /**
  * @brief Q16.16定点数角度归一化（0 ~ 2π）
  * @brief 将角度归一化到 [0, 2π) 范围
- * @brief 利用 q16_16_normalize_angle 实现，避免代码冗余
+ * @brief 利用 foc_normalize_angle 实现，避免代码冗余
  * @param angle_q 输入角度（Q16.16格式，弧度）
  * @return 归一化后的角度（Q16.16格式，范围 [0, 2π)）
  */
-q16_16_t q16_16_normalize_angle_0_2pi(q16_16_t angle_q)
+q16_16_t foc_normalize_angle_0_2pi(q16_16_t angle_q)
 {
     // 先归一化到 [-π, π)，然后平移到 [0, 2π)
-    q16_16_t result = q16_16_normalize_angle(angle_q);
+    q16_16_t result = foc_normalize_angle(angle_q);
 
     // 如果结果在 [-π, 0)，加上 2π 转换到 [π, 2π)
     if (result < 0) {
@@ -377,13 +378,13 @@ q16_16_t q16_16_normalize_angle_0_2pi(q16_16_t angle_q)
  * - target = 350°, current = 10° → 返回 -20°（而不是340°）
  * - target = 10°, current = 350° → 返回 20°（而不是-340°）
  *
- * @see q16_16_normalize_angle()
+ * @see foc_normalize_angle()
  */
-q16_16_t q16_16_angle_diff(q16_16_t target, q16_16_t current)
+q16_16_t foc_angle_diff(q16_16_t target, q16_16_t current)
 {
     // 计算原始角度差
     q16_16_t diff = q16_16_sub(target, current);
 
     // 将差值归一化到[-π, π)范围，确保是最小角度差
-    return q16_16_normalize_angle(diff);
+    return foc_normalize_angle(diff);
 }

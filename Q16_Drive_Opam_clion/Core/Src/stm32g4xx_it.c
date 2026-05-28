@@ -29,7 +29,7 @@
 #include "usart_receive.h"
 #include "app.h"
 #include "device_linear_hall.h"
-#include "foc_ctrl_q16.h"
+#include "foc_task.h"
 
 /* USER CODE END TD */
 
@@ -45,7 +45,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -264,7 +263,7 @@ void TIM1_CC_IRQHandler(void)
   HAL_TIM_IRQHandler(&htim1);
   /* USER CODE BEGIN TIM1_CC_IRQn 1 */
 
-  adc_dma_start_convert();
+  foc_task_adc_dma_start();
   device_linear_hall_start_dma();
 
   /* USER CODE END TIM1_CC_IRQn 1 */

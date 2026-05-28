@@ -17,7 +17,7 @@
 #include "device_linear_hall.h"
 #include "device_mt6701.h"
 #include "device_mt6816.h"
-#include "foc_config_q16.h"
+#include "foc_config.h"
 #include "fsm_linear_hall.h"
 #include "perf_counter.h"
 #include "utils_math.h"

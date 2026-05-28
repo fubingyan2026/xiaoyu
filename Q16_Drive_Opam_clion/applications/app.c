@@ -18,7 +18,7 @@
 #include "device_ws2812.h"
 #include "easyflash.h"
 #include "flash_task.h"
-#include "foc_ctrl_q16.h"
+#include "foc_task.h"
 #include "hal_uart.h"
 #include "key_menu.h"
 #include "lwmem/lwmem.h"
@@ -48,6 +48,7 @@ pt1Filter_t filter_cog_current;
 pid_type_def pid_type_velocity;
 
 lwmem_stats_t lwmem_stats;
+
 /* 事件1句柄 */
 tk_event_t* interrupt_event = NULL;
 tk_event_t* can_send_event = NULL;
@@ -96,7 +97,7 @@ void timer_uartTask_timeout_callback(tk_timer_t* timer)
 void timer_driverTask_timeout_callback(tk_timer_t* timer)
 {
     FDCAN_Server_Task();
-    foc_fsm_calc();
+    foc_fsm_step(&g_foc_ctx.fsm);
 }
 
 void AppInit(void)
@@ -134,7 +135,7 @@ void AppInit(void)
     CANCommInit(); // 注册CAN收发实例
     uart_it_init();
 
-    foc_init(); // FOC初始化(包含传感器初始化)
+    foc_task_init(); // FOC平台初始化(传感器+配置+FOC模块)
 
     cm_backtrace_init("odrive-foc", "V0.0.2", "V0.0.1");
     key_func_init();
@@ -184,7 +185,7 @@ void AppRunning(void)
 
     /* 事件1同时接收到了标志1和标志2，清除标志并触发事件处理程序 */
     if (true == tk_event_recv(interrupt_event, TIM_EVENT_FLAG | ADC_EVENT_FLAG, TK_EVENT_OPTION_AND | TK_EVENT_OPTION_CLEAR, NULL)) {
-        foc_adc_irq_calc();
+        foc_irq_handler(&g_foc_ctx);
         Get_Time_Hook(0);
         tk_event_send(can_send_event, TIM_EVENT_FLAG);
     }

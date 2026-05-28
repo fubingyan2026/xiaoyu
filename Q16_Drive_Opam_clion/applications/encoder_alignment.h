@@ -21,7 +21,7 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "foc_config_q16.h"
+#include "foc_config.h"
 
 /*==============================================================================
  * Configuration Constants

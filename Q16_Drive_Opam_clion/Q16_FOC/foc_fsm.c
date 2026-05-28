@@ -6,30 +6,32 @@
  */
 
 #include "foc_fsm.h"
+
+#include <string.h>
+
 #include "debug.h"
 #include "encoder_alignment.h"
 #include "flash_task.h"
+#include "foc.h"
 #include "foc_port.h"
 #include "fsm_linear_hall.h"
 #include "stdlib.h"
-#include <string.h>
-
-static foc_fsm_context_t g_foc_fsm = { 0 };
 
 static const char* foc_state_names[] = { "IDLE", "ALIGN", "ALIGNMENT", "RUN", "HALL", "STOP" };
 
 /**
  * @brief 框架回调适配器：进入回调
  */
-static void fsm_entry_adapter(fsm_t* ctx, fsm_state_t state)
+static void fsm_entry_adapter(fsm_t* fsm_ctx, fsm_state_t state)
 {
-    foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)ctx;
+    foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)fsm_ctx;
+    foc_context_t* foc = (foc_context_t*)foc_ctx->parent;
 
     switch (state) {
     case FOC_FSM_STATE_ALIGN:
-        foc_ctx->ctrl->target_id_q = 0;
-        foc_ctx->ctrl->target_iq_q = 0;
-        foc_ctx->ctrl->electrical_angle_q = q16_16_mul(ALIGN_THETA_Q, FLOAT_TO_Q16_16(-4.0f));
+        foc_set_target_id(foc, 0);
+        foc_set_target_iq(foc, 0);
+        foc_set_electrical_angle(foc, q16_16_mul(ALIGN_THETA_Q, FLOAT_TO_Q16_16(-4.0f)));
         break;
 
     case FOC_FSM_STATE_ALIGNMENT:
@@ -37,13 +39,13 @@ static void fsm_entry_adapter(fsm_t* ctx, fsm_state_t state)
         foc_ctx->cali_ctx.step = FOC_CALI_STEP_FORWARD;
         foc_ctx->cali_ctx.timeout_cnt = 0;
         foc_ctx->cali_ctx.last_angle_q = 0;
-        foc_ctx->ctrl->target_iq_q = IF_STARTUP_IQ_Q;
-        foc_ctx->ctrl->omega_q = 0;
-        foc_ctx->ctrl->electrical_angle_q = q16_16_mul(ALIGN_THETA_Q, FLOAT_TO_Q16_16(-4.0f));
+        foc_set_target_iq(foc, IF_STARTUP_IQ_Q);
+        foc_set_omega(foc, 0);
+        foc_set_electrical_angle(foc, q16_16_mul(ALIGN_THETA_Q, FLOAT_TO_Q16_16(-4.0f)));
         break;
 
     case FOC_FSM_STATE_STOP:
-        foc_port_pwm_stop(foc_port_get_instance());
+        foc_port_pwm_stop(&foc->port);
         break;
 
     default:
@@ -56,9 +58,9 @@ static void fsm_entry_adapter(fsm_t* ctx, fsm_state_t state)
 /**
  * @brief 框架回调适配器：退出回调
  */
-static void fsm_exit_adapter(fsm_t* ctx, fsm_state_t state)
+static void fsm_exit_adapter(fsm_t* fsm_ctx, fsm_state_t state)
 {
-    (void)ctx;
+    (void)fsm_ctx;
     DEBUG_LOGD("foc_fsm", "状态机退出:%s", foc_fsm_state_to_string(state));
 }
 
@@ -77,66 +79,68 @@ static int32_t cycle_average(int32_t a, int32_t b, int32_t cyc)
     return ave_data;
 }
 
-static fsm_state_t handler_idle(fsm_t* ctx)
+static fsm_state_t handler_idle(fsm_t* fsm_ctx)
 {
-    foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)ctx;
+    foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)fsm_ctx;
+    foc_context_t* foc = (foc_context_t*)foc_ctx->parent;
 
-    if (foc_ctx->ctrl->sw) {
-        foc_port_pwm_start(foc_port_get_instance());
+    if (foc_get_sw(foc)) {
+        foc_port_pwm_start(&foc->port);
         return FOC_FSM_STATE_RUN;
     }
     return FOC_FSM_STATE_IDLE;
 }
 
-static fsm_state_t handler_align(fsm_t* ctx)
+static fsm_state_t handler_align(fsm_t* fsm_ctx)
 {
-    foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)ctx;
+    foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)fsm_ctx;
+    foc_context_t* foc = (foc_context_t*)foc_ctx->parent;
 
-    if (foc_ctx->ctrl->target_iq_q < ALIGN_CURRENT_Q) {
-        foc_ctx->ctrl->target_iq_q = q16_16_add(foc_ctx->ctrl->target_iq_q, q16_16_mul(ALIGN_CURRENT_Q, STATE_PERIOD_Q));
+    if (foc_get_target_iq(foc) < ALIGN_CURRENT_Q) {
+        foc_set_target_iq(foc, q16_16_add(foc_get_target_iq(foc), q16_16_mul(ALIGN_CURRENT_Q, STATE_PERIOD_Q)));
     } else {
         static uint16_t align_cnt = 0;
         if (align_cnt++ >= FOC_FSM_ALIGN_TIMEOUT_CNT) {
             align_cnt = 0;
-            foc_ctx->ctrl->electrical_angle_q = q16_16_mul(ALIGN_THETA_Q, FLOAT_TO_Q16_16(-4.0f));
+            foc_set_electrical_angle(foc, q16_16_mul(ALIGN_THETA_Q, FLOAT_TO_Q16_16(-4.0f)));
             return FOC_FSM_STATE_ALIGNMENT;
         }
     }
     return FOC_FSM_STATE_ALIGN;
 }
 
-static fsm_state_t handler_alignment(fsm_t* ctx)
+static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
 {
-    foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)ctx;
-    foc_ctrl_t* ctrl = foc_ctx->ctrl;
-    motor_flash_config_t* flash_data = foc_ctx->flash_data;
+    foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)fsm_ctx;
+    foc_context_t* foc = (foc_context_t*)foc_ctx->parent;
+    motor_flash_config_t* flash_data = (motor_flash_config_t*)foc_ctx->flash_data;
     q16_16_t threshold = q16_16_mul(ALIGN_THETA_Q, FLOAT_TO_Q16_16(0.5f));
 
-    if (ctrl->omega_q < IF_STARTUP_OMEGA_Q) {
-        ctrl->omega_q = q16_16_add(ctrl->omega_q, IF_STARTUP_OMEGA_ACC_Q);
+    if (foc_get_omega(foc) < IF_STARTUP_OMEGA_Q) {
+        foc_set_omega(foc, q16_16_add(foc_get_omega(foc), IF_STARTUP_OMEGA_ACC_Q));
     } else {
-        ctrl->omega_q = IF_STARTUP_OMEGA_Q;
+        foc_set_omega(foc, IF_STARTUP_OMEGA_Q);
     }
 
-    ctrl->target_iq_q = IF_STARTUP_IQ_Q;
+    foc_set_target_iq(foc, IF_STARTUP_IQ_Q);
 
     switch (foc_ctx->cali_ctx.step) {
     case FOC_CALI_STEP_FORWARD: {
-        if (ctrl->electrical_angle_q < foc_ctx->cali_ctx.last_angle_q) {
-            ctrl->electrical_angle_q = q16_16_add(ctrl->electrical_angle_q, ctrl->omega_q);
+        if (foc_get_electrical_angle(foc) < foc_ctx->cali_ctx.last_angle_q) {
+            foc_set_electrical_angle(foc, q16_16_add(foc_get_electrical_angle(foc), foc_get_omega(foc)));
         } else {
-            ctrl->electrical_angle_q = foc_ctx->cali_ctx.last_angle_q;
+            foc_set_electrical_angle(foc, foc_ctx->cali_ctx.last_angle_q);
 
             if (foc_ctx->cali_ctx.timeout_cnt++ >= FOC_FSM_ELEC_ANGLE_STABLE_TIME) {
                 foc_ctx->cali_ctx.timeout_cnt = 0;
                 foc_ctx->cali_ctx.last_angle_q = q16_16_add(foc_ctx->cali_ctx.last_angle_q, ALIGN_THETA_Q);
 
-                if ((ctrl->electrical_angle_q >= threshold) && (foc_ctx->cali_ctx.capture_idx >= 0) && (foc_ctx->cali_ctx.capture_idx <= (int16_t)g_encoder_calib.total_steps) && (flash_data != NULL)) {
-                    flash_data->angle_map[foc_ctx->cali_ctx.capture_idx] = ctrl->raw_angle_q;
+                if ((foc_get_electrical_angle(foc) >= threshold) && (foc_ctx->cali_ctx.capture_idx >= 0) && (foc_ctx->cali_ctx.capture_idx <= (int16_t)g_encoder_calib.total_steps) && (flash_data != NULL)) {
+                    flash_data->angle_map[foc_ctx->cali_ctx.capture_idx] = foc_get_raw_angle(foc);
                     DEBUG_LOGI("foc_fsm", "正向校准数据缓存到flash:%d", foc_ctx->cali_ctx.capture_idx);
                 }
 
-                if (ctrl->electrical_angle_q >= threshold) {
+                if (foc_get_electrical_angle(foc) >= threshold) {
                     foc_ctx->cali_ctx.capture_idx++;
                 }
 
@@ -153,8 +157,8 @@ static fsm_state_t handler_alignment(fsm_t* ctx)
     case FOC_CALI_STEP_TRANSITION: {
         if (foc_ctx->cali_ctx.transition_cnt < FOC_FSM_TRANSITION_STEPS) {
             q16_16_t transition_ratio = q16_16_sub(Q16_16_ONE, q16_16_div(INT_TO_Q16_16(foc_ctx->cali_ctx.transition_cnt), INT_TO_Q16_16(FOC_FSM_TRANSITION_STEPS)));
-            q16_16_t current_omega = q16_16_mul(ctrl->omega_q, transition_ratio);
-            ctrl->electrical_angle_q = q16_16_add(ctrl->electrical_angle_q, current_omega);
+            q16_16_t current_omega = q16_16_mul(foc_get_omega(foc), transition_ratio);
+            foc_set_electrical_angle(foc, q16_16_add(foc_get_electrical_angle(foc), current_omega));
             foc_ctx->cali_ctx.transition_cnt++;
         } else {
             if (foc_ctx->cali_ctx.transition_cnt < FOC_FSM_TRANSITION_STEPS + FOC_FSM_STOP_TIME) {
@@ -162,24 +166,24 @@ static fsm_state_t handler_alignment(fsm_t* ctx)
             } else {
                 foc_ctx->cali_ctx.step = FOC_CALI_STEP_REVERSE;
                 foc_ctx->cali_ctx.transition_cnt = 0;
-                ctrl->target_iq_q = IF_STARTUP_IQ_Q;
+                foc_set_target_iq(foc, IF_STARTUP_IQ_Q);
             }
         }
         break;
     }
 
     case FOC_CALI_STEP_REVERSE: {
-        if (ctrl->electrical_angle_q > foc_ctx->cali_ctx.last_angle_q) {
-            ctrl->electrical_angle_q = q16_16_sub(ctrl->electrical_angle_q, ctrl->omega_q);
+        if (foc_get_electrical_angle(foc) > foc_ctx->cali_ctx.last_angle_q) {
+            foc_set_electrical_angle(foc, q16_16_sub(foc_get_electrical_angle(foc), foc_get_omega(foc)));
         } else {
-            ctrl->electrical_angle_q = foc_ctx->cali_ctx.last_angle_q;
+            foc_set_electrical_angle(foc, foc_ctx->cali_ctx.last_angle_q);
 
             if (foc_ctx->cali_ctx.timeout_cnt++ >= FOC_FSM_ELEC_ANGLE_STABLE_TIME) {
                 foc_ctx->cali_ctx.timeout_cnt = 0;
                 foc_ctx->cali_ctx.capture_idx--;
 
-                if ((ctrl->electrical_angle_q >= threshold) && (foc_ctx->cali_ctx.capture_idx >= 0) && (foc_ctx->cali_ctx.capture_idx <= (int16_t)g_encoder_calib.total_steps) && (flash_data != NULL)) {
-                    flash_data->angle_map[foc_ctx->cali_ctx.capture_idx] = cycle_average(flash_data->angle_map[foc_ctx->cali_ctx.capture_idx], ctrl->raw_angle_q,
+                if ((foc_get_electrical_angle(foc) >= threshold) && (foc_ctx->cali_ctx.capture_idx >= 0) && (foc_ctx->cali_ctx.capture_idx <= (int16_t)g_encoder_calib.total_steps) && (flash_data != NULL)) {
+                    flash_data->angle_map[foc_ctx->cali_ctx.capture_idx] = cycle_average(flash_data->angle_map[foc_ctx->cali_ctx.capture_idx], foc_get_raw_angle(foc),
                         g_encoder_calib.encoder_lines);
                     DEBUG_LOGI("foc_fsm", "反向平均数据缓存到flash:%d", foc_ctx->cali_ctx.capture_idx);
                 }
@@ -214,7 +218,7 @@ static fsm_state_t handler_alignment(fsm_t* ctx)
             flash_task_request(FLASH_TASK_WRITE_ANGLE, flash_data, sizeof(g_motor_flash_cfg));
         }
 
-        ctrl->target_id_q = 0;
+        foc_set_target_id(foc, 0);
         return FOC_FSM_STATE_RUN;
     }
 
@@ -225,22 +229,25 @@ static fsm_state_t handler_alignment(fsm_t* ctx)
     return FOC_FSM_STATE_ALIGNMENT;
 }
 
-static fsm_state_t handler_run(fsm_t* ctx)
+static fsm_state_t handler_run(fsm_t* fsm_ctx)
 {
-    foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)ctx;
+    foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)fsm_ctx;
+    foc_context_t* foc = (foc_context_t*)foc_ctx->parent;
 
-    foc_ctx->ctrl->target_id_q = 0;
-    foc_ctx->ctrl->target_iq_q = FLOAT_TO_Q16_16(0.25f);
+    foc_set_target_id(foc, 0);
+    foc_set_target_iq(foc, FLOAT_TO_Q16_16(0.25f));
 
     return FOC_FSM_STATE_RUN;
 }
 
-static fsm_state_t handler_hall(fsm_t* ctx)
+static fsm_state_t handler_hall(fsm_t* fsm_ctx)
 {
-    foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)ctx;
+    foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)fsm_ctx;
+    foc_context_t* foc = (foc_context_t*)foc_ctx->parent;
+
     fsm_linear_hall_task();
-    foc_ctx->ctrl->target_iq_q = FLOAT_TO_Q16_16(fsm_linear_hall_get_current());
-    foc_ctx->ctrl->electrical_angle_q = FLOAT_TO_Q16_16(fsm_linear_hall_get_elec_angle());
+    foc_set_target_iq(foc, FLOAT_TO_Q16_16(fsm_linear_hall_get_current()));
+    foc_set_electrical_angle(foc, FLOAT_TO_Q16_16(fsm_linear_hall_get_elec_angle()));
 
     if (fsm_linear_hall_is_done()) {
         return FOC_FSM_STATE_ALIGN;
@@ -249,20 +256,20 @@ static fsm_state_t handler_hall(fsm_t* ctx)
     return FOC_FSM_STATE_HALL;
 }
 
-static fsm_state_t handler_stop(fsm_t* ctx)
+static fsm_state_t handler_stop(fsm_t* fsm_ctx)
 {
-    (void)ctx;
+    (void)fsm_ctx;
     return FOC_FSM_STATE_STOP;
 }
 
-foc_fsm_ret_e foc_fsm_init(foc_fsm_context_t* ctx, foc_ctrl_t* ctrl)
+foc_fsm_ret_e foc_fsm_init(foc_fsm_context_t* ctx, void* parent)
 {
-    if ((ctx == NULL) || (ctrl == NULL)) {
+    if ((ctx == NULL) || (parent == NULL)) {
         return FOC_FSM_RET_ERROR;
     }
 
     memset(ctx, 0, sizeof(foc_fsm_context_t));
-    ctx->ctrl = ctrl;
+    ctx->parent = parent;
     ctx->flash_data = NULL;
 
     static fsm_handler_t handlers[FOC_FSM_STATE_COUNT];
@@ -339,22 +346,7 @@ const char* foc_fsm_state_to_string(foc_fsm_state_e state)
     return "UNKNOWN";
 }
 
-foc_fsm_context_t* foc_fsm_get_instance(void)
-{
-    return &g_foc_fsm;
-}
-
-foc_fsm_state_e foc_fsm_current_state(void)
-{
-    return g_foc_fsm.fsm.current_state;
-}
-
-void foc_fsm_calc(void)
-{
-    foc_fsm_step(&g_foc_fsm);
-}
-
-void foc_fsm_set_flash_data(foc_fsm_context_t* ctx, motor_flash_config_t* flash_data)
+void foc_fsm_set_flash_data(foc_fsm_context_t* ctx, void* flash_data)
 {
     if (ctx != NULL) {
         ctx->flash_data = flash_data;

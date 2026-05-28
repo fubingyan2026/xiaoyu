@@ -21,7 +21,6 @@
 #include "fsm_linear_hall.h"
 
 #include "flash_task.h"
-#include "foc_config_q16.h"
 #include "public.h"
 
 /* Private constants ---------------------------------------------------------*/
