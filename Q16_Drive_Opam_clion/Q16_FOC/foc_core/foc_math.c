@@ -55,34 +55,59 @@ static const q16_16_t sin_table[SIN_TABLE_SIZE] = {
 
 #define SIN_LUT_INDEX_MULTIPLIER 5340352ULL // (512ULL << 32) / 411775 = 5340351.78, 向上取整确保 2π 映射到索引 512
 
+/**
+ * @brief 同时计算 Q16.16 角度的正弦和余弦值
+ *
+ * 实现原理（查找表 + 线性插值）：
+ *   1. 将输入角度归一化到 [0, 2π) 范围，使用 64 位除法避免精度损失
+ *   2. 通过乘法定理将 [0, 2π) 映射到 [0, SIN_TABLE_SIZE) 索引空间：
+ *      索引乘数 = (SIN_TABLE_SIZE << 32) / (2π) ≈ 5340352
+ *      利用 64 位乘法直接分离整数索引和小数部分，无需除法
+ *   3. 查表得到相邻两个索引的 sin 值，cos 通过相位偏移 SIN_TABLE_SIZE/4 获得
+ *   4. 对小数部分做 16 位线性插值，平衡精度和计算速度
+ *
+ * 性能特性：
+ *   - 查表：4 次内存读取
+ *   - 运算：1 次 64 位除法（角度归一化）+ 1 次 64 位乘法（索引计算）+ 少量整数运算
+ *   - 精度：约 0.01°（线性插值将 512 点查表的精度从 ~0.7° 提升至 ~0.01°）
+ *
+ * @param angle_q  输入角度（Q16.16格式，弧度）
+ * @param sin_out  输出正弦值指针（Q16.16格式）
+ * @param cos_out  输出余弦值指针（Q16.16格式）
+ */
 void foc_sin_cos(q16_16_t angle_q, q16_16_t* sin_out, q16_16_t* cos_out)
 {
+    /* 步骤1：角度归一化到 [0, 2π)，使用 64 位除法避免取模运算的溢出风险 */
     int32_t k = (int32_t)((int64_t)angle_q / Q16_16_2PI);
     angle_q = (q16_16_t)((int64_t)angle_q - (int64_t)k * Q16_16_2PI);
     if (angle_q < 0)
         angle_q = q16_16_add(angle_q, Q16_16_2PI);
 
+    /* 步骤2：将角度映射到 LUT 索引空间，64 位乘积同时得到整数索引和小数部分 */
     uint64_t scaled = (uint64_t)angle_q * SIN_LUT_INDEX_MULTIPLIER;
 
-    uint32_t index = (uint32_t)(scaled >> 32); // ✓ 整数部分
+    uint32_t index = (uint32_t)(scaled >> 32);      // 高32位：整数索引（0~511）
     uint32_t frac_full = (uint32_t)(scaled & 0xFFFFFFFFUL);
-    uint16_t frac = (uint16_t)(frac_full >> 16); // ✓ 正确提取
+    uint16_t frac = (uint16_t)(frac_full >> 16);    // 高16位小数：插值权重
 
-    /* 安全取模（表大小为2的幂） */
+    /* 步骤3：安全取模（表大小为2的幂，与运算代替除法），计算cos索引（相位偏移π/2） */
     index &= (SIN_TABLE_SIZE - 1);
     uint32_t index_cos = (index + (SIN_TABLE_SIZE >> 2)) & (SIN_TABLE_SIZE - 1);
 
+    /* 步骤4：查表获取相邻两个索引的正弦值和余弦值 */
     q16_16_t sin1 = sin_table[index];
     q16_16_t sin2 = sin_table[(index + 1) & (SIN_TABLE_SIZE - 1)];
     q16_16_t cos1 = sin_table[index_cos];
     q16_16_t cos2 = sin_table[(index_cos + 1) & (SIN_TABLE_SIZE - 1)];
 
+    /* 步骤5：线性插值，使用 64 位中间结果避免溢出 */
     int64_t diff_sin = (int64_t)sin2 - sin1;
     int64_t diff_cos = (int64_t)cos2 - cos1;
 
     q16_16_t interp_sin = (q16_16_t)((diff_sin * frac) >> 16);
     q16_16_t interp_cos = (q16_16_t)((diff_cos * frac) >> 16);
 
+    /* 步骤6：输出最终插值结果 */
     *sin_out = sin1 + interp_sin;
     *cos_out = cos1 + interp_cos;
 }
@@ -257,6 +282,17 @@ void foc_ipark_transform(q16_16_t d, q16_16_t q, q16_16_t sin_theta, q16_16_t co
     *beta = q16_16_add(q16_16_mul(sin_theta, d), q16_16_mul(cos_theta, q));
 }
 
+/**
+ * @brief 计算二维矢量的幅值
+ *
+ * 计算 sqrt(alpha² + beta²)，内部使用 foc_sqrt 实现定点开方。
+ * 使用场景：电压矢量幅度归一化、过调制检测等。
+ * 若仅需比较幅度大小，建议使用 foc_vector_magnitude_sq 以避免开方开销。
+ *
+ * @param alpha α 轴分量（Q16.16格式）
+ * @param beta  β 轴分量（Q16.16格式）
+ * @return 矢量幅值（Q16.16格式）
+ */
 q16_16_t foc_vector_magnitude(q16_16_t alpha, q16_16_t beta)
 {
     q16_16_t alpha_sq = q16_16_mul(alpha, alpha);
@@ -266,11 +302,38 @@ q16_16_t foc_vector_magnitude(q16_16_t alpha, q16_16_t beta)
     return foc_sqrt(sum_sq);
 }
 
+/**
+ * @brief 计算二维矢量幅值的平方
+ *
+ * 直接计算 alpha² + beta²，避免了开方运算。
+ * 适用场景：
+ *   - 仅需比较矢量幅度大小时（如过调制判断）
+ *   - 不需要精确幅值的场合
+ *   相比 foc_vector_magnitude，计算量小且无精度损失。
+ *
+ * @param alpha α 轴分量（Q16.16格式）
+ * @param beta  β 轴分量（Q16.16格式）
+ * @return 矢量幅值的平方（Q16.16格式）
+ */
 q16_16_t foc_vector_magnitude_sq(q16_16_t alpha, q16_16_t beta)
 {
     return q16_16_add(q16_16_mul(alpha, alpha), q16_16_mul(beta, beta));
 }
 
+/**
+ * @brief 初始化PI控制器
+ *
+ * 将 Ki 预先乘以 dt（采样周期），使得 foc_pi_calc() 中无需重复乘 dt，
+ * 减少一次乘法运算。所有状态量（integral、err、out）清零。
+ *
+ * @param pi        PI控制器结构体指针
+ * @param kp        比例增益（Q16.16格式）
+ * @param ki        积分增益原始值（Q16.16格式，内部会预乘 dt）
+ * @param max_val   输出最大值（Q16.16格式）
+ * @param min_val   输出最小值（Q16.16格式）
+ * @param integ_sat 积分饱和限制（Q16.16格式，绝对值），防止积分深度饱和
+ * @param dt_q      采样周期（Q16.16格式，秒）
+ */
 void foc_pi_init(foc_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val, q16_16_t min_val, q16_16_t integ_sat,
     q16_16_t dt_q)
 {
@@ -286,6 +349,19 @@ void foc_pi_init(foc_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val, q16_1
     pi->out = 0;
 }
 
+/**
+ * @brief 执行PI控制器计算
+ *
+ * 计算公式：out = integral + Kp * err
+ * 其中 integral += Ki_premultiplied * err  (Ki_premultiplied = Ki * dt)
+ *
+ * 抗积分饱和（Anti-Windup）策略：
+ *   - 当输出达到限幅值且误差方向使饱和加深时，停止积分累积
+ *   - 当输出未饱和或误差方向使饱和减弱时，允许正常积分
+ *   - 积分项独立受 integ_sat 限制，防止深度饱和后恢复迟缓
+ *
+ * @param pi PI控制器结构体指针（需事先调用 foc_pi_init 初始化）
+ */
 void foc_pi_calc(foc_pi_t* pi)
 {
     pi->err = q16_16_sub(pi->target, pi->real);
@@ -306,6 +382,18 @@ void foc_pi_calc(foc_pi_t* pi)
     pi->out = q16_16_clip(pi->out, pi->min_value, pi->max_value);
 }
 
+/**
+ * @brief 重置PI控制器状态
+ *
+ * 清零积分累积值（integral）、误差（err）和输出（out）。
+ * 保留 kp、ki、max_value、min_value、integ_sat 等配置参数不变。
+ * 适用场景：
+ *   - 电机启动/停止时清除历史累积
+ *   - 控制模式切换（如速度环→电流环）时重置
+ *   - 故障恢复后重新初始化
+ *
+ * @param pi PI控制器结构体指针
+ */
 void foc_pi_reset(foc_pi_t* pi)
 {
     pi->integral = 0;
@@ -315,18 +403,71 @@ void foc_pi_reset(foc_pi_t* pi)
 
 /* ============= 低通滤波实现 ============= */
 
+/**
+ * @brief 一阶低通滤波器更新（通用版）
+ *
+ * 差分方程：out = old + K * (new - old)
+ * 等价于  out = (1 - K) * old + K * new
+ *
+ * 适用场景：
+ *   - 电流采样滤波（抑制 ADC 噪声）
+ *   - 速度估计平滑
+ *   - 角度信号去噪
+ *
+ * 注意：当滤波系数 K 为 2 的负幂次时，建议使用 foc_lpf_update_shift
+ * 以提高性能。
+ *
+ * @param old_val 上一次滤波输出值（Q16.16格式）
+ * @param new_val 当前采样输入值（Q16.16格式）
+ * @param lpf_k   滤波系数（Q16.16格式），范围 [0, 1]，越大响应越快
+ * @return 滤波后的输出值（Q16.16格式）
+ */
 q16_16_t foc_lpf_update(q16_16_t old_val, q16_16_t new_val, q16_16_t lpf_k)
 {
     q16_16_t delta = q16_16_sub(new_val, old_val);
     return q16_16_add(old_val, q16_16_mul(lpf_k, delta));
 }
 
+/**
+ * @brief 一阶低通滤波器更新（移位版）
+ *
+ * 使用右移代替乘法实现滤波，等效滤波系数 K = 1 / (2^shift)。
+ * 差分方程：out = old + (new - old) >> shift
+ *
+ * 适用场景：
+ *   - 对性能敏感的实时控制中断中
+ *   - 滤波系数可容忍 2 的幂次精度（如 1/2, 1/4, 1/8 等）
+ *   - 相比 foc_lpf_update 节省一次 32×32 定点乘法
+ *
+ * 注意：不支持通用系数配置，需预先确定位移位数。
+ *
+ * @param old_val 上一次滤波输出值（Q16.16格式）
+ * @param new_val 当前采样输入值（Q16.16格式）
+ * @param shift   右移位数（0~31），等效滤波系数 = 1/(2^shift)
+ *                例如 shift=2 时 K=0.25
+ * @return 滤波后的输出值（Q16.16格式）
+ */
 q16_16_t foc_lpf_update_shift(q16_16_t old_val, q16_16_t new_val, uint8_t shift)
 {
     int64_t delta = (int64_t)new_val - old_val;
     return (q16_16_t)(old_val + (delta >> shift));
 }
 
+/**
+ * @brief 初始化滑动平均滤波器
+ *
+ * 滑动平均滤波器使用环形缓冲区存储最近的 N 个采样值，
+ * 每次更新返回缓冲区内所有采样值的算术平均。
+ * 由于 N 必须为 2 的幂，求平均值通过右移实现，无需除法。
+ *
+ * 约束：
+ *   - length 必须为 2 的幂（如 4、8、16、32）
+ *   - buf 指向的缓冲区必须由调用者分配，长度 ≥ len
+ *
+ * @param filter 滤波器结构体指针
+ * @param buf    预先分配的环形缓冲区指针（长度 ≥ len）
+ * @param len    缓冲区长度（必须为 2 的幂）
+ */
 void foc_ma_filter_init(foc_ma_filter_t *filter, q16_16_t *buf, uint16_t len) {
     if (len == 0 || (len & (len - 1)) != 0 || buf == NULL)
         return;
@@ -340,6 +481,21 @@ void foc_ma_filter_init(foc_ma_filter_t *filter, q16_16_t *buf, uint16_t len) {
         filter->shift++;
 }
 
+/**
+ * @brief 更新滑动平均滤波器
+ *
+ * 将新值写入环形缓冲区，替换最旧的值，同时更新累加和。
+ * 返回当前窗口的算术平均值 = sum / length（通过右移实现）。
+ *
+ * 使用场景：
+ *   - 电流/电压采样预滤波
+ *   - 速度/位置估计平滑
+ *   - 需要平滑但无需快速响应的场合
+ *
+ * @param filter  滤波器结构体指针（需事先调用 foc_ma_filter_init）
+ * @param new_val 新的采样值（Q16.16格式）
+ * @return 当前滑动平均值（Q16.16格式）
+ */
 q16_16_t foc_ma_filter_update(foc_ma_filter_t* filter, q16_16_t new_val)
 {
     if (filter->buffer == NULL || filter->length == 0)

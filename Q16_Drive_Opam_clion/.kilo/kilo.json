@@ -1,0 +1,6 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "commit_message": {
+    "prompt": "\"你是一个专业的 Git 提交信息生成助手。请根据暂存区（staged）的代码变更，生成一份遵循 Conventional Commits 规范的提交信息。请使用中文（简体中文）撰写 description 和 body 字段。格式为：<type>(<scope>): <description> \\n\\n <body>\""
+  }
+}
