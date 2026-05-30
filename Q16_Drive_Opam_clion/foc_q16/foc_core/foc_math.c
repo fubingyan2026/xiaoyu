@@ -86,9 +86,9 @@ void foc_sin_cos(q16_16_t angle_q, q16_16_t* sin_out, q16_16_t* cos_out)
     /* 步骤2：将角度映射到 LUT 索引空间，64 位乘积同时得到整数索引和小数部分 */
     uint64_t scaled = (uint64_t)angle_q * SIN_LUT_INDEX_MULTIPLIER;
 
-    uint32_t index = (uint32_t)(scaled >> 32);      // 高32位：整数索引（0~511）
+    uint32_t index = (uint32_t)(scaled >> 32); // 高32位：整数索引（0~511）
     uint32_t frac_full = (uint32_t)(scaled & 0xFFFFFFFFUL);
-    uint16_t frac = (uint16_t)(frac_full >> 16);    // 高16位小数：插值权重
+    uint16_t frac = (uint16_t)(frac_full >> 16); // 高16位小数：插值权重
 
     /* 步骤3：安全取模（表大小为2的幂，与运算代替除法），计算cos索引（相位偏移π/2） */
     index &= (SIN_TABLE_SIZE - 1);
@@ -370,7 +370,7 @@ void foc_pi_calc(foc_pi_t* pi)
     q16_16_t out_temp = q16_16_add(pi->integral, kp_term);
 
     uint8_t saturated = (out_temp >= pi->max_value && pi->err > 0)
-                     || (out_temp <= pi->min_value && pi->err < 0);
+        || (out_temp <= pi->min_value && pi->err < 0);
 
     if (!saturated) {
         q16_16_t ki_term = q16_16_mul(pi->ki, pi->err);
@@ -468,7 +468,8 @@ q16_16_t foc_lpf_update_shift(q16_16_t old_val, q16_16_t new_val, uint8_t shift)
  * @param buf    预先分配的环形缓冲区指针（长度 ≥ len）
  * @param len    缓冲区长度（必须为 2 的幂）
  */
-void foc_ma_filter_init(foc_ma_filter_t *filter, q16_16_t *buf, uint16_t len) {
+void foc_ma_filter_init(foc_ma_filter_t* filter, q16_16_t* buf, uint16_t len)
+{
     if (len == 0 || (len & (len - 1)) != 0 || buf == NULL)
         return;
 

@@ -39,16 +39,10 @@
  */
 #define CURRENT_SAMPLE_FACTOR 0.0096683555f
 
-/**
- * @def CURRENT_SAMPLE_FACTOR_Q
- * @brief 电流采样转换因子（Q16.16固定点格式）
- */
-#define CURRENT_SAMPLE_FACTOR_Q FLOAT_TO_Q16_16(CURRENT_SAMPLE_FACTOR)
-
-#define MOTOR_PHASE_RESISTANCE 6.2f    ///< 电机相电阻 @note 单位为 Ω（欧姆）
-#define MOTOR_PHASE_INDUCTANCE 0.001f  ///< 电机相电感 @note 单位为 H（亨利）
-#define V_BUS_MAX (48)                 ///< 母线最大电压 @note 单位为 V（伏特），用于硬件过压保护判断
-#define V_BUS (24.0f)                  ///< 母线电压 @note 单位为 V（伏特），实际供电电压，用于 SVPWM 占空比归一化
+#define MOTOR_PHASE_RESISTANCE 6.2f ///< 电机相电阻 @note 单位为 Ω（欧姆）
+#define MOTOR_PHASE_INDUCTANCE 0.001f ///< 电机相电感 @note 单位为 H（亨利）
+#define V_BUS_MAX (48) ///< 母线最大电压 @note 单位为 V（伏特），用于硬件过压保护判断
+#define V_BUS (24.0f) ///< 母线电压 @note 单位为 V（伏特），实际供电电压，用于 SVPWM 占空比归一化
 
 /* ============= 系统参数 ============= */
 /**
@@ -63,7 +57,8 @@
  * @def FOC_PWM_PERIOD
  * @brief FOC 控制周期（秒）
  * @note 等于 PWM 周期的时间长度。FOC 电流环在 PWM 定时器更新事件中断中执行，
- *       因此控制频率 = 1 / FOC_PWM_PERIOD ≈ 16.8kHz
+ *       因此控制频率 = 1 / FOC_PWM_PERIOD ≈ 16.8kHz。
+ *       Q16.16 转换在 foc_init() 中预计算后存入 ctx->pwm_period_q，避免中断中重复转换
  */
 #define FOC_PWM_PERIOD (0.00005952381f)
 
@@ -71,17 +66,15 @@
  * @def STATE_PERIOD
  * @brief 状态机运行周期（秒）
  * @note 状态机（IF 启动、编码器校准等）不需要在 PWM 中断中每个周期都执行，
- *       通常以 1ms（1000Hz）的频率在主循环中被调用
+ *       通常以 1ms（1000Hz）的频率在主循环中被调用。
+ *       Q16.16 转换在 foc_init() 中预计算后存入 ctx->state_period_q
  */
 #define STATE_PERIOD (0.001f)
 
-#define FOC_PWM_PERIOD_Q FLOAT_TO_Q16_16(FOC_PWM_PERIOD) ///< FOC PWM周期（Q16.16固定点格式）
-#define STATE_PERIOD_Q FLOAT_TO_Q16_16(STATE_PERIOD)      ///< 状态机周期（Q16.16固定点格式）
-
 /* ============= 数学常数 ============= */
-#define M_2PI (6.2831853f)         ///< 2π = 6.283185307179586
-#define SQRT3 1.732050807568877f   ///< √3 ≈ 1.732050807568877，用于 Clarke 变换中 Iβ 计算
-#define INV_SQRT3 0.577350269f     ///< 1/√3 ≈ 0.577350269，等幅值 Clarke 变换的缩放系数
+#define M_2PI (6.2831853f) ///< 2π = 6.283185307179586
+#define SQRT3 1.732050807568877f ///< √3 ≈ 1.732050807568877，用于 Clarke 变换中 Iβ 计算
+#define INV_SQRT3 0.577350269f ///< 1/√3 ≈ 0.577350269，等幅值 Clarke 变换的缩放系数
 
 /* ============= PLL 参数 ============= */
 /**
@@ -109,45 +102,43 @@
 
 /* ============= 对齐参数 ============= */
 /**
- * @def ALIGN_THETA_Q
- * @brief 对齐初始电气角度（Q16.16格式）
+ * @brief 对齐初始电气角度（弧度）
  * @note 用于转子预定位（对齐）阶段。0.25 * 2π = π/2，
- *       即给电机施加一个 90° 电气角度的定向磁场，将转子拉到已知位置
+ *       即给电机施加一个 90° 电气角度的定向磁场，将转子拉到已知位置。
+ *       Q16.16 转换在 foc_init() 中预计算后存入 ctx->align_theta_q
  */
-#define ALIGN_THETA_Q FLOAT_TO_Q16_16(0.25f * M_2PI)
+#define ALIGN_THETA (0.25f * M_2PI)
 
-#define ALIGN_CURRENT (0.50f)         ///< 对齐电流 @note 单位为 A（安培）
-#define ALIGN_CURRENT_Q FLOAT_TO_Q16_16(0.50f) ///< 对齐电流（Q16.16格式）
+#define ALIGN_CURRENT (0.50f) ///< 对齐电流 @note 单位为 A（安培）
 
 /* ============= IF启动参数 ============= */
 /**
- * @def IF_STARTUP_IQ_Q
- * @brief IF（I-F 启动）Q 轴电流目标值（Q16.16格式）
+ * @brief IF（I-F 启动）Q 轴电流目标值（安培）
  * @note 在 IF 启动模式下，向电机施加恒定的 Iq 电流产生转矩，
- *       使转子跟随旋转磁场加速。此处复用 ALIGN_CURRENT 作为启动电流
+ *       使转子跟随旋转磁场加速。
+ *       Q16.16 转换在 foc_init() 中预计算后存入 ctx->if_startup_iq_q
  */
-#define IF_STARTUP_IQ_Q FLOAT_TO_Q16_16(ALIGN_CURRENT)
+#define IF_STARTUP_IQ (ALIGN_CURRENT)
 
 /**
  * @def IF_STARTUP_OMEGA
- * @brief IF 启动每步角速度增量
+ * @brief IF 启动每步角速度增量（弧度）
  * @note 公式：(25 rpm / 60) * MOTOR_POLES * 2π * STATE_PERIOD
  *       物理含义：25 rpm 机械转速换算为每个状态机周期（1ms）的电气角度增量。
- *       用于 IF 启动阶段开环扫频时的角度步进
+ *       用于 IF 启动阶段开环扫频时的角度步进。
+ *       Q16.16 转换在 foc_init() 中预计算后存入 ctx->if_startup_omega_q
  */
 #define IF_STARTUP_OMEGA ((25.0f / 60.0f) * MOTOR_POLES * M_2PI * STATE_PERIOD)
 
 /**
  * @def IF_STARTUP_OMEGA_ACC
- * @brief IF 启动角速度加速度
+ * @brief IF 启动角速度加速度（弧度）
  * @note 公式：(10 rpm / 60 / MOTOR_POLES) * 2π * STATE_PERIOD
  *       物理含义：每个状态机周期增加的机械转速为 10 rpm/min（每分钟增加 10 转），
- *       换算为每个周期（1ms）的电气角度增量。用于 IF 启动的扫频加速度
+ *       换算为每个周期（1ms）的电气角度增量。用于 IF 启动的扫频加速度。
+ *       Q16.16 转换在 foc_init() 中预计算后存入 ctx->if_startup_omega_acc_q
  */
 #define IF_STARTUP_OMEGA_ACC (10.0f / 60.0f / MOTOR_POLES * M_2PI * STATE_PERIOD)
-
-#define IF_STARTUP_OMEGA_Q FLOAT_TO_Q16_16(IF_STARTUP_OMEGA)     ///< IF启动角速度（Q16.16格式）
-#define IF_STARTUP_OMEGA_ACC_Q FLOAT_TO_Q16_16(IF_STARTUP_OMEGA_ACC) ///< IF启动角速度加速度（Q16.16格式）
 
 /* ============= 电流环参数 ============= */
 /**
@@ -184,15 +175,15 @@
  */
 #define CURRENT_IQ_OUT_MAX (INV_SQRT3 * V_BUS)
 
-#define CURRENT_IQ_KP (CURRENT_KP)                   ///< IQ 电流环比例增益，与 D 轴共用相同值
-#define CURRENT_IQ_KI (CURRENT_KI)                   ///< IQ 电流环积分增益，与 D 轴共用相同值
-#define CURRENT_IQ_OUT_MIN (-CURRENT_IQ_OUT_MAX)     ///< IQ 电流环最小输出电压（对称限幅）
-#define CURRENT_IQ_INTEG_SAT (CURRENT_IQ_OUT_MAX)    ///< IQ 电流环积分饱和限制，防止积分深度饱和
+#define CURRENT_IQ_KP (CURRENT_KP) ///< IQ 电流环比例增益，与 D 轴共用相同值
+#define CURRENT_IQ_KI (CURRENT_KI) ///< IQ 电流环积分增益，与 D 轴共用相同值
+#define CURRENT_IQ_OUT_MIN (-CURRENT_IQ_OUT_MAX) ///< IQ 电流环最小输出电压（对称限幅）
+#define CURRENT_IQ_INTEG_SAT (CURRENT_IQ_OUT_MAX) ///< IQ 电流环积分饱和限制，防止积分深度饱和
 
-#define CURRENT_ID_KP (CURRENT_KP)                   ///< ID 电流环比例增益，与 Q 轴共用相同值
-#define CURRENT_ID_KI (CURRENT_KI)                   ///< ID 电流环积分增益，与 Q 轴共用相同值
-#define CURRENT_ID_OUT_MAX CURRENT_IQ_OUT_MAX        ///< ID 电流环最大输出电压
-#define CURRENT_ID_OUT_MIN (-CURRENT_ID_OUT_MAX)     ///< ID 电流环最小输出电压
-#define CURRENT_ID_INTEG_SAT CURRENT_IQ_INTEG_SAT    ///< ID 电流环积分饱和限制
+#define CURRENT_ID_KP (CURRENT_KP) ///< ID 电流环比例增益，与 Q 轴共用相同值
+#define CURRENT_ID_KI (CURRENT_KI) ///< ID 电流环积分增益，与 Q 轴共用相同值
+#define CURRENT_ID_OUT_MAX CURRENT_IQ_OUT_MAX ///< ID 电流环最大输出电压
+#define CURRENT_ID_OUT_MIN (-CURRENT_ID_OUT_MAX) ///< ID 电流环最小输出电压
+#define CURRENT_ID_INTEG_SAT CURRENT_IQ_INTEG_SAT ///< ID 电流环积分饱和限制
 
 #endif /* FOC_CONFIG_H */

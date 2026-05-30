@@ -13,7 +13,7 @@
 #include "debug.h"
 #include "encoder_alignment.h"
 #include "foc_config.h"
-#include "foc_port.h"
+#include "foc_hal.h"
 #include "main.h"
 
 /* ==================== 硬件相关 ==================== */
@@ -168,7 +168,7 @@ void foc_task_init(void)
     encoder_alignment_init();
 
     // 构建端口配置
-    foc_port_config_t port_cfg = {
+    foc_hal_config_t port_cfg = {
         .adc_read = adc_read_adapter,
         .adc_init = adc_init_adapter,
         .pwm_output = foc_hw_pwm_output,
@@ -177,7 +177,7 @@ void foc_task_init(void)
         .encoder_read = encoder_read_adapter,
         .delay_ms = foc_hw_delay_ms,
         .pwm_period_counts = PWM_PERIOD,
-        .current_sample_factor_q = CURRENT_SAMPLE_FACTOR_Q,
+        .current_sample_factor_q = FLOAT_TO_Q16_16(CURRENT_SAMPLE_FACTOR),
     };
 
     // 构建FOC配置

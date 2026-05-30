@@ -16,8 +16,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "foc_hal.h"
 #include "foc_math.h"
-#include "foc_port.h"
 #include "foc_svpwm.h"
 
 /* ==================== 前置声明 ==================== */

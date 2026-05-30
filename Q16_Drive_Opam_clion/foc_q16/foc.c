@@ -21,7 +21,7 @@
 
 #include "encoder_alignment.h"
 #include "foc_core.h"
-#include "foc_port.h"
+#include "foc_hal.h"
 
 /**
  * @brief 初始化 FOC 模块
@@ -65,12 +65,12 @@ foc_error_t foc_init(foc_context_t* ctx, const foc_config_t* config)
     ctx->sw = true;
 
     /* 初始化端口（硬件抽象层），检查必要回调 */
-    if (!foc_port_init(&ctx->port, &ctx->config.port_config)) {
+    if (!foc_hal_init(&ctx->port, &ctx->config.port_config)) {
         return FOC_ERROR_PORT_INIT_FAILED;
     }
 
     /* 初始化 ADC 硬件 */
-    foc_port_adc_init(&ctx->port);
+    foc_hal_adc_init(&ctx->port);
 
     /* 初始化 D 轴和 Q 轴 PI 控制器 */
     foc_pi_reset(&ctx->pi_id);
@@ -103,7 +103,7 @@ foc_error_t foc_init(foc_context_t* ctx, const foc_config_t* config)
 
     /* 初始化 FOC 状态机 */
     if (foc_fsm_init(&ctx->fsm, ctx) != FOC_FSM_RET_OK) {
-        foc_port_deinit(&ctx->port);
+        foc_hal_deinit(&ctx->port);
         return FOC_ERROR_FSM_INIT_FAILED;
     }
 
@@ -111,7 +111,20 @@ foc_error_t foc_init(foc_context_t* ctx, const foc_config_t* config)
     foc_fsm_set_flash_data(&ctx->fsm, ctx->config.flash_data);
 
     /* 启动 PWM 输出 */
-    foc_port_pwm_start(&ctx->port);
+    foc_hal_pwm_start(&ctx->port);
+
+    /* 预计算常用 Q16.16 常量（避免运行时中断中重复 FLOAT_TO_Q16_16 调用） */
+    ctx->pwm_period_q = FLOAT_TO_Q16_16(ctx->config.pwm_period_s);
+    ctx->state_period_q = FLOAT_TO_Q16_16(ctx->config.fsm_period_s);
+    ctx->pll_kp_q = FLOAT_TO_Q16_16(ctx->config.pll_kp);
+    ctx->pll_ki_q = FLOAT_TO_Q16_16(ctx->config.pll_ki);
+    ctx->pll_speed_limit_q = FLOAT_TO_Q16_16(ctx->config.pll_speed_limit);
+    ctx->align_theta_q = FLOAT_TO_Q16_16(ALIGN_THETA);
+    ctx->align_current_q = FLOAT_TO_Q16_16(ALIGN_CURRENT);
+    ctx->if_startup_iq_q = FLOAT_TO_Q16_16(IF_STARTUP_IQ);
+    ctx->if_startup_omega_q = FLOAT_TO_Q16_16(IF_STARTUP_OMEGA);
+    ctx->if_startup_omega_acc_q = FLOAT_TO_Q16_16(IF_STARTUP_OMEGA_ACC);
+    ctx->lpf_beta_q = FLOAT_TO_Q16_16(0.33f);
 
     ctx->initialized = true;
 
@@ -133,10 +146,10 @@ void foc_deinit(foc_context_t* ctx)
     }
 
     /* 停止 PWM 输出，防止意外驱动电机 */
-    foc_port_pwm_stop(&ctx->port);
+    foc_hal_pwm_stop(&ctx->port);
 
     /* 反初始化端口 */
-    foc_port_deinit(&ctx->port);
+    foc_hal_deinit(&ctx->port);
 
     /* 清除初始化标志 */
     ctx->initialized = false;
@@ -174,19 +187,15 @@ void foc_irq_handler(foc_context_t* ctx)
     }
 
     /* 步骤1：读取编码器当前位置 */
-    ctx->raw_angle_q = foc_port_encoder_read(&ctx->port);
+    ctx->raw_angle_q = foc_hal_encoder_read(&ctx->port);
 
     /* 步骤2：更新电气角度和 PLL（仅在 RUN 状态下执行）
      * 在 ALIGN、ALIGNMENT 等状态下，电气角度由状态机直接控制 */
     if (fsm_current_state(&ctx->fsm.fsm) == FOC_FSM_STATE_RUN) {
         float electrical_angle = encoder_track_sector(ctx->raw_angle_q, &g_encoder_calib);
         ctx->electrical_angle_q = FLOAT_TO_Q16_16(electrical_angle);
-
-        q16_16_t pll_kp_q = FLOAT_TO_Q16_16(ctx->config.pll_kp);
-        q16_16_t pll_ki_q = FLOAT_TO_Q16_16(ctx->config.pll_ki);
-        q16_16_t pll_speed_limit_q = FLOAT_TO_Q16_16(ctx->config.pll_speed_limit);
-        foc_core_pll_run(ctx->electrical_angle_q, FOC_PWM_PERIOD_Q, &ctx->pll_phase_q,
-            &ctx->pll_velocity_q, pll_kp_q, pll_ki_q, pll_speed_limit_q);
+        foc_core_pll_run(ctx->electrical_angle_q, ctx->pwm_period_q, &ctx->pll_phase_q,
+            &ctx->pll_velocity_q, ctx->pll_kp_q, ctx->pll_ki_q, ctx->pll_speed_limit_q);
         /* 将 rad/s 转换为 RPM：ω_rpm = ω_rad/s * 60 / (2π * 极对数) */
         ctx->pll_velocity_rpm = Q16_16_TO_FLOAT(ctx->pll_velocity_q) * 60.0f / M_2PI / ctx->config.motor_poles;
     }

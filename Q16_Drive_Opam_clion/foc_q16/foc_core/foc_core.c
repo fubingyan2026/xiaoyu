@@ -25,7 +25,7 @@ void foc_core_current_loop(foc_context_t* ctx, q16_16_t electrical_angle_q)
     foc_sin_cos(electrical_angle_q, &ctx->svpwm.sin_cos[0], &ctx->svpwm.sin_cos[1]);
 
     // 读取ADC电流采样
-    foc_port_adc_read(&ctx->port, &ctx->current_sample[0], &ctx->current_sample[1], &ctx->current_sample[2]);
+    foc_hal_adc_read(&ctx->port, &ctx->current_sample[0], &ctx->current_sample[1], &ctx->current_sample[2]);
 
     q16_16_t ia_q = ctx->current_sample[0];
     q16_16_t ib_q = ctx->current_sample[1];
@@ -42,9 +42,8 @@ void foc_core_current_loop(foc_context_t* ctx, q16_16_t electrical_angle_q)
     foc_park_transform(i_alpha_q, i_beta_q, ctx->svpwm.sin_cos[0], ctx->svpwm.sin_cos[1], &id_raw_q, &iq_raw_q);
 
     // 低通滤波
-    const q16_16_t lpf_beta_q = FLOAT_TO_Q16_16(0.33f);
-    ctx->lpf_id_q = foc_lpf_update(ctx->lpf_id_q, id_raw_q, lpf_beta_q);
-    ctx->lpf_iq_q = foc_lpf_update(ctx->lpf_iq_q, iq_raw_q, lpf_beta_q);
+    ctx->lpf_id_q = foc_lpf_update(ctx->lpf_id_q, id_raw_q, ctx->lpf_beta_q);
+    ctx->lpf_iq_q = foc_lpf_update(ctx->lpf_iq_q, iq_raw_q, ctx->lpf_beta_q);
 
     // PI电流控制器
     ctx->pi_id.target = ctx->target_id_q;
@@ -67,7 +66,7 @@ void foc_core_current_loop(foc_context_t* ctx, q16_16_t electrical_angle_q)
     foc_svpwm_calculate(&ctx->svpwm);
 
     // 更新PWM输出
-    foc_port_pwm_update(&ctx->port, ctx->svpwm.ta, ctx->svpwm.tb, ctx->svpwm.tc, ctx->svpwm.td);
+    foc_hal_pwm_update(&ctx->port, ctx->svpwm.ta, ctx->svpwm.tb, ctx->svpwm.tc, ctx->svpwm.td);
 }
 
 /**

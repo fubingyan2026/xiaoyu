@@ -93,22 +93,22 @@
  * @brief FOC 状态机状态枚举
  */
 typedef enum __attribute__((packed)) {
-  FOC_FSM_STATE_IDLE = 0,       /**< 空闲状态：无电流输出，等待开关信号 */
-  FOC_FSM_STATE_ALIGN,          /**< 对齐状态：施加定向磁场将转子拉到已知位置 */
-  FOC_FSM_STATE_ALIGNMENT,      /**< 校准状态：执行编码器正反向自动校准 */
-  FOC_FSM_STATE_RUN,            /**< 运行状态：FOC 电流闭环正常运行 */
-  FOC_FSM_STATE_HALL,           /**< 霍尔状态：使用线性霍尔传感器辅助启动 */
-  FOC_FSM_STATE_STOP,           /**< 停止状态：PWM 关闭，电机停止 */
-  FOC_FSM_STATE_COUNT           /**< 状态总数（用于数组定界，非实际状态） */
+    FOC_FSM_STATE_IDLE = 0, /**< 空闲状态：无电流输出，等待开关信号 */
+    FOC_FSM_STATE_ALIGN, /**< 对齐状态：施加定向磁场将转子拉到已知位置 */
+    FOC_FSM_STATE_ALIGNMENT, /**< 校准状态：执行编码器正反向自动校准 */
+    FOC_FSM_STATE_RUN, /**< 运行状态：FOC 电流闭环正常运行 */
+    FOC_FSM_STATE_HALL, /**< 霍尔状态：使用线性霍尔传感器辅助启动 */
+    FOC_FSM_STATE_STOP, /**< 停止状态：PWM 关闭，电机停止 */
+    FOC_FSM_STATE_COUNT /**< 状态总数（用于数组定界，非实际状态） */
 } foc_fsm_state_e;
 
 /**
  * @brief FOC 状态机函数返回值枚举
  */
 typedef enum __attribute__((packed)) {
-  FOC_FSM_RET_OK = 0,            /**< 操作成功 */
-  FOC_FSM_RET_ERROR,             /**< 操作失败（参数无效或内部错误） */
-  FOC_FSM_RET_INVALID_STATE,     /**< 无效的状态切换请求 */
+    FOC_FSM_RET_OK = 0, /**< 操作成功 */
+    FOC_FSM_RET_ERROR, /**< 操作失败（参数无效或内部错误） */
+    FOC_FSM_RET_INVALID_STATE, /**< 无效的状态切换请求 */
 } foc_fsm_ret_e;
 
 /**
@@ -121,11 +121,11 @@ typedef enum __attribute__((packed)) {
  *   - COMPLETE：数据处理，检测方向并写入 Flash
  */
 typedef enum __attribute__((packed)) {
-  FOC_CALI_STEP_FORWARD = 0,     /**< 正向扫描阶段 */
-  FOC_CALI_STEP_TRANSITION,      /**< 正反向过渡阶段 */
-  FOC_CALI_STEP_REVERSE,         /**< 反向扫描阶段 */
-  FOC_CALI_STEP_COMPLETE,        /**< 校准完成阶段（数据写入 Flash） */
-  FOC_CALI_STEP_COUNT            /**< 校准步骤总数 */
+    FOC_CALI_STEP_FORWARD = 0, /**< 正向扫描阶段 */
+    FOC_CALI_STEP_TRANSITION, /**< 正反向过渡阶段 */
+    FOC_CALI_STEP_REVERSE, /**< 反向扫描阶段 */
+    FOC_CALI_STEP_COMPLETE, /**< 校准完成阶段（数据写入 Flash） */
+    FOC_CALI_STEP_COUNT /**< 校准步骤总数 */
 } foc_cali_step_e;
 
 /*============================================================================
@@ -144,24 +144,24 @@ typedef struct foc_fsm_context_s foc_fsm_context_t;
  * 包括当前采样索引、校准步骤、超时计数器和角度跟踪值。
  */
 typedef struct __attribute__((packed)) {
-  int16_t capture_idx;            /**< 校准采样索引
-                                       正向扫描时递增，反向扫描时递减 */
-  foc_cali_step_e step;          /**< 当前校准步骤（FORWARD / TRANSITION / REVERSE / COMPLETE） */
-  uint16_t timeout_cnt;          /**< 超时/稳定等待计数器
-                                       每个角度台阶需等待机械稳定后再采样 */
-  uint16_t transition_cnt;       /**< 正向→反向过渡计数器 */
-  q16_16_t last_angle_q;         /**< 上一次电气角度（Q16.16格式）
-                                       用于判断角度是否达到下一个台阶 */
+    int16_t capture_idx; /**< 校准采样索引
+                              正向扫描时递增，反向扫描时递减 */
+    foc_cali_step_e step; /**< 当前校准步骤（FORWARD / TRANSITION / REVERSE / COMPLETE） */
+    uint16_t timeout_cnt; /**< 超时/稳定等待计数器
+                                每个角度台阶需等待机械稳定后再采样 */
+    uint16_t transition_cnt; /**< 正向→反向过渡计数器 */
+    q16_16_t last_angle_q; /**< 上一次电气角度（Q16.16格式）
+                                 用于判断角度是否达到下一个台阶 */
 } foc_fsm_cali_context_t;
 
 /**
  * @brief FOC FSM 上下文结构体
  */
 struct foc_fsm_context_s {
-  fsm_t fsm;                      /**< 通用 FSM 实例 */
-  foc_fsm_cali_context_t cali_ctx; /**< 编码器校准上下文 */
-  void* parent;                   /**< 父级 foc_context_t 指针 */
-  void* flash_data;               /**< Flash 校准数据指针（motor_flash_config_t*） */
+    fsm_t fsm; /**< 通用 FSM 实例 */
+    foc_fsm_cali_context_t cali_ctx; /**< 编码器校准上下文 */
+    void* parent; /**< 父级 foc_context_t 指针 */
+    void* flash_data; /**< Flash 校准数据指针（motor_flash_config_t*） */
 };
 
 /*============================================================================

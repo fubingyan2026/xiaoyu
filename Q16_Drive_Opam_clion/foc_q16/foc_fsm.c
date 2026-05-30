@@ -13,7 +13,7 @@
 #include "encoder_alignment.h"
 #include "flash_task.h"
 #include "foc.h"
-#include "foc_port.h"
+#include "foc_hal.h"
 #include "fsm_linear_hall.h"
 #include "stdlib.h"
 
@@ -40,7 +40,7 @@ static void fsm_entry_adapter(fsm_t* fsm_ctx, fsm_state_t state)
         /* 清零电流目标值，设置反向 360°（-4 * π/2）的初始电气角度用于转子预定位 */
         foc_set_target_id(foc, 0);
         foc_set_target_iq(foc, 0);
-        foc_set_electrical_angle(foc, q16_16_mul(ALIGN_THETA_Q, FLOAT_TO_Q16_16(-4.0f)));
+        foc_set_electrical_angle(foc, q16_16_mul(foc->align_theta_q, FLOAT_TO_Q16_16(-4.0f)));
         break;
 
     case FOC_FSM_STATE_ALIGNMENT:
@@ -50,13 +50,13 @@ static void fsm_entry_adapter(fsm_t* fsm_ctx, fsm_state_t state)
         foc_ctx->cali_ctx.timeout_cnt = 0;
         foc_ctx->cali_ctx.last_angle_q = 0;
         /* 施加 IF 启动电流，速度为 0，角度回退到反向 360° 起始位置 */
-        foc_set_target_iq(foc, IF_STARTUP_IQ_Q);
+        foc_set_target_iq(foc, foc->if_startup_iq_q);
         foc_set_omega(foc, 0);
-        foc_set_electrical_angle(foc, q16_16_mul(ALIGN_THETA_Q, FLOAT_TO_Q16_16(-4.0f)));
+        foc_set_electrical_angle(foc, q16_16_mul(foc->align_theta_q, FLOAT_TO_Q16_16(-4.0f)));
         break;
 
     case FOC_FSM_STATE_STOP:
-        foc_port_pwm_stop(&foc->port);
+        foc_hal_pwm_stop(&foc->port);
         break;
 
     default:
@@ -126,7 +126,7 @@ static fsm_state_t handler_idle(fsm_t* fsm_ctx)
     foc_context_t* foc = (foc_context_t*)foc_ctx->parent;
 
     if (foc_get_sw(foc)) {
-        foc_port_pwm_start(&foc->port);
+        foc_hal_pwm_start(&foc->port);
         return FOC_FSM_STATE_RUN;
     }
     return FOC_FSM_STATE_IDLE;
@@ -135,7 +135,7 @@ static fsm_state_t handler_idle(fsm_t* fsm_ctx)
 /**
  * @brief ALIGN（对齐/预定位）状态处理器
  *
- * 执行转子预定位：逐渐增加 Iq 电流到目标值 ALIGN_CURRENT_Q，
+ * 执行转子预定位：逐渐增加 Iq 电流到目标值 foc->align_current_q，
  * 通过定子磁场将转子拉到已知角度位置。
  * 电流达到目标值后保持一段时间（由 FOC_FSM_ALIGN_TIMEOUT_CNT 设定），
  * 然后切换到 ALIGNMENT（校准）状态。
@@ -148,13 +148,13 @@ static fsm_state_t handler_align(fsm_t* fsm_ctx)
     foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)fsm_ctx;
     foc_context_t* foc = (foc_context_t*)foc_ctx->parent;
 
-    if (foc_get_target_iq(foc) < ALIGN_CURRENT_Q) {
-        foc_set_target_iq(foc, q16_16_add(foc_get_target_iq(foc), q16_16_mul(ALIGN_CURRENT_Q, STATE_PERIOD_Q)));
+    if (foc_get_target_iq(foc) < foc->align_current_q) {
+        foc_set_target_iq(foc, q16_16_add(foc_get_target_iq(foc), q16_16_mul(foc->align_current_q, foc->state_period_q)));
     } else {
         static uint16_t align_cnt = 0;
         if (align_cnt++ >= FOC_FSM_ALIGN_TIMEOUT_CNT) {
             align_cnt = 0;
-            foc_set_electrical_angle(foc, q16_16_mul(ALIGN_THETA_Q, FLOAT_TO_Q16_16(-4.0f)));
+            foc_set_electrical_angle(foc, q16_16_mul(foc->align_theta_q, FLOAT_TO_Q16_16(-4.0f)));
             return FOC_FSM_STATE_ALIGNMENT;
         }
     }
@@ -187,15 +187,15 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
     foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)fsm_ctx;
     foc_context_t* foc = (foc_context_t*)foc_ctx->parent;
     motor_flash_config_t* flash_data = (motor_flash_config_t*)foc_ctx->flash_data;
-    q16_16_t threshold = q16_16_mul(ALIGN_THETA_Q, FLOAT_TO_Q16_16(0.5f));
+    q16_16_t threshold = q16_16_mul(foc->align_theta_q, FLOAT_TO_Q16_16(0.5f));
 
-    if (foc_get_omega(foc) < IF_STARTUP_OMEGA_Q) {
-        foc_set_omega(foc, q16_16_add(foc_get_omega(foc), IF_STARTUP_OMEGA_ACC_Q));
+    if (foc_get_omega(foc) < foc->if_startup_omega_q) {
+        foc_set_omega(foc, q16_16_add(foc_get_omega(foc), foc->if_startup_omega_acc_q));
     } else {
-        foc_set_omega(foc, IF_STARTUP_OMEGA_Q);
+        foc_set_omega(foc, foc->if_startup_omega_q);
     }
 
-    foc_set_target_iq(foc, IF_STARTUP_IQ_Q);
+    foc_set_target_iq(foc, foc->if_startup_iq_q);
 
     switch (foc_ctx->cali_ctx.step) {
     case FOC_CALI_STEP_FORWARD: {
@@ -206,7 +206,7 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
 
             if (foc_ctx->cali_ctx.timeout_cnt++ >= FOC_FSM_ELEC_ANGLE_STABLE_TIME) {
                 foc_ctx->cali_ctx.timeout_cnt = 0;
-                foc_ctx->cali_ctx.last_angle_q = q16_16_add(foc_ctx->cali_ctx.last_angle_q, ALIGN_THETA_Q);
+                foc_ctx->cali_ctx.last_angle_q = q16_16_add(foc_ctx->cali_ctx.last_angle_q, foc->align_theta_q);
 
                 if ((foc_get_electrical_angle(foc) >= threshold) && (foc_ctx->cali_ctx.capture_idx >= 0) && (foc_ctx->cali_ctx.capture_idx <= (int16_t)g_encoder_calib.total_steps) && (flash_data != NULL)) {
                     flash_data->angle_map[foc_ctx->cali_ctx.capture_idx] = foc_get_raw_angle(foc);
@@ -239,7 +239,7 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
             } else {
                 foc_ctx->cali_ctx.step = FOC_CALI_STEP_REVERSE;
                 foc_ctx->cali_ctx.transition_cnt = 0;
-                foc_set_target_iq(foc, IF_STARTUP_IQ_Q);
+                foc_set_target_iq(foc, foc->if_startup_iq_q);
             }
         }
         break;
@@ -264,7 +264,7 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
                 if (foc_ctx->cali_ctx.capture_idx <= -(int16_t)FOC_FSM_CALI_STEPS_EXTRA) {
                     foc_ctx->cali_ctx.step = FOC_CALI_STEP_COMPLETE;
                 } else {
-                    foc_ctx->cali_ctx.last_angle_q = q16_16_sub(foc_ctx->cali_ctx.last_angle_q, ALIGN_THETA_Q);
+                    foc_ctx->cali_ctx.last_angle_q = q16_16_sub(foc_ctx->cali_ctx.last_angle_q, foc->align_theta_q);
                 }
             }
         }
