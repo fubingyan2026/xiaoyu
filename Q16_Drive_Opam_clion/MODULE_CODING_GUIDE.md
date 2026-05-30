@@ -10,9 +10,8 @@
 
 ### 遵循的规范
 
-- **Google 嵌入式规范**：遵循 [Google Embedded Style Guide](https://google.github.io/styleguide/embedded.html)
-- **Google C++ 风格指南（C 语言部分）**：遵循 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)
-- **MISRA C:2012**：遵循 MISRA C 规范
+- **WebKit 代码风格指南**：遵循 [WebKit Code Style Guidelines](https://webkit.org/code-style-guidelines/)，包括缩进、大括号位置、命名、注释等格式化规范
+- **MISRA C:2012**：遵循 MISRA C 规范（安全性与可靠性约束）
 
 ---
 
@@ -478,7 +477,7 @@ context_t* ctx = (context_t*)__malloc(sizeof(context_t));
 if (ctx == NULL) {
   return MODULE_ERROR_MEMORY_ALLOC;
 }
-__memset(ctx, 0, sizeof(context_t));  // 立即清零
+memset(ctx, 0, sizeof(context_t));  // 立即清零
 
 // 现在所有成员都是确定的初始值：
 // ctx->initialized = false (0)
@@ -500,7 +499,7 @@ __memset(ctx, 0, sizeof(context_t));  // 立即清零
 
 | 规则             | 说明                                                                |
 | ---------------- | ------------------------------------------------------------------- |
-| 分配后立即初始化 | `__malloc` 后必须紧跟 `__memset(ptr, 0, size)`                      |
+| 分配后立即初始化 | `__malloc` 后必须紧跟 `memset(ptr, 0, size)`                      |
 | 检查返回值       | 分配后必须检查是否为 `NULL`                                         |
 | 结构体优先清零   | 所有结构体分配后都应清零，确保指针成员为 `NULL`，布尔成员为 `false` |
 
@@ -520,7 +519,7 @@ module_context_t* module_create(const module_config_t* config) {
   }
 
   // 2. 立即初始化为零（关键！）
-  __memset(ctx, 0, sizeof(module_context_t));
+  memset(ctx, 0, sizeof(module_context_t));
 
   // 3. 保存配置
   ctx->config = *config;
@@ -659,41 +658,3 @@ const uint8_t* module_get_buffer(const module_context_t* ctx);
 - [ ] **动态分配的内存已初始化为零**
 
 ---
-
----
-
-## 使用说明
-
-将此文档提供给 AI 时，请说明：
-
-1. **模块名称**：指定模块前缀（如 `protocol_parser`）
-2. **模块功能**：描述模块的主要功能
-3. **配置参数**：列出所有配置参数
-4. **公共接口**：列出所有公共函数
-
-**示例提示词**：
-
-```
-请根据 C语言模块编程规范提示词.md 的规范，生成一个名为 "uart_driver" 的模块代码。
-
-模块功能：UART 串口驱动
-
-配置参数：
-- 串口实例号
-- 波特率
-- 数据位
-- 停止位
-- 校验位
-- 发送完成回调
-- 接收完成回调
-
-公共接口：
-- 初始化
-- 发送数据
-- 接收数据
-- 反初始化
-```
-
----
-
-**遵循本规范，生成高质量、可维护的 C 语言代码！**

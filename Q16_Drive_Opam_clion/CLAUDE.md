@@ -29,13 +29,14 @@ Application entry points: `AppInit()` and `AppRunning()` in `applications/app.c`
 
 ## Coding Standards
 
-Two conflicting style guides exist. Resolution:
+生成代码时严格遵循以下规范文档：
 
-- **`.clang-format` takes precedence** — 2-space indent, Google style, K&R braces, 80-column limit
-- `hal_drivers/HAL_DRIVERS_STYLE_GUIDE.md` matches clang-format (2-space, K&R)
-- `Middlewares/protocol/MODULE_CODING_GUIDE.md` specifies 4-space indent and Allman-style function braces, but `.clang-format` reformats over this
+- **全项目通用**：[`MODULE_CODING_GUIDE.md`](MODULE_CODING_GUIDE.md) — 适用于所有目录，定义了代码风格（WebKit）、命名、注释、模块模式、内存管理等规范
+- **HAL 层专用**：[`hal_drivers/HAL_DRIVERS_STYLE_GUIDE.md`](hal_drivers/HAL_DRIVERS_STYLE_GUIDE.md) — **仅对 `hal_drivers/` 目录生效**，定义了硬件抽象层的分层架构、ops 表模式、平台注册等特有规范
 
-Write code that passes `clang-format`. All public API and complex logic comments in **Chinese**.
+两个文档的格式化规则一致（WebKit 风格：4 空格缩进、Allman 函数大括号、K&R 控制语句大括号、`type*` 指针声明、不超过 100 字符行长）。HAL 层文档在通用规范基础上叠加了分层设计、上下文管理、constructor 自动注册等专属规则。
+
+所有公共 API 和复杂逻辑注释使用**中文**。
 
 ## Middleware Module Pattern
 
@@ -68,15 +69,32 @@ Without this, `ctx->initialized` may be garbage-true, causing `init()` to call `
 
 `__malloc`/`__free` 之外的其他函数使用 C 标准库（`memset`, `memcpy` 等）。
 
-## Key Frameworks
+## Middlewares 优先
 
-All accessible via `#include "public.h"`:
+生成代码时，**优先使用 `Middlewares/` 下已有的功能模块**，避免重复造轮。通过 `#include "public.h"` 即可引入所有 Middlewares 模块。
 
-- **FSM** (`Middlewares/logic/fsm.h`) — O(1) transition table, on-entry/on-exit callbacks, debug names. Used by FOC, LED, keys, CAN.
-- **Message Center** (`Middlewares/message_center/message_center.h`) — pub-sub with shared ring-buffer per topic. Publisher owns the queue; subscribers track individual read positions.
-- **kfifo** (`Middlewares/utils/kfifo.h`) — lockless ring buffer, buffer size must be power-of-2. `kfifo_skip_in()`/`kfifo_move_in()` for DMA sync.
-- **Daemon** (`Middlewares/services/daemon/daemon.h`) — linked-list task health monitor with reload timeouts. `daemon_task()` must be called periodically from main loop.
-- **Debug** (`Middlewares/services/debug/debug.h`) — ESP32-style logging: `DEBUG_LOGE/W/I/D/T(tag, ...)`, `DEBUG_ASSERT(expr)`. Output via internal kfifo, flushed by timer to UART DMA.
+| 分类 | 模块 | 路径 | 用途 |
+|---|---|---|---|
+| **Algorithm** | PID | `algorithm/controller/pid.h` | 通用 PID 控制器 |
+| | Gimbal PID | `algorithm/controller/gimbal_pid.h` | 云台专用 PID |
+| | Filter | `algorithm/filter/filter.h` | 数字滤波器（低通、移动平均等） |
+| | PLL | `algorithm/pll/pll.h` | 锁相环（用于无感 FOC） |
+| | Math | `algorithm/math/maths.h` | Q16 定点数学库 |
+| | CRC | `algorithm/crc.h` | CRC 校验 |
+| **Services** | Debug | `services/debug/debug.h` | ESP32 风格日志（`DEBUG_LOGE/W/I/D/T`） |
+| | Daemon | `services/daemon/daemon.h` | 任务健康监控 + 看门狗 |
+| | LED | `services/led/led.h` | LED 状态管理 |
+| | CAN Comm | `services/can_comm/can_comm.h` | CAN 通信服务 |
+| **Protocol** | Parser | `protocol/protocol_parser.h` | 数据包解析（帧匹配、校验） |
+| | Packer | `protocol/protocol_packer.h` | 数据包封装 |
+| **Logic** | FSM | `fsm/fsm.h` | O(1) 状态机，on-entry/on-exit 回调 |
+| | Key Base | `key_base/key_base.h` | 按键扫描与事件分发 |
+| **Message** | Message Center | `message_center/message_center.h` | 发布-订阅消息总线 |
+| **Sensor** | Angle Sensor | `angle_sensor/angle_sensor.h` | 角度传感器抽象 |
+| **Utils** | kfifo | `utils/kfifo.h` | 无锁环形缓冲区（DMA 友好） |
+| | Memory Pool | `utils/memory_pool.h` | `__malloc`/`__free` 内存池 |
+| | clist | `utils/clist.h` | 通用双向链表 |
+| | Toolkit | `utils/toolkit/toolkit.h` | 工具函数集 |
 
 ## public.h Pattern
 
