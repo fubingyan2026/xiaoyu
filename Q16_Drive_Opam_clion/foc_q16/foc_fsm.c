@@ -189,10 +189,10 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
     motor_flash_config_t* flash_data = (motor_flash_config_t*)foc_ctx->flash_data;
     q16_16_t threshold = q16_16_mul(foc->align_theta_q, FLOAT_TO_Q16_16(0.5f));
 
-    if (foc_get_omega(foc) < foc->if_startup_omega_q) {
+    if (foc_get_omega(foc) < foc->if_startup_target_omega_q) {
         foc_set_omega(foc, q16_16_add(foc_get_omega(foc), foc->if_startup_omega_acc_q));
     } else {
-        foc_set_omega(foc, foc->if_startup_omega_q);
+        foc_set_omega(foc, foc->if_startup_target_omega_q);
     }
 
     foc_set_target_iq(foc, foc->if_startup_iq_q);

@@ -122,7 +122,7 @@ foc_error_t foc_init(foc_context_t* ctx, const foc_config_t* config)
     ctx->align_theta_q = FLOAT_TO_Q16_16(ALIGN_THETA);
     ctx->align_current_q = FLOAT_TO_Q16_16(ALIGN_CURRENT);
     ctx->if_startup_iq_q = FLOAT_TO_Q16_16(IF_STARTUP_IQ);
-    ctx->if_startup_omega_q = FLOAT_TO_Q16_16(IF_STARTUP_OMEGA);
+    ctx->if_startup_target_omega_q = FLOAT_TO_Q16_16(IF_STARTUP_OMEGA);
     ctx->if_startup_omega_acc_q = FLOAT_TO_Q16_16(IF_STARTUP_OMEGA_ACC);
     ctx->lpf_beta_q = FLOAT_TO_Q16_16(0.33f);
 
@@ -187,17 +187,16 @@ void foc_irq_handler(foc_context_t* ctx)
     }
 
     /* 步骤1：读取编码器当前位置 */
-    ctx->raw_angle_q = foc_hal_encoder_read(&ctx->port);
-
+    ctx->raw_angle = foc_hal_encoder_read(&ctx->port);
     /* 步骤2：更新电气角度和 PLL（仅在 RUN 状态下执行）
      * 在 ALIGN、ALIGNMENT 等状态下，电气角度由状态机直接控制 */
     if (fsm_current_state(&ctx->fsm.fsm) == FOC_FSM_STATE_RUN) {
-        float electrical_angle = encoder_track_sector(ctx->raw_angle_q, &g_encoder_calib);
+        float electrical_angle = encoder_track_sector(ctx->raw_angle, &g_encoder_calib);
         ctx->electrical_angle_q = FLOAT_TO_Q16_16(electrical_angle);
         foc_core_pll_run(ctx->electrical_angle_q, ctx->pwm_period_q, &ctx->pll_phase_q,
-            &ctx->pll_velocity_q, ctx->pll_kp_q, ctx->pll_ki_q, ctx->pll_speed_limit_q);
+            &ctx->pll_omega_q, ctx->pll_kp_q, ctx->pll_ki_q, ctx->pll_speed_limit_q);
         /* 将 rad/s 转换为 RPM：ω_rpm = ω_rad/s * 60 / (2π * 极对数) */
-        ctx->pll_velocity_rpm = Q16_16_TO_FLOAT(ctx->pll_velocity_q) * 60.0f / M_2PI / ctx->config.motor_poles;
+        ctx->pll_velocity_rpm = Q16_16_TO_FLOAT(ctx->pll_omega_q) * 60.0f / M_2PI / ctx->config.motor_poles;
     }
 
     /* 步骤3：执行电流环核心算法
@@ -290,7 +289,7 @@ void foc_set_sw(foc_context_t* ctx, bool sw)
 void foc_set_omega(foc_context_t* ctx, q16_16_t omega)
 {
     if (ctx) {
-        ctx->omega_q = omega;
+        ctx->target_omega_q = omega;
     }
 }
 
@@ -349,7 +348,7 @@ q16_16_t foc_get_target_id(const foc_context_t* ctx)
  */
 q16_16_t foc_get_omega(const foc_context_t* ctx)
 {
-    return ctx ? ctx->omega_q : 0;
+    return ctx ? ctx->target_omega_q : 0;
 }
 
 /**
@@ -399,5 +398,5 @@ bool foc_get_sw(const foc_context_t* ctx)
  */
 uint16_t foc_get_raw_angle(const foc_context_t* ctx)
 {
-    return ctx ? ctx->raw_angle_q : 0;
+    return ctx ? ctx->raw_angle : 0;
 }

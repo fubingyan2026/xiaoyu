@@ -126,7 +126,7 @@
  * @note 公式：(25 rpm / 60) * MOTOR_POLES * 2π * STATE_PERIOD
  *       物理含义：25 rpm 机械转速换算为每个状态机周期（1ms）的电气角度增量。
  *       用于 IF 启动阶段开环扫频时的角度步进。
- *       Q16.16 转换在 foc_init() 中预计算后存入 ctx->if_startup_omega_q
+ *       Q16.16 转换在 foc_init() 中预计算后存入 ctx->if_startup_target_omega_q
  */
 #define IF_STARTUP_OMEGA ((25.0f / 60.0f) * MOTOR_POLES * M_2PI * STATE_PERIOD)
 

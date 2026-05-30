@@ -155,7 +155,7 @@ struct foc_context {
     q16_16_t align_theta_q; /**< 对齐角度（Q16.16 格式，弧度）= 0.25 * 2π */
     q16_16_t align_current_q; /**< 对齐电流（Q16.16 格式，安培）= 0.50A */
     q16_16_t if_startup_iq_q; /**< IF 启动 Iq（Q16.16 格式，安培） */
-    q16_16_t if_startup_omega_q; /**< IF 启动角速度（Q16.16 格式，弧度/步） */
+    q16_16_t if_startup_target_omega_q; /**< IF 启动角速度（Q16.16 格式，弧度/步） */
     q16_16_t if_startup_omega_acc_q; /**< IF 启动角加速度（Q16.16 格式，弧度/步²） */
     q16_16_t lpf_beta_q; /**< 电流低通滤波系数（Q16.16 格式），用于电流环 Id/Iq 反馈平滑 */
 
@@ -166,15 +166,15 @@ struct foc_context {
                                @note 由状态机或上层速度环设置 */
     q16_16_t target_id_q; /**< 目标 D 轴电流（Q16.16 格式，安培）
                                @note 通常设为 0（MTPA 时为负值） */
-    q16_16_t omega_q; /**< 角速度（Q16.16 格式，rad/s）
+    q16_16_t target_omega_q; /**< 角速度（Q16.16 格式，rad/s）
                            @note IF 启动时由状态机直接设定 */
-    uint16_t raw_angle_q; /**< 编码器原始读数
+    uint16_t raw_angle; /**< 编码器原始读数
                                @note 编码器计数值（0 ~ encoder_lines - 1） */
     q16_16_t electrical_angle_q; /**< 电气角度（Q16.16 格式，弧度）
                                       @note 由编码器映射表或状态机提供 */
     q16_16_t pll_phase_q; /**< PLL 输出相位（Q16.16 格式，弧度）
                                @note 锁相环对电气角度进行滤波和预测 */
-    q16_16_t pll_velocity_q; /**< PLL 输出角速度（Q16.16 格式，rad/s）
+    q16_16_t pll_omega_q; /**< PLL 输出角速度（Q16.16 格式，rad/s）
                                   @note 锁相环估计的转速 */
     float pll_velocity_rpm; /**< PLL 输出速度（RPM）
                                  @note 用于调试输出和用户界面 */
