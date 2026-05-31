@@ -25,7 +25,7 @@
 
 #include "app.h"
 #include "crc16.h"
-#include "encoder_alignment.h"
+#include "foc_encoder.h"
 #include "foc_task.h"
 #include "hal_uart.h"
 #include "stm32g4xx_hal.h"
@@ -36,8 +36,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-extern encoder_calibration_t g_encoder_calib;
-extern motor_flash_config_t g_motor_flash_cfg;
+extern foc_encoder_flash_t g_encoder_flash;
 
 static usart_protocol_context_t* s_current_ctx = NULL;
 
@@ -783,10 +782,10 @@ static usart_protocol_error_t cmd_get_calib_status_handler(uint8_t func_code,
     if ((state == (uint8_t)FOC_FSM_STATE_ALIGN) || (state == (uint8_t)FOC_FSM_STATE_ALIGNMENT)) {
         calib_status.status = USART_PROTOCOL_CALIB_STATUS_RUNNING;
         calib_status.progress = 50U;
-    } else if (g_encoder_calib.is_valid) {
+    } else if (foc_get_encoder_ctx(&g_foc_ctx)->is_valid) {
         calib_status.status = USART_PROTOCOL_CALIB_STATUS_COMPLETE;
         calib_status.progress = 100U;
-        calib_status.direction = (int8_t)g_encoder_calib.direction;
+        calib_status.direction = (int8_t)foc_get_encoder_ctx(&g_foc_ctx)->direction;
     } else {
         calib_status.status = USART_PROTOCOL_CALIB_STATUS_IDLE;
         calib_status.progress = 0U;
@@ -812,14 +811,14 @@ static usart_protocol_error_t cmd_get_calib_data_handler(uint8_t func_code,
     (void)data;
     (void)len;
 
-    uint16_t calib_data_len = (uint16_t)(sizeof(g_motor_flash_cfg.angle_map) + 1U);
+    uint16_t calib_data_len = (uint16_t)(sizeof(g_encoder_flash.angle_map) + 1U);
     if (calib_data_len > 256U) {
         calib_data_len = 256U;
     }
 
-    (void)memcpy(response, &g_motor_flash_cfg.angle_map,
+    (void)memcpy(response, &g_encoder_flash.angle_map,
         (size_t)(calib_data_len - 1U));
-    response[calib_data_len - 1U] = (uint8_t)g_motor_flash_cfg.direction;
+    response[calib_data_len - 1U] = (uint8_t)g_encoder_flash.direction;
 
     *resp_len = calib_data_len;
     return USART_PROTOCOL_OK;
@@ -844,12 +843,12 @@ static usart_protocol_error_t cmd_set_calib_data_handler(uint8_t func_code,
     }
 
     uint16_t map_len = len - 1U;
-    if (map_len > (uint16_t)sizeof(g_motor_flash_cfg.angle_map)) {
-        map_len = (uint16_t)sizeof(g_motor_flash_cfg.angle_map);
+    if (map_len > (uint16_t)sizeof(g_encoder_flash.angle_map)) {
+        map_len = (uint16_t)sizeof(g_encoder_flash.angle_map);
     }
 
-    (void)memcpy(&g_motor_flash_cfg.angle_map, data, (size_t)map_len);
-    g_motor_flash_cfg.direction = (motor_direction_t)data[len - 1U];
+    (void)memcpy(&g_encoder_flash.angle_map, data, (size_t)map_len);
+    g_encoder_flash.direction = (foc_encoder_dir_t)data[len - 1U];
 
     return USART_PROTOCOL_OK;
 }
@@ -870,7 +869,7 @@ static usart_protocol_error_t cmd_clear_calib_handler(uint8_t func_code,
     (void)response;
     *resp_len = 0U;
 
-    (void)__memset(&g_motor_flash_cfg, 0, sizeof(motor_flash_config_t));
+    (void)__memset(&g_encoder_flash, 0, sizeof(foc_encoder_flash_t));
 
     return USART_PROTOCOL_OK;
 }

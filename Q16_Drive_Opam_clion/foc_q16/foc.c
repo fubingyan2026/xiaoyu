@@ -19,7 +19,6 @@
 
 #include <string.h>
 
-#include "encoder_alignment.h"
 #include "foc_core.h"
 #include "foc_hal.h"
 
@@ -107,8 +106,10 @@ foc_error_t foc_init(foc_context_t* ctx, const foc_config_t* config)
         return FOC_ERROR_FSM_INIT_FAILED;
     }
 
-    /* 设置 Flash 校准数据指针 */
-    foc_fsm_set_flash_data(&ctx->fsm, ctx->config.flash_data);
+    /* 初始化编码器校准（从已加载的 Flash 数据导入） */
+    if (ctx->config.flash_data != NULL) {
+        foc_encoder_init(&ctx->encoder, ctx->config.flash_data->angle_map, ctx->config.flash_data->direction);
+    }
 
     /* 启动 PWM 输出 */
     foc_hal_pwm_start(&ctx->port);
@@ -191,7 +192,7 @@ void foc_irq_handler(foc_context_t* ctx)
     /* 步骤2：更新电气角度和 PLL（仅在 RUN 状态下执行）
      * 在 ALIGN、ALIGNMENT 等状态下，电气角度由状态机直接控制 */
     if (fsm_current_state(&ctx->fsm.fsm) == FOC_FSM_STATE_RUN) {
-        float electrical_angle = encoder_track_sector(ctx->raw_angle, &g_encoder_calib);
+        float electrical_angle = foc_encoder_track_sector(&ctx->encoder, ctx->raw_angle);
         ctx->electrical_angle_q = FLOAT_TO_Q16_16(electrical_angle);
         foc_core_pll_run(ctx->electrical_angle_q, ctx->pwm_period_q, &ctx->pll_phase_q,
             &ctx->pll_omega_q, ctx->pll_kp_q, ctx->pll_ki_q, ctx->pll_speed_limit_q);

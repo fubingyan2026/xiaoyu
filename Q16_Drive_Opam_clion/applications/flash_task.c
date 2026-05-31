@@ -18,13 +18,16 @@ static flash_task_mgr_t g_flash_task_mgr = { 0 };
 static message_center_publisher_t* g_flash_task_publisher = NULL;
 static message_center_subscriber_t* g_flash_task_subscriber = NULL;
 
+/** @brief 编码器校准 Flash 持久化数据，由 default_env_set 自动加载/保存 */
+foc_encoder_flash_t g_encoder_flash;
+
 /**
  * @brief   默认环境变量表
  * @note    这些变量会从Flash加载到RAM中
  */
 const ef_env default_env_set[] = {
-    { FLASH_MAGIC_ENCODER, &g_motor_flash_cfg,
-        sizeof(g_motor_flash_cfg) }, ///< 电机校准数据
+    { FLASH_MAGIC_ENCODER, &g_encoder_flash,
+        sizeof(g_encoder_flash) }, ///< 电机校准数据
     { FLASH_MAGIC_HALL, &hall_save_param,
         sizeof(hall_save_param) }, ///< 霍尔传感器参数
     { FLASH_MAGIC_CAN, &can_save_id, sizeof(can_save_id) }, ///< CAN通信ID配置
@@ -53,7 +56,7 @@ static void task_write_can_identify(void* data, size_t size)
 
 static void task_erase_all(void* data, size_t size)
 {
-    g_motor_flash_cfg = (motor_flash_config_t) { 0 };
+    g_encoder_flash = (foc_encoder_flash_t) { 0 };
     can_save_id = 0;
     hall_save_param = (hall_save_param_t) { 0 };
 

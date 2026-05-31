@@ -30,6 +30,7 @@
 #include "angle_sensor.h"
 #include "foc_config.h"
 #include "foc_core/foc_core.h"
+#include "foc_encoder.h"
 #include "foc_fsm.h"
 #include "foc_hal.h"
 
@@ -126,10 +127,10 @@ typedef struct {
     angle_sensor_type_e sensor_type; /**< 角度传感器类型
                                           @note 如 AS5600、MT6816 等 */
 
-    // 校准数据指针
-    void* flash_data; /**< Flash 校准数据指针
-                           @note 指向 motor_flash_config_t 结构体，
-                           用于存储编码器角度映射表 */
+  // 校准数据指针
+  foc_encoder_flash_t* flash_data;    /**< Flash 校准数据指针
+                                           @note 指向 foc_encoder_flash_t 结构体，
+                                           由 flash_task.c 管理通过 EasyFlash 自动加载/保存 */
 } foc_config_t;
 
 /* ==================== FOC 上下文结构体 ==================== */
@@ -185,6 +186,7 @@ struct foc_context {
     foc_svpwm_context_t svpwm; /**< SVPWM 上下文 */
     foc_hal_t port; /**< 端口管理器（硬件抽象层） */
     foc_fsm_context_t fsm; /**< FSM 状态机 */
+    foc_encoder_t encoder; /**< 编码器校准与扇区跟踪 */
     angle_sensor_context_t sensor; /**< 角度传感器上下文 */
 
     // 滤波器状态
@@ -300,6 +302,16 @@ float foc_get_velocity_rpm(const foc_context_t* ctx);
 bool foc_get_sw(const foc_context_t* ctx);
 uint16_t foc_get_raw_angle(const foc_context_t* ctx);
 /**@}*/
+
+/**
+ * @brief 获取编码器上下文指针
+ * @param ctx FOC 上下文指针
+ * @return 编码器上下文指针（foc_encoder_t*），ctx 为空时返回 NULL
+ */
+static inline foc_encoder_t* foc_get_encoder_ctx(foc_context_t* ctx)
+{
+    return ctx ? &ctx->encoder : NULL;
+}
 
 #ifdef __cplusplus
 }

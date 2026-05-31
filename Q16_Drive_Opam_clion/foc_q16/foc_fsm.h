@@ -160,8 +160,7 @@ typedef struct __attribute__((packed)) {
 struct foc_fsm_context_s {
     fsm_t fsm; /**< 通用 FSM 实例 */
     foc_fsm_cali_context_t cali_ctx; /**< 编码器校准上下文 */
-    void* parent; /**< 父级 foc_context_t 指针 */
-    void* flash_data; /**< Flash 校准数据指针（motor_flash_config_t*） */
+    void* parent; /**< 父级 foc_context_t 指针（编码器数据通过 ->encoder 直接访问） */
 };
 
 /*============================================================================
@@ -218,16 +217,5 @@ foc_fsm_ret_e foc_fsm_request_state(foc_fsm_context_t* ctx, foc_fsm_state_e stat
  * @return 状态名称字符串（如 "IDLE"、"RUN"），无效状态返回 "UNKNOWN"
  */
 const char* foc_fsm_state_to_string(foc_fsm_state_e state);
-
-/**
- * @brief 设置 Flash 校准数据指针
- *
- * 校准过程中需要将编码器映射数据写入 Flash，
- * 此函数在初始化后由外部调用，传递 Flash 数据结构的地址。
- *
- * @param ctx        FSM 上下文指针
- * @param flash_data Flash 校准数据指针（motor_flash_config_t*）
- */
-void foc_fsm_set_flash_data(foc_fsm_context_t* ctx, void* flash_data);
 
 #endif /* FOC_FSM_H */

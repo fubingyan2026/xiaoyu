@@ -11,9 +11,10 @@
 #include "angle_sensor.h"
 #include "bsp_delay.h"
 #include "debug.h"
-#include "encoder_alignment.h"
+#include "foc_encoder.h"
 #include "foc_config.h"
 #include "foc_hal.h"
+#include "flash_task.h"
 #include "main.h"
 
 /* ==================== 硬件相关 ==================== */
@@ -164,8 +165,7 @@ void foc_task_init(void)
     angle_sensor_init_context(&g_foc_ctx.sensor, SENSOR_TYPE_LINEAR_HALL);
     angle_sensor_init(&g_foc_ctx.sensor);
 
-    // 加载编码器校准数据
-    encoder_alignment_init();
+    // 编码器校准数据由 flash_task.c 通过 EasyFlash default_env_set 自动加载到 g_encoder_flash
 
     // 构建端口配置
     foc_hal_config_t port_cfg = {
@@ -199,8 +199,8 @@ void foc_task_init(void)
         .v_bus = V_BUS,
         .max_duty_ratio = 0.95f,
         .port_config = port_cfg,
-        .sensor_type = SENSOR_TYPE_LINEAR_HALL,
-        .flash_data = &g_motor_flash_cfg,
+        .sensor_type = SENSOR_TYPE_MT6701,
+        .flash_data = &g_encoder_flash,
     };
 
     // 初始化FOC模块

@@ -14,7 +14,7 @@
 #include "public.h"
 
 #include "easyflash.h"
-#include "encoder_alignment.h"
+#include "foc_encoder.h"
 #include "fsm_linear_hall.h"
 
 /*============================================================================
@@ -49,7 +49,7 @@ typedef enum __attribute__((packed)) {
     FLASH_TASK_COUNT
 } flash_task_type_t;
 
-extern motor_flash_config_t g_motor_flash_cfg;
+extern foc_encoder_flash_t g_encoder_flash;
 extern hall_save_param_t hall_save_param;
 extern uint32_t can_save_id;
 

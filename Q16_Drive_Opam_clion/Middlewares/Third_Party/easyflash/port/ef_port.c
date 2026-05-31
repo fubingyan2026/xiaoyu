@@ -13,7 +13,7 @@
 #include <string.h>
 
 #include "debug.h"
-#include "encoder_alignment.h"
+#include "foc_encoder.h"
 #include "flash_task.h"
 #include "fsm_linear_hall.h"
 #include "memory_pool.h"

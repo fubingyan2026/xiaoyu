@@ -10,7 +10,7 @@
 #include <string.h>
 
 #include "debug.h"
-#include "encoder_alignment.h"
+#include "foc_encoder.h"
 #include "flash_task.h"
 #include "foc.h"
 #include "foc_hal.h"
@@ -186,7 +186,6 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
 {
     foc_fsm_context_t* foc_ctx = (foc_fsm_context_t*)fsm_ctx;
     foc_context_t* foc = (foc_context_t*)foc_ctx->parent;
-    motor_flash_config_t* flash_data = (motor_flash_config_t*)foc_ctx->flash_data;
     q16_16_t threshold = q16_16_mul(foc->align_theta_q, FLOAT_TO_Q16_16(0.5f));
 
     if (foc_get_omega(foc) < foc->if_startup_target_omega_q) {
@@ -208,8 +207,8 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
                 foc_ctx->cali_ctx.timeout_cnt = 0;
                 foc_ctx->cali_ctx.last_angle_q = q16_16_add(foc_ctx->cali_ctx.last_angle_q, foc->align_theta_q);
 
-                if ((foc_get_electrical_angle(foc) >= threshold) && (foc_ctx->cali_ctx.capture_idx >= 0) && (foc_ctx->cali_ctx.capture_idx <= (int16_t)g_encoder_calib.total_steps) && (flash_data != NULL)) {
-                    flash_data->angle_map[foc_ctx->cali_ctx.capture_idx] = foc_get_raw_angle(foc);
+                if ((foc_get_electrical_angle(foc) >= threshold) && (foc_ctx->cali_ctx.capture_idx >= 0) && (foc_ctx->cali_ctx.capture_idx <= (int16_t)foc->encoder.total_steps)) {
+                    foc->encoder.angle_map[foc_ctx->cali_ctx.capture_idx] = foc_get_raw_angle(foc);
                     DEBUG_LOGI("foc_fsm", "正向校准数据缓存到flash:%d", foc_ctx->cali_ctx.capture_idx);
                 }
 
@@ -217,7 +216,7 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
                     foc_ctx->cali_ctx.capture_idx++;
                 }
 
-                if (foc_ctx->cali_ctx.capture_idx >= (int16_t)(g_encoder_calib.total_steps + FOC_FSM_CALI_STEPS_EXTRA)) {
+                if (foc_ctx->cali_ctx.capture_idx >= (int16_t)(foc->encoder.total_steps + FOC_FSM_CALI_STEPS_EXTRA)) {
                     foc_ctx->cali_ctx.step = FOC_CALI_STEP_TRANSITION;
                     foc_ctx->cali_ctx.transition_cnt = 0;
                     return FOC_FSM_STATE_ALIGNMENT;
@@ -255,9 +254,9 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
                 foc_ctx->cali_ctx.timeout_cnt = 0;
                 foc_ctx->cali_ctx.capture_idx--;
 
-                if ((foc_get_electrical_angle(foc) >= threshold) && (foc_ctx->cali_ctx.capture_idx >= 0) && (foc_ctx->cali_ctx.capture_idx <= (int16_t)g_encoder_calib.total_steps) && (flash_data != NULL)) {
-                    flash_data->angle_map[foc_ctx->cali_ctx.capture_idx] = cycle_average(flash_data->angle_map[foc_ctx->cali_ctx.capture_idx], foc_get_raw_angle(foc),
-                        g_encoder_calib.encoder_lines);
+                if ((foc_get_electrical_angle(foc) >= threshold) && (foc_ctx->cali_ctx.capture_idx >= 0) && (foc_ctx->cali_ctx.capture_idx <= (int16_t)foc->encoder.total_steps)) {
+                    foc->encoder.angle_map[foc_ctx->cali_ctx.capture_idx] = cycle_average(foc->encoder.angle_map[foc_ctx->cali_ctx.capture_idx], foc_get_raw_angle(foc),
+                        foc->encoder.encoder_lines);
                     DEBUG_LOGI("foc_fsm", "反向平均数据缓存到flash:%d", foc_ctx->cali_ctx.capture_idx);
                 }
 
@@ -272,24 +271,10 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
     }
 
     case FOC_CALI_STEP_COMPLETE: {
-        if (flash_data != NULL) {
-            foc_ctx->cali_ctx.capture_idx = 0;
+        foc_ctx->cali_ctx.capture_idx = 0;
 
-            encoder_detect_direction(flash_data->angle_map, &g_encoder_calib);
-            flash_data->direction = (int16_t)g_encoder_calib.direction;
-
-            if (g_encoder_calib.direction == MOTOR_DIR_REVERSE) {
-                while (foc_ctx->cali_ctx.capture_idx <= (int16_t)g_encoder_calib.total_steps) {
-                    flash_data->angle_map[foc_ctx->cali_ctx.capture_idx] = g_encoder_calib.encoder_lines - flash_data->angle_map[foc_ctx->cali_ctx.capture_idx];
-                    foc_ctx->cali_ctx.capture_idx++;
-                }
-            }
-
-            DEBUG_LOGI("foc_fsm", "编码器方向:%d", g_encoder_calib.direction);
-            encoder_detect_direction(flash_data->angle_map, &g_encoder_calib);
-            g_encoder_calib.direction = flash_data->direction;
-            flash_task_request(FLASH_TASK_WRITE_ANGLE, flash_data, sizeof(g_motor_flash_cfg));
-        }
+            foc_encoder_calibration_finalize(&foc->encoder);
+            flash_task_request(FLASH_TASK_WRITE_ANGLE, &foc->encoder, sizeof(foc_encoder_flash_t));
 
         foc_set_target_id(foc, 0);
         return FOC_FSM_STATE_RUN;
@@ -384,7 +369,6 @@ foc_fsm_ret_e foc_fsm_init(foc_fsm_context_t* ctx, void* parent)
 
     memset(ctx, 0, sizeof(foc_fsm_context_t));
     ctx->parent = parent;
-    ctx->flash_data = NULL;
 
     static fsm_handler_t handlers[FOC_FSM_STATE_COUNT];
     static fsm_guard_t transitions[FOC_FSM_STATE_COUNT * FOC_FSM_STATE_COUNT];
@@ -489,20 +473,4 @@ const char* foc_fsm_state_to_string(foc_fsm_state_e state)
         return foc_state_names[state];
     }
     return "UNKNOWN";
-}
-
-/**
- * @brief 设置 Flash 校准数据指针
- *
- * 状态机在校准完成后需要将校准数据写入 Flash，
- * 此函数传递 Flash 数据结构的指针给状态机上下文。
- *
- * @param ctx        FSM 上下文指针
- * @param flash_data Flash 校准数据结构体指针（motor_flash_config_t*）
- */
-void foc_fsm_set_flash_data(foc_fsm_context_t* ctx, void* flash_data)
-{
-    if (ctx != NULL) {
-        ctx->flash_data = flash_data;
-    }
 }
