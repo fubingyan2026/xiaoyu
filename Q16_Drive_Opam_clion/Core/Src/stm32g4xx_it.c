@@ -264,7 +264,11 @@ void TIM1_CC_IRQHandler(void)
   /* USER CODE BEGIN TIM1_CC_IRQn 1 */
 
   foc_task_adc_dma_start();
-  device_linear_hall_start_dma();
+  if (g_foc_ctx.config.sensor_type == SENSOR_TYPE_LINEAR_HALL) {
+      device_linear_hall_start_dma();
+  } else {
+      tk_event_send(interrupt_event, ADC_EVENT_FLAG);
+  }
 
   /* USER CODE END TIM1_CC_IRQn 1 */
 }

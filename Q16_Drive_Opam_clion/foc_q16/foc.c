@@ -19,6 +19,7 @@
 
 #include <string.h>
 
+#include "debug.h"
 #include "foc_core.h"
 #include "foc_hal.h"
 
@@ -62,6 +63,10 @@ foc_error_t foc_init(foc_context_t* ctx, const foc_config_t* config)
 
     /* 设置控制参数：默认使能 */
     ctx->sw = true;
+
+    /* 初始化角度传感器（依赖 ctx->config.sensor_type） */
+    angle_sensor_init_context(&ctx->sensor, ctx->config.sensor_type);
+    angle_sensor_init(&ctx->sensor);
 
     /* 初始化端口（硬件抽象层），检查必要回调 */
     if (!foc_hal_init(&ctx->port, &ctx->config.port_config)) {
@@ -108,7 +113,10 @@ foc_error_t foc_init(foc_context_t* ctx, const foc_config_t* config)
 
     /* 初始化编码器校准（从已加载的 Flash 数据导入） */
     if (ctx->config.flash_data != NULL) {
-        foc_encoder_init(&ctx->encoder, ctx->config.flash_data->angle_map, ctx->config.flash_data->direction);
+        if (!foc_encoder_init(&ctx->encoder, ctx->config.flash_data->angle_map, ctx->config.flash_data->direction)) {
+            /* 校准数据无效或未校准，首次启动属于正常情况 */
+            DEBUG_LOGW("foc", "编码器校准数据无效，需执行校准流程");
+        }
     }
 
     /* 启动 PWM 输出 */
@@ -199,7 +207,6 @@ void foc_irq_handler(foc_context_t* ctx)
         /* 将 rad/s 转换为 RPM：ω_rpm = ω_rad/s * 60 / (2π * 极对数) */
         ctx->pll_velocity_rpm = Q16_16_TO_FLOAT(ctx->pll_omega_q) * 60.0f / M_2PI / ctx->config.motor_poles;
     }
-
     /* 步骤3：执行电流环核心算法
      * sin/cos → Clarke/Park → PI → 逆 Park → SVPWM → PWM 输出 */
     foc_core_current_loop(ctx, ctx->electrical_angle_q);

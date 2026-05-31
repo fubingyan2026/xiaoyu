@@ -120,10 +120,15 @@ void foc_hal_pwm_update(foc_hal_t* hal, q16_16_t ta, q16_16_t tb, q16_16_t tc, q
     }
 
     /* 将归一化 Q16.16 占空比转换为硬件定时器计数值 */
-    uint32_t ta_counts = (uint32_t)q16_16_mul(ta, INT_TO_Q16_16(hal->config.pwm_period_counts));
-    uint32_t tb_counts = (uint32_t)q16_16_mul(tb, INT_TO_Q16_16(hal->config.pwm_period_counts));
-    uint32_t tc_counts = (uint32_t)q16_16_mul(tc, INT_TO_Q16_16(hal->config.pwm_period_counts));
-    uint32_t td_counts = (uint32_t)q16_16_mul(td, INT_TO_Q16_16(hal->config.pwm_period_counts));
+    /* duty_float = ta / 65536, counts = duty_float * period = (ta * period) / 65536 */
+    int64_t ta_product = (int64_t)ta * (int64_t)hal->config.pwm_period_counts;
+    int64_t tb_product = (int64_t)tb * (int64_t)hal->config.pwm_period_counts;
+    int64_t tc_product = (int64_t)tc * (int64_t)hal->config.pwm_period_counts;
+    int64_t td_product = (int64_t)td * (int64_t)hal->config.pwm_period_counts;
+    uint32_t ta_counts = (uint32_t)Q16_16_TO_INT((int32_t)ta_product);
+    uint32_t tb_counts = (uint32_t)Q16_16_TO_INT((int32_t)tb_product);
+    uint32_t tc_counts = (uint32_t)Q16_16_TO_INT((int32_t)tc_product);
+    uint32_t td_counts = (uint32_t)Q16_16_TO_INT((int32_t)td_product);
 
     hal->config.pwm_output(ta_counts, tb_counts, tc_counts, td_counts);
 }

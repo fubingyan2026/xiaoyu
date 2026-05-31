@@ -11,10 +11,10 @@
 #include "angle_sensor.h"
 #include "bsp_delay.h"
 #include "debug.h"
-#include "foc_encoder.h"
-#include "foc_config.h"
-#include "foc_hal.h"
 #include "flash_task.h"
+#include "foc_config.h"
+#include "foc_encoder.h"
+#include "foc_hal.h"
 #include "main.h"
 
 /* ==================== 硬件相关 ==================== */
@@ -82,13 +82,21 @@ static void foc_hw_adc_init(foc_context_t* ctx)
     HAL_TIM_Base_Start_IT(&PWM_INSTANCE);
     HAL_TIM_PWM_Start_IT(&PWM_INSTANCE, TIM_CHANNEL_4);
 }
-
+volatile uint32_t observe_ta, observe_tb, observe_tc;
 static void foc_hw_pwm_output(uint32_t ta, uint32_t tb, uint32_t tc, uint32_t td)
 {
-    if (ta > PWM_PERIOD) ta = PWM_PERIOD;
-    if (tb > PWM_PERIOD) tb = PWM_PERIOD;
-    if (tc > PWM_PERIOD) tc = PWM_PERIOD;
-    if (td > PWM_PERIOD) td = PWM_PERIOD;
+    if (ta > PWM_PERIOD)
+        ta = PWM_PERIOD;
+    if (tb > PWM_PERIOD)
+        tb = PWM_PERIOD;
+    if (tc > PWM_PERIOD)
+        tc = PWM_PERIOD;
+    if (td > PWM_PERIOD)
+        td = PWM_PERIOD;
+
+    observe_ta = ta;
+    observe_tb = tb;
+    observe_tc = tc;
 
     __HAL_TIM_SET_COMPARE(&PWM_INSTANCE, TIM_CHANNEL_1, ta);
     __HAL_TIM_SET_COMPARE(&PWM_INSTANCE, TIM_CHANNEL_2, tb);
@@ -161,11 +169,19 @@ void foc_task_adc_dma_start(void)
 
 void foc_task_init(void)
 {
-    // 初始化角度传感器
-    angle_sensor_init_context(&g_foc_ctx.sensor, SENSOR_TYPE_LINEAR_HALL);
-    angle_sensor_init(&g_foc_ctx.sensor);
-
-    // 编码器校准数据由 flash_task.c 通过 EasyFlash default_env_set 自动加载到 g_encoder_flash
+    // 从 Flash 显式加载编码器校准数据（兜底 default_env_set 自动加载）
+    {
+        size_t saved_len = 0;
+        size_t read_len = ef_get_env_blob(FLASH_MAGIC_ENCODER, &g_encoder_flash,
+            sizeof(g_encoder_flash), &saved_len);
+        if (read_len == sizeof(g_encoder_flash)) {
+            DEBUG_LOGI("foc_task", "从Flash加载编码器校准: map[0]=%d, dir=%d",
+                g_encoder_flash.angle_map[0], g_encoder_flash.direction);
+        } else {
+            DEBUG_LOGW("foc_task", "Flash无编码器校准数据 (read=%d, saved=%d), 需执行校准",
+                read_len, saved_len);
+        }
+    }
 
     // 构建端口配置
     foc_hal_config_t port_cfg = {

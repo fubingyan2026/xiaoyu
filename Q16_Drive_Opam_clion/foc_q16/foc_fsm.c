@@ -10,9 +10,9 @@
 #include <string.h>
 
 #include "debug.h"
-#include "foc_encoder.h"
 #include "flash_task.h"
 #include "foc.h"
+#include "foc_encoder.h"
 #include "foc_hal.h"
 #include "fsm_linear_hall.h"
 #include "stdlib.h"
@@ -207,9 +207,11 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
                 foc_ctx->cali_ctx.timeout_cnt = 0;
                 foc_ctx->cali_ctx.last_angle_q = q16_16_add(foc_ctx->cali_ctx.last_angle_q, foc->align_theta_q);
 
-                if ((foc_get_electrical_angle(foc) >= threshold) && (foc_ctx->cali_ctx.capture_idx >= 0) && (foc_ctx->cali_ctx.capture_idx <= (int16_t)foc->encoder.total_steps)) {
+                if ((foc_get_electrical_angle(foc) >= threshold) && (foc_ctx->cali_ctx.capture_idx >= 0) //
+                    && (foc_ctx->cali_ctx.capture_idx <= (int16_t)foc->encoder.total_steps)) {
                     foc->encoder.angle_map[foc_ctx->cali_ctx.capture_idx] = foc_get_raw_angle(foc);
-                    DEBUG_LOGI("foc_fsm", "正向校准数据缓存到flash:%d", foc_ctx->cali_ctx.capture_idx);
+                    DEBUG_LOGI("foc_fsm", "正向校准数据缓存到flash:%d,raw_data:%d", foc_ctx->cali_ctx.capture_idx, //
+                        foc->encoder.angle_map[foc_ctx->cali_ctx.capture_idx]);
                 }
 
                 if (foc_get_electrical_angle(foc) >= threshold) {
@@ -257,7 +259,8 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
                 if ((foc_get_electrical_angle(foc) >= threshold) && (foc_ctx->cali_ctx.capture_idx >= 0) && (foc_ctx->cali_ctx.capture_idx <= (int16_t)foc->encoder.total_steps)) {
                     foc->encoder.angle_map[foc_ctx->cali_ctx.capture_idx] = cycle_average(foc->encoder.angle_map[foc_ctx->cali_ctx.capture_idx], foc_get_raw_angle(foc),
                         foc->encoder.encoder_lines);
-                    DEBUG_LOGI("foc_fsm", "反向平均数据缓存到flash:%d", foc_ctx->cali_ctx.capture_idx);
+                    DEBUG_LOGI("foc_fsm", "反向平均数据缓存到flash:%d,raw_data:%d", foc_ctx->cali_ctx.capture_idx,
+                        foc->encoder.angle_map[foc_ctx->cali_ctx.capture_idx]);
                 }
 
                 if (foc_ctx->cali_ctx.capture_idx <= -(int16_t)FOC_FSM_CALI_STEPS_EXTRA) {
@@ -273,8 +276,8 @@ static fsm_state_t handler_alignment(fsm_t* fsm_ctx)
     case FOC_CALI_STEP_COMPLETE: {
         foc_ctx->cali_ctx.capture_idx = 0;
 
-            foc_encoder_calibration_finalize(&foc->encoder);
-            flash_task_request(FLASH_TASK_WRITE_ANGLE, &foc->encoder, sizeof(foc_encoder_flash_t));
+        foc_encoder_calibration_finalize(&foc->encoder);
+        flash_task_request(FLASH_TASK_WRITE_ANGLE, &foc->encoder, sizeof(foc_encoder_flash_t));
 
         foc_set_target_id(foc, 0);
         return FOC_FSM_STATE_RUN;

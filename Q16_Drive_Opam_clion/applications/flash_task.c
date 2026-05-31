@@ -38,8 +38,22 @@ const ef_env default_env_set[] = {
  */
 static void task_write_angle_align(void* data, size_t size)
 {
-    ef_set_env_blob(FLASH_MAGIC_ENCODER, data, size);
-    DEBUG_LOGI("flash", "编码器校准写入");
+    EfErrCode err = ef_set_env_blob(FLASH_MAGIC_ENCODER, data, size);
+    if (err == EF_NO_ERR) {
+        /* 回读验证：确认数据已写入 Flash 并可从 env 中读取 */
+        foc_encoder_flash_t verify;
+        size_t saved_len = 0;
+        size_t read_len = ef_get_env_blob(FLASH_MAGIC_ENCODER, &verify, sizeof(verify), &saved_len);
+        if (read_len == sizeof(verify) && verify.angle_map[0] != 0) {
+            DEBUG_LOGI("flash", "编码器校准写入成功, angle_map[0]=%d, dir=%d",
+                verify.angle_map[0], verify.direction);
+        } else {
+            DEBUG_LOGE("flash", "编码器校准写入校验失败: read=%d, saved=%d, map[0]=%d",
+                read_len, saved_len, verify.angle_map[0]);
+        }
+    } else {
+        DEBUG_LOGE("flash", "编码器校准写入失败: err=%d", err);
+    }
 }
 
 static void task_write_linear_hall(void* data, size_t size)

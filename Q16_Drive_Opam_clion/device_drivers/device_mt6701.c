@@ -56,7 +56,8 @@ uint16_t device_mt6701_get_angle_data(void) { return get_raw_data(NULL); }
 
 static uint16_t get_raw_data(uint16_t* raw_data)
 {
-    uint16_t txData = 0x3FF;
+    /* MT6701 需要2个16-bit SPI帧：第1帧发命令，第2帧发 dummy 以读取第2个响应字 */
+    uint16_t txData[2] = { 0xFFFF, 0x0000 };
     uint8_t Retry_count = 2;
 
     if (hal_spi_get_state(&mt68xx_spi_ctx) != HAL_SPI_ST_READY) {
@@ -69,9 +70,10 @@ Retry:
 
     spi_cs_low();
 
+    /* SPI3 配置为 16-bit 模式，Size 为半字数（非字节数）= 2 */
     const hal_spi_error_t spiStatus = hal_spi_transmit_receive(
-        &mt68xx_spi_ctx, (uint8_t*)&txData, (uint8_t*)s_data_buffer,
-        sizeof(s_data_buffer), 100);
+        &mt68xx_spi_ctx, (uint8_t*)txData, (uint8_t*)s_data_buffer,
+        sizeof(s_data_buffer) / sizeof(s_data_buffer[0]), 100);
     if (spiStatus != HAL_SPI_OK) {
         spi_cs_high();
         return 0;
