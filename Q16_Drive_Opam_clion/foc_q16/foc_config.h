@@ -37,11 +37,13 @@
  *       计算公式取决于硬件：采样电阻 × 放大器增益 × ADC 参考电压 / ADC 分辨率。
  *       此处值为 0.0096683555，即 ADC 读数每增加 1 对应约 9.67mA
  */
-#define CURRENT_SAMPLE_FACTOR 0.0096683555f
+#define OPAMPS 8.333f ///< 运放增益
+#define RESISTOR 0.01f ///< 采样电阻值
+#define CURRENT_SAMPLE_FACTOR (3.30f / (4096.0f * OPAMPS * RESISTOR)) ///< 电流采样转换因子
 
 #define MOTOR_PHASE_RESISTANCE 6.2f ///< 电机相电阻 @note 单位为 Ω（欧姆）
 #define MOTOR_PHASE_INDUCTANCE 0.001f ///< 电机相电感 @note 单位为 H（亨利）
-#define V_BUS_MAX (48) ///< 母线最大电压 @note 单位为 V（伏特），用于硬件过压保护判断
+#define V_BUS_MAX (36) ///< 母线最大电压 @note 单位为 V（伏特），用于硬件过压保护判断
 #define V_BUS (24.0f) ///< 母线电压 @note 单位为 V（伏特），实际供电电压，用于 SVPWM 占空比归一化
 
 /* ============= 系统参数 ============= */

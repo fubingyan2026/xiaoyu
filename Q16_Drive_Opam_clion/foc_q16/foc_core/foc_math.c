@@ -112,6 +112,17 @@ void foc_sin_cos(q16_16_t angle_q, q16_16_t* sin_out, q16_16_t* cos_out)
     *cos_out = cos1 + interp_cos;
 }
 
+static inline int clz32(uint32_t x)
+{
+    int n = 0;
+    if ((x & 0xFFFF0000U) == 0) { n += 16; x <<= 16; }
+    if ((x & 0xFF000000U) == 0) { n += 8;  x <<= 8; }
+    if ((x & 0xF0000000U) == 0) { n += 4;  x <<= 4; }
+    if ((x & 0xC0000000U) == 0) { n += 2;  x <<= 2; }
+    if ((x & 0x80000000U) == 0) { n += 1; }
+    return n;
+}
+
 /**
  * @brief Q16.16 快速平方根
  */
@@ -122,7 +133,7 @@ q16_16_t foc_sqrt(q16_16_t x)
     if (x == Q16_16_ONE)
         return Q16_16_ONE;
 
-    int clz = __builtin_clz((uint32_t)x);
+    int clz = clz32((uint32_t)x);
     q16_16_t y = (q16_16_t)(1u << ((17 + clz) >> 1));
 
     for (int i = 0; i < 3; i++) {
@@ -145,7 +156,7 @@ q16_16_t foc_inv_sqrt(q16_16_t x)
     if (x == Q16_16_ONE)
         return Q16_16_ONE;
 
-    int clz = __builtin_clz((uint32_t)x);
+    int clz = clz32((uint32_t)x);
     int exp = (17 + clz) >> 1;
     q16_16_t y = (q16_16_t)(1u << exp);
 
@@ -338,7 +349,8 @@ void foc_pi_init(foc_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val, q16_1
     q16_16_t dt_q)
 {
     pi->kp = kp;
-    pi->ki = q16_16_mul(ki, dt_q); // 预乘 dt，calc() 中省去一次乘法
+    pi->ki = ki; // 保存原始 ki，calc() 中再乘 dt
+    pi->dt_q = dt_q;
     pi->max_value = max_val;
     pi->min_value = min_val;
     pi->integ_sat = integ_sat;
@@ -353,14 +365,8 @@ void foc_pi_init(foc_pi_t* pi, q16_16_t kp, q16_16_t ki, q16_16_t max_val, q16_1
  * @brief 执行PI控制器计算
  *
  * 计算公式：out = integral + Kp * err
- * 其中 integral += Ki_premultiplied * err  (Ki_premultiplied = Ki * dt)
- *
- * 抗积分饱和（Anti-Windup）策略：
- *   - 当输出达到限幅值且误差方向使饱和加深时，停止积分累积
- *   - 当输出未饱和或误差方向使饱和减弱时，允许正常积分
- *   - 积分项独立受 integ_sat 限制，防止深度饱和后恢复迟缓
- *
- * @param pi PI控制器结构体指针（需事先调用 foc_pi_init 初始化）
+ * 其中 integral += Ki * err * dt（与旧版 q16_16_pi_calc 完全一致）
+ * 积分项受 integ_sat 独立限幅，输出受 max_value/min_value 限幅。
  */
 void foc_pi_calc(foc_pi_t* pi)
 {
@@ -370,10 +376,10 @@ void foc_pi_calc(foc_pi_t* pi)
     q16_16_t out_temp = q16_16_add(pi->integral, kp_term);
 
     uint8_t saturated = (out_temp >= pi->max_value && pi->err > 0)
-        || (out_temp <= pi->min_value && pi->err < 0);
+                     || (out_temp <= pi->min_value && pi->err < 0);
 
     if (!saturated) {
-        q16_16_t ki_term = q16_16_mul(pi->ki, pi->err);
+        q16_16_t ki_term = q16_16_mul(q16_16_mul(pi->ki, pi->err), pi->dt_q);
         pi->integral = q16_16_add(pi->integral, ki_term);
         pi->integral = q16_16_clip(pi->integral, -pi->integ_sat, pi->integ_sat);
     }
@@ -386,11 +392,7 @@ void foc_pi_calc(foc_pi_t* pi)
  * @brief 重置PI控制器状态
  *
  * 清零积分累积值（integral）、误差（err）和输出（out）。
- * 保留 kp、ki、max_value、min_value、integ_sat 等配置参数不变。
- * 适用场景：
- *   - 电机启动/停止时清除历史累积
- *   - 控制模式切换（如速度环→电流环）时重置
- *   - 故障恢复后重新初始化
+ * 保留 kp、ki、dt_q、max_value、min_value、integ_sat 等配置参数不变。
  *
  * @param pi PI控制器结构体指针
  */

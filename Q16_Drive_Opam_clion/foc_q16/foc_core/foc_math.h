@@ -348,6 +348,7 @@ typedef struct {
     q16_16_t integral; ///< 积分累积值
     q16_16_t target, real, err; ///< 目标值、实际值、误差
     q16_16_t out; ///< 控制器输出
+    q16_16_t dt_q; ///< 采样周期（Q16.16格式，秒）
 } foc_pi_t;
 
 /**

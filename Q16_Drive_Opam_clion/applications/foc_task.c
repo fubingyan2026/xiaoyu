@@ -38,8 +38,8 @@ static void foc_hw_adc_read(foc_context_t* ctx, q16_16_t* current_a, q16_16_t* c
     uint32_t adc_a = ctx->adc_dma_buffer[0];
     uint32_t adc_b = ctx->adc_dma_buffer[1];
 
-    q16_16_t diff_a = INT_TO_Q16_16((int32_t)adc_a) - ctx->adc_offset[0];
-    q16_16_t diff_b = INT_TO_Q16_16((int32_t)adc_b) - ctx->adc_offset[1];
+    q16_16_t diff_a = -INT_TO_Q16_16((int32_t)adc_a) + ctx->adc_offset[0];
+    q16_16_t diff_b = -INT_TO_Q16_16((int32_t)adc_b) + ctx->adc_offset[1];
 
     *current_a = q16_16_mul(diff_a, ctx->port.config.current_sample_factor_q);
     *current_b = q16_16_mul(diff_b, ctx->port.config.current_sample_factor_q);

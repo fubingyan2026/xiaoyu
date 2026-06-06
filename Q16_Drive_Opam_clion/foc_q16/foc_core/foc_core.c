@@ -41,9 +41,9 @@ void foc_core_current_loop(foc_context_t* ctx, q16_16_t electrical_angle_q)
     q16_16_t iq_raw_q = 0;
     foc_park_transform(i_alpha_q, i_beta_q, ctx->svpwm.sin_cos[0], ctx->svpwm.sin_cos[1], &id_raw_q, &iq_raw_q);
 
-    // 低通滤波（注意：如果电流反馈符号反了，iq_raw_q 需取反）
+    // 低通滤波
     ctx->lpf_id_q = foc_lpf_update(ctx->lpf_id_q, id_raw_q, ctx->lpf_beta_q);
-    ctx->lpf_iq_q = foc_lpf_update(ctx->lpf_iq_q, -iq_raw_q, ctx->lpf_beta_q);  // 加负号修复符号
+    ctx->lpf_iq_q = foc_lpf_update(ctx->lpf_iq_q, iq_raw_q, ctx->lpf_beta_q);
 
     // PI电流控制器
     ctx->pi_id.target = ctx->target_id_q;
@@ -55,9 +55,8 @@ void foc_core_current_loop(foc_context_t* ctx, q16_16_t electrical_angle_q)
     foc_pi_calc(&ctx->pi_id);
 
     // 设置SVPWM输入
-    ctx->svpwm.vd = 0; // ctx->pi_id.out;
-    ctx->svpwm.vq = FLOAT_TO_Q16_16(6);
-   // ctx->pi_iq.out;
+    ctx->svpwm.vd = ctx->pi_id.out;
+    ctx->svpwm.vq = ctx->pi_iq.out;
 
     // 逆Park变换
     foc_ipark_transform(ctx->svpwm.vd, ctx->svpwm.vq, ctx->svpwm.sin_cos[0], ctx->svpwm.sin_cos[1],
